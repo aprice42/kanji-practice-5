@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kanji-practice-5",
+  "compatibility_date": "2026-09-12",
+  "assets": {
+    // Vite's build output. `npm run build` produces this, then
+    // `npx wrangler deploy` uploads it as static assets.
+    "directory": "./dist",
+    // Serve /index.html for unknown paths so the app still loads if the PWA
+    // or a bookmark requests a path other than /.
+    "not_found_handling": "single-page-application"
+  }
+}
