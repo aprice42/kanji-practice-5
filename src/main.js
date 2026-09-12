@@ -1,13 +1,17 @@
-import { cards } from './cards.js'
+import { cards as rawCards } from './cards.js'
 import './style.css'
+
+// Stable id per card so a card's status survives across practice rounds.
+const cards = rawCards.map((card, id) => ({ ...card, id }))
 
 const app = document.getElementById('app')
 
 const state = {
+  // id -> 'correct' | 'incorrect'. The source of truth for the score: a card
+  // answered wrong in round 1 and right in round 2 simply flips to 'correct'.
+  status: new Map(),
   deck: [],
   index: 0,
-  correct: 0,
-  incorrect: 0,
   revealed: false,
   done: false,
 }
@@ -21,19 +25,29 @@ function shuffle(list) {
   return out
 }
 
-function restart() {
-  state.deck = shuffle(cards)
+function byStatus(kind) {
+  return cards.filter((card) => state.status.get(card.id) === kind)
+}
+
+function startRound(deck) {
+  state.deck = shuffle(deck)
   state.index = 0
-  state.correct = 0
-  state.incorrect = 0
   state.revealed = false
   state.done = false
   render()
 }
 
+function restart() {
+  state.status.clear()
+  startRound(cards)
+}
+
+function practiceMissed() {
+  startRound(byStatus('incorrect'))
+}
+
 function choose(kind) {
-  if (kind === 'correct') state.correct++
-  else state.incorrect++
+  state.status.set(state.deck[state.index].id, kind)
   state.revealed = false
   if (state.index + 1 >= state.deck.length) state.done = true
   else state.index++
@@ -41,37 +55,77 @@ function choose(kind) {
 }
 
 function tally() {
+  const correct = byStatus('correct').length
+  const incorrect = byStatus('incorrect').length
   return `
     <div class="tally" role="status" aria-live="polite">
       <span class="tally__group">
         <span class="tally__icon" aria-hidden="true">✅</span>
-        <span class="tally__count">${state.correct}</span>
+        <span class="tally__count">${correct}</span>
         <span class="visually-hidden">correct</span>
       </span>
       <span class="tally__group">
-        <span class="tally__count">${state.incorrect}</span>
+        <span class="tally__count">${incorrect}</span>
         <span class="tally__icon" aria-hidden="true">🚫</span>
         <span class="visually-hidden">incorrect</span>
       </span>
     </div>`
 }
 
-function render() {
-  if (state.done) {
-    const total = state.deck.length
-    app.innerHTML = `
-      ${tally()}
-      <div class="stage stage--results">
-        <p class="results__score">${state.correct} / ${total}</p>
-        <p class="results__label">cards correct</p>
+function table(caption, list) {
+  if (!list.length) return ''
+  return `
+    <table class="results__table">
+      <caption>${caption}</caption>
+      <thead>
+        <tr><th scope="col">Reading</th><th scope="col">Written form</th></tr>
+      </thead>
+      <tbody>
+        ${list
+          .map(
+            (card) => `<tr>
+              <td lang="ja">${card.reading}</td>
+              <td lang="ja">${card.written}</td>
+            </tr>`
+          )
+          .join('')}
+      </tbody>
+    </table>`
+}
+
+function renderResults() {
+  const correct = byStatus('correct')
+  const missed = byStatus('incorrect')
+
+  app.innerHTML = `
+    ${tally()}
+    <div class="results">
+      <p class="results__score">${correct.length} / ${cards.length}</p>
+      <p class="results__label">
+        ${missed.length ? `${missed.length} still to get` : 'All correct — nice work! 🎉'}
+      </p>
+      <div class="results__tables">
+        ${table(`🚫 Missed (${missed.length})`, missed)}
+        ${table(`✅ Correct (${correct.length})`, correct)}
       </div>
-      <div class="actions">
-        <button class="btn" id="restart">🔄 Start over</button>
-      </div>`
-    document.getElementById('restart').addEventListener('click', restart)
-    app.querySelector('.btn').focus()
-    return
+    </div>
+    <div class="actions">
+      ${
+        missed.length
+          ? `<button class="btn" id="retry">Practice the ${missed.length} missed</button>`
+          : ''
+      }
+      <button class="btn btn--secondary" id="restart">Start over</button>
+    </div>`
+
+  if (missed.length) {
+    document.getElementById('retry').addEventListener('click', practiceMissed)
   }
+  document.getElementById('restart').addEventListener('click', restart)
+}
+
+function render() {
+  if (state.done) return renderResults()
 
   const card = state.deck[state.index]
 
