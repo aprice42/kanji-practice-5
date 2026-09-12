@@ -133,6 +133,15 @@ html, body {
   gap: 0.35em;
 }
 
+.confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
 /* Results ---------------------------------------------------------------- */
 .results {
   flex: 1;

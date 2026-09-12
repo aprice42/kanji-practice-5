@@ -9,7 +9,8 @@ At the end you get a score, a table of the missed cards and a table of the corre
 (reading + written form), and two buttons: **Practice the N missed** — which runs another
 round with just those — and **Start over**, which reshuffles all 51 and clears the score.
 Retry rounds keep going until nothing is missed; getting a card right on a retry flips it
-from missed to correct, so the score climbs toward 51/51.
+from missed to correct, so the score climbs toward 51/51. Clear the whole set and you get
+confetti (skipped for `prefers-reduced-motion`).
 
 ## Local
 

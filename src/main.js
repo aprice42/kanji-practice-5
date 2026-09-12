@@ -1,4 +1,5 @@
 import { cards as rawCards } from './cards.js'
+import { confetti } from './confetti.js'
 import './style.css'
 
 // Stable id per card so a card's status survives across practice rounds.
@@ -136,6 +137,8 @@ function renderResults() {
     document.getElementById('retry').addEventListener('click', practiceMissed)
   }
   document.getElementById('restart').addEventListener('click', restart)
+
+  if (!missed.length) confetti()
 }
 
 function render() {
