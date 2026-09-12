@@ -66,6 +66,41 @@ html, body {
 .tally__icon { font-size: 1.1em; line-height: 1; }
 .tally__count { font-variant-numeric: tabular-nums; min-width: 1.5ch; text-align: center; }
 
+/* Progress --------------------------------------------------------------- */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+}
+.progress__bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--rule);
+  overflow: hidden;
+}
+.progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  /* --teal-text, not --teal: the fill must clear 3:1 against the track, which
+     the dark-mode --teal does not (2.2:1). */
+  background: var(--teal-text);
+}
+.progress__label {
+  margin: 0;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .progress__fill { transition: width 180ms ease; }
+}
+
 /* Card stage ------------------------------------------------------------- */
 .stage {
   flex: 1;

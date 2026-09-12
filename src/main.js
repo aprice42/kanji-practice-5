@@ -72,6 +72,20 @@ function tally() {
     </div>`
 }
 
+function progress() {
+  const total = state.deck.length
+  const position = state.index + 1
+  return `
+    <div class="progress">
+      <div class="progress__bar" role="progressbar"
+           aria-valuemin="1" aria-valuemax="${total}" aria-valuenow="${position}"
+           aria-valuetext="Card ${position} of ${total}">
+        <div class="progress__fill" style="width: ${(position / total) * 100}%"></div>
+      </div>
+      <p class="progress__label">${position} of ${total}</p>
+    </div>`
+}
+
 function table(caption, list) {
   if (!list.length) return ''
   return `
@@ -132,6 +146,7 @@ function render() {
   if (!state.revealed) {
     app.innerHTML = `
       ${tally()}
+      ${progress()}
       <div class="stage">
         <p class="kana" lang="ja">${card.reading}</p>
       </div>
@@ -147,6 +162,7 @@ function render() {
 
   app.innerHTML = `
     ${tally()}
+    ${progress()}
     <div class="stage">
       <p class="kanji" lang="ja">${card.written}</p>
       <div class="gloss">
