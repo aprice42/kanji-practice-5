@@ -233,6 +233,16 @@ ending). That is information, not a failure — see **`npm run audit`** above.
   `:root :lang(ja)`. A string without it falls back to a system font.
 - **Colours come from tokens only.** Never a literal hex in a component rule — there are
   four palettes × light and dark, and a literal breaks seven of the eight combinations.
+- **Never style bare elements inside a container.** This has caused two separate bugs:
+  `.menu__panel button { … }` also hit the theme and palette pills that live in that panel,
+  overriding their shape, their pill radius and their active fill — the active pill went
+  white-on-white on hover. Style a class (`[role="menuitem"]`), not `button`.
+- **Watch specificity on state rules.** `.btn:hover:not(:disabled)` out-ranks a plain
+  `.btn--secondary:hover`, which once filled the outline button with the same colour as its
+  text. A variant overriding a state needs to match that state rule's specificity.
+- **Check hover, not just the resting state.** Both of the above were invisible in a
+  screenshot. `--primary-hover` must keep `--on-primary` readable: lightening the Matcha
+  dark teal for hover dropped its white label to 3.93:1, so that one darkens instead.
 - **Correct and wrong are distinguished by shape, not just colour**, and every icon carries
   a text label.
 - **The app is sized to fit without scrolling**, using `min(vw, vh)` clamps rather than

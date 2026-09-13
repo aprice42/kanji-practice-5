@@ -33,7 +33,9 @@
   --bg: #faf7f1;
   --surface: #f2ede3;
   --ink: #1f2430;
-  --muted: #5b6070;
+  /* Dark enough to clear 4.5:1 on --rule, the segmented-control track that
+     inactive labels sit on. */
+  --muted: #565b6a;
   --rule: #ddd5c7;
   --edge: #8b8673;
   --primary: #2f4a7d;
@@ -140,7 +142,9 @@
     --rule: #2e3c38;
     --edge: #5f716c;
     --primary: #2f7568;
-    --primary-hover: #398e7f;
+    /* Darkens rather than lightens: lightening this teal pushes white label text
+     below 4.5:1 (it reached 3.93 before). */
+  --primary-hover: #28655a;
     --primary-text: #79c7b6;
     --on-primary: #ffffff;
     --good: #a6d16a;
@@ -208,7 +212,9 @@
   --rule: #2e3c38;
   --edge: #5f716c;
   --primary: #2f7568;
-  --primary-hover: #398e7f;
+  /* Darkens rather than lightens: lightening this teal pushes white label text
+     below 4.5:1 (it reached 3.93 before). */
+  --primary-hover: #28655a;
   --primary-text: #79c7b6;
   --on-primary: #ffffff;
   --good: #a6d16a;
@@ -354,23 +360,9 @@ html, body {
   width: 100%;
   margin: 0.25rem 0;
 }
-/* These sit inside .menu__panel, whose `button { display: block }` rule is more
-   specific than the pill classes — restate the flex layout at higher
-   specificity or the swatches collapse to zero-width inline spans. */
-.menu__panel .theme__btn,
-.menu__panel .palette__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-  text-align: center;
-}
 .menu__panel .theme__btn { flex: 1; }
 /* Two per row in the narrow panel, rather than four cramped ones. */
-.menu__panel .palette__btn {
-  flex: 1 1 calc(50% - 0.3rem);
-  min-height: 44px;
-}
+.menu__panel .palette__btn { flex: 1 1 calc(50% - 0.3rem); }
 
 /* Top bar + menu ---------------------------------------------------------- */
 .topbar {
@@ -424,7 +416,10 @@ html, body {
   text-transform: uppercase;
   color: var(--muted);
 }
-.menu__panel button {
+/* Scoped to real menu items — the theme and palette pills also live in this
+   panel, and a blanket `button` selector overrode their shape, their pill
+   radius and their active background. */
+.menu__panel [role='menuitem'] {
   display: block;
   width: 100%;
   appearance: none;
@@ -439,7 +434,7 @@ html, body {
   border-radius: 0.625rem;
   cursor: pointer;
 }
-.menu__panel button:hover { background: var(--surface); }
+.menu__panel [role='menuitem']:hover { background: var(--surface); }
 .menu__panel hr {
   border: 0;
   border-top: 1px solid var(--rule);
@@ -475,6 +470,13 @@ html, body {
   color: var(--on-primary);
   font-weight: 600;
 }
+/* Hover must not disturb the active pill: its label is --on-primary, which is
+   only readable on the primary fill. */
+.palette__btn:not(.is-active):hover { border-color: var(--primary-text); }
+.palette__btn.is-active:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.mode__btn.is-active:hover,
+.theme__btn.is-active:hover { background: var(--primary-hover); }
+
 .palette__swatch {
   width: 16px;
   height: 16px;
@@ -513,7 +515,13 @@ html, body {
 .home__title {
   margin: 0;
   font-size: clamp(2rem, min(11vw, 8vh), 4.5rem);
-  font-weight: 500;
+  /* Klee One sets CJK on a full-width grid, which leaves airy gaps either side
+     of narrow kana like の and makes a short title read as disconnected
+     characters. "palt" switches to each glyph's own width; the small positive
+     tracking then puts an even rhythm back. */
+  font-weight: 600;
+  font-feature-settings: "palt" 1;
+  letter-spacing: 0.02em;
 }
 .home__subtitle {
   margin: 0 0 0.5rem;
@@ -814,7 +822,14 @@ html, body {
   color: var(--primary-text);
   border: 2px solid var(--primary-text);
 }
-.btn--secondary:hover { background: color-mix(in srgb, var(--primary-text) 14%, transparent); }
+/* Needs to out-specify `.btn:hover:not(:disabled)` above, which would otherwise
+   fill this button with the primary colour while its text stays that same
+   colour — an invisible label. */
+.btn--secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary-text) 14%, transparent);
+  border-color: var(--primary-text);
+  color: var(--primary-text);
+}
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .judge { display: flex; gap: clamp(1.5rem, 8vw, 3.5rem); }
