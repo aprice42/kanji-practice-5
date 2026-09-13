@@ -11,10 +11,11 @@ const app = document.getElementById('app')
 const CHOICE_COUNT = 3
 
 /* What the results screen says, and how much confetti it throws.
-   Thresholds: 25 / 50 / 75 / 95 / 100 percent. 76–94 keeps the same words as
-   51–75 but earns a bigger burst, so every threshold crossing is felt. How
-   many were missed is already clear from the tally and the Missed table, so
-   this line is purely encouragement. */
+   Thresholds: 0 / 25 / 50 / 75 / 95 / 100 percent. 76–94 keeps the same words
+   as 51–75 but earns a bigger burst, so every threshold crossing is felt. A
+   clean miss gets level 0 — no confetti, since there is nothing to celebrate
+   yet — and encouragement to try again. How many were missed is already clear
+   from the tally and the Missed table, so this line is purely encouragement. */
 function celebrationFor(correct, total) {
   const percent = total ? (correct / total) * 100 : 0
   if (percent >= 100) return { message: 'You did it!', level: 6 }
@@ -22,7 +23,8 @@ function celebrationFor(correct, total) {
   if (percent > 75) return { message: 'Almost there!', level: 4 }
   if (percent > 50) return { message: 'Almost there!', level: 3 }
   if (percent > 25) return { message: 'Great work!', level: 2 }
-  return { message: 'Good job!', level: 1 }
+  if (percent > 0) return { message: 'Good job!', level: 1 }
+  return { message: 'Keep practicing!', level: 0 }
 }
 
 const MODES = {
@@ -613,8 +615,9 @@ function renderResults() {
   }
   document.getElementById('restart').addEventListener('click', restart)
 
-  // Something for every finished round, more of it the better the score.
-  confetti(celebration.level)
+  // Something for every round with at least one right, more of it the better
+  // the score. A zero-score round gets none.
+  if (celebration.level > 0) confetti(celebration.level)
 }
 
 function render() {
