@@ -10,6 +10,21 @@ const app = document.getElementById('app')
 
 const CHOICE_COUNT = 3
 
+/* What the results screen says, and how much confetti it throws.
+   Thresholds: 25 / 50 / 75 / 95 / 100 percent. 76–94 keeps the same words as
+   51–75 but earns a bigger burst, so every threshold crossing is felt. How
+   many were missed is already clear from the tally and the Missed table, so
+   this line is purely encouragement. */
+function celebrationFor(correct, total) {
+  const percent = total ? (correct / total) * 100 : 0
+  if (percent >= 100) return { message: 'You did it!', level: 6 }
+  if (percent >= 95) return { message: 'So close!', level: 5 }
+  if (percent > 75) return { message: 'Almost there!', level: 4 }
+  if (percent > 50) return { message: 'Almost there!', level: 3 }
+  if (percent > 25) return { message: 'Great work!', level: 2 }
+  return { message: 'Good job!', level: 1 }
+}
+
 const MODES = {
   flashcards: { label: 'Flash cards', icon: 'cards', hint: 'Show the answer, then mark yourself' },
   choice: { label: 'Multiple choice', icon: 'choice', hint: 'Pick the right answer from three' },
@@ -566,6 +581,7 @@ function table(caption, list, tone) {
 function renderResults() {
   const correct = byStatus('correct')
   const missed = byStatus('incorrect')
+  const celebration = celebrationFor(correct.length, cards.length)
 
   app.innerHTML = `
     <header class="topbar topbar--results">
@@ -575,11 +591,7 @@ function renderResults() {
     </header>
     <div class="results">
       <p class="results__label ${missed.length ? '' : 'is-good'}">
-        ${
-          missed.length
-            ? `${missed.length} still to get`
-            : `${icon('spark', 'icon--spark')} Way to Go!`
-        }
+        ${icon('spark', 'icon--spark')} ${celebration.message}
       </p>
       <div class="results__tables">
         ${table(`${icon('cross', 'icon--caption')} Missed (${missed.length})`, missed, 'is-bad')}
@@ -601,7 +613,8 @@ function renderResults() {
   }
   document.getElementById('restart').addEventListener('click', restart)
 
-  if (!missed.length) confetti()
+  // Something for every finished round, more of it the better the score.
+  confetti(celebration.level)
 }
 
 function render() {

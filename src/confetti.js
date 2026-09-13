@@ -4,7 +4,19 @@ const COLORS = [
   '#f2c94c', '#eb5757', '#2f80ed', '#27ae60',
   '#bb6bd9', '#f2994a', '#56ccf2', '#ff6fb5',
 ]
-const DURATION = 6000
+
+/* Every finished round gets something; the amount steps up as the score
+   crosses each band, and only a clean sweep gets the full barrage.
+   `share` scales the pieces in each wave, `waves` is how many of the staged
+   waves fire at all. */
+export const LEVELS = {
+  1: { share: 0.16, waves: 2, duration: 1800 },
+  2: { share: 0.28, waves: 3, duration: 2400 },
+  3: { share: 0.44, waves: 4, duration: 3200 },
+  4: { share: 0.64, waves: 5, duration: 4200 },
+  5: { share: 0.82, waves: 6, duration: 5000 },
+  6: { share: 1, waves: 7, duration: 6000 },
+}
 const GRAVITY = 0.11
 const DRAG = 0.992
 const TERMINAL = 9
@@ -52,9 +64,12 @@ function burst(count, x, y) {
   })
 }
 
-export function confetti() {
+export function confetti(level = 6) {
   // Decorative only — skip entirely for people who ask for reduced motion.
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+  const { share, waves: waveCount, duration } = LEVELS[level] ?? LEVELS[6]
+  const n = (count) => Math.max(6, Math.round(count * share))
 
   const canvas = document.createElement('canvas')
   canvas.className = 'confetti'
@@ -75,15 +90,16 @@ export function confetti() {
   ctx.scale(dpr, dpr)
 
   // Waves keep it going instead of one puff that's over before you look up.
+  // Ordered so the earlier ones alone still read as a complete little burst.
   const waves = [
-    { at: 0, make: () => [...cannon(130, w, h, true), ...cannon(130, w, h, false)] },
-    { at: 0, make: () => rain(200, w) },
-    { at: 450, make: () => burst(180, w / 2, h * 0.38) },
-    { at: 900, make: () => [...cannon(110, w, h, true), ...cannon(110, w, h, false)] },
-    { at: 1400, make: () => rain(220, w) },
-    { at: 2000, make: () => [...burst(90, w * 0.25, h * 0.3), ...burst(90, w * 0.75, h * 0.3)] },
-    { at: 2800, make: () => rain(200, w) },
-  ]
+    { at: 0, make: () => [...cannon(n(130), w, h, true), ...cannon(n(130), w, h, false)] },
+    { at: 0, make: () => rain(n(200), w) },
+    { at: 450, make: () => burst(n(180), w / 2, h * 0.38) },
+    { at: 900, make: () => [...cannon(n(110), w, h, true), ...cannon(n(110), w, h, false)] },
+    { at: 1400, make: () => rain(n(220), w) },
+    { at: 2000, make: () => [...burst(n(90), w * 0.25, h * 0.3), ...burst(n(90), w * 0.75, h * 0.3)] },
+    { at: 2800, make: () => rain(n(200), w) },
+  ].slice(0, waveCount)
 
   let pieces = []
   const start = performance.now()
@@ -97,13 +113,13 @@ export function confetti() {
       fired++
     }
 
-    if (elapsed > DURATION) {
+    if (elapsed > duration) {
       canvas.remove()
       return
     }
 
     // Fade the whole thing out over the last stretch.
-    canvas.style.opacity = String(Math.min(1, (DURATION - elapsed) / 1200))
+    canvas.style.opacity = String(Math.min(1, (duration - elapsed) / 1200))
     ctx.clearRect(0, 0, w, h)
 
     for (const p of pieces) {
