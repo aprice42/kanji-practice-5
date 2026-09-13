@@ -15,10 +15,42 @@ the card and advances. Self-marked.
 
 ### Multiple choice
 
-Prompt plus three options — the right answer and two distractors drawn from other cards.
+Prompt plus three options — the right answer and two distractors.
 Tapping an option marks it right or wrong and reveals the meaning, then a verdict appears
 ("Correct" or "Not quite — it's 魚") with a **Continue** button. Nothing advances until
 that button is tapped, so there is no time pressure on reading the answer.
+
+#### Choosing distractors
+
+Picking the two wrong options at random made many cards answerable without reading any
+kanji. Asked おおい, a child shown 多い / 社会 / 中国 only has to match the trailing い —
+and 社会 and 中国 can be ruled out on shape alone, leaving the answer standing by itself.
+
+`src/choices.js` scores every other card as a candidate:
+
+- **Can it be eliminated on shape?** A candidate whose okurigana cannot fit the prompt is
+  worth avoiding, and this outweighs every other signal combined.
+- **Does it resemble the answer?** Same okurigana, same kanji/kana arrangement, shares a
+  kanji, same length.
+
+The two best-scoring candidates are used, shuffled so equal scores stay varied. おおい now
+draws 多い / 太い / 細い. This is all derived from the card data, so **new cards need no
+configuration** — nothing to maintain by hand.
+
+Measured over the current deck, questions answerable without reading any kanji:
+
+| Direction | Before | After |
+| --- | --- | --- |
+| かな → 漢字 | 11.3% | **0%** |
+| 漢字 → かな | 90.5% | **35%** |
+
+#### `npm run audit`
+
+Run after adding or editing cards. It reports the same figures and lists any card the deck
+cannot disguise — one whose ending no other card shares, like 分ける, where わける is the
+only reading in the deck ending in ける. That is a property of the deck, not a bug: add a
+card sharing the ending and it stops being guessable. The audit imports `src/choices.js`,
+the same module the app uses, so the two cannot drift apart.
 
 ### Menu
 

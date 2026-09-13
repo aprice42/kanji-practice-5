@@ -1,4 +1,5 @@
 import { cards as rawCards } from './cards.js'
+import { shuffle, facesOf, buildChoices } from './choices.js'
 import { confetti } from './confetti.js'
 import './style.css'
 
@@ -183,53 +184,20 @@ function bindThemeSwitch() {
 
 /* State helpers ---------------------------------------------------------- */
 
-function shuffle(list) {
-  const out = list.slice()
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[out[i], out[j]] = [out[j], out[i]]
-  }
-  return out
-}
+const faces = (card) => facesOf(card, state.direction)
+const answerFace = (card) => faces(card).answer
 
 function byStatus(kind) {
   return cards.filter((card) => state.status.get(card.id) === kind)
 }
 
-// The card's two sides, per direction.
-function faces(card) {
-  return state.direction === 'reading-first'
-    ? { prompt: card.reading, answer: card.written, echo: card.reading }
-    : { prompt: card.written, answer: card.reading, echo: card.written }
-}
-
-function answerFace(card) {
-  return faces(card).answer
-}
-
-// Correct answer plus distractors drawn from other cards, de-duplicated by the
-// text actually shown so two options can never read identically.
-function buildChoices(card) {
-  const correct = answerFace(card)
-  const seen = new Set([correct])
-  const pool = shuffle(cards.filter((c) => c.id !== card.id))
-  const options = [card]
-
-  for (const other of pool) {
-    if (options.length >= CHOICE_COUNT) break
-    const face = answerFace(other)
-    if (seen.has(face)) continue
-    seen.add(face)
-    options.push(other)
-  }
-
-  return shuffle(options)
-}
-
 function prepareCard() {
   state.revealed = false
   state.picked = null
-  state.choices = state.mode === 'choice' ? buildChoices(state.deck[state.index]) : []
+  state.choices =
+    state.mode === 'choice'
+      ? buildChoices(cards, state.deck[state.index], state.direction, CHOICE_COUNT)
+      : []
 }
 
 function startRound(deck) {
@@ -383,7 +351,7 @@ function bindDirectionSwitch() {
       state.direction = btn.dataset.direction
       // Options are built from the answer face, so they must be rebuilt.
       if (state.screen === 'practice' && state.mode === 'choice' && !state.picked) {
-        state.choices = buildChoices(state.deck[state.index])
+        state.choices = buildChoices(cards, state.deck[state.index], state.direction, CHOICE_COUNT)
       }
       render()
     })
