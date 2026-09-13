@@ -15,6 +15,8 @@ const state = {
   index: 0,
   revealed: false,
   done: false,
+  // 'reading-first': see かな, recall the kanji. 'written-first': the reverse.
+  mode: 'reading-first',
 }
 
 function shuffle(list) {
@@ -71,6 +73,39 @@ function tally() {
         <span class="visually-hidden">incorrect</span>
       </span>
     </div>`
+}
+
+const MODES = [
+  { id: 'reading-first', label: 'かな → 漢字', hint: 'See the reading, recall the written form' },
+  { id: 'written-first', label: '漢字 → かな', hint: 'See the written form, recall the reading' },
+]
+
+function modeSwitch() {
+  return `
+    <div class="mode" role="group" aria-label="Practice direction">
+      ${MODES.map(
+        (m) => `<button class="mode__btn ${state.mode === m.id ? 'is-active' : ''}"
+                    data-mode="${m.id}" aria-pressed="${state.mode === m.id}"
+                    title="${m.hint}" lang="ja">${m.label}</button>`
+      ).join('')}
+    </div>`
+}
+
+function bindModeSwitch() {
+  for (const btn of app.querySelectorAll('.mode__btn')) {
+    btn.addEventListener('click', () => {
+      if (state.mode === btn.dataset.mode) return
+      state.mode = btn.dataset.mode
+      render()
+    })
+  }
+}
+
+// The card's two sides, per direction.
+function faces(card) {
+  return state.mode === 'reading-first'
+    ? { prompt: card.reading, answer: card.written, echo: card.reading }
+    : { prompt: card.written, answer: card.reading, echo: card.written }
 }
 
 function progress() {
@@ -145,17 +180,20 @@ function render() {
   if (state.done) return renderResults()
 
   const card = state.deck[state.index]
+  const side = faces(card)
 
   if (!state.revealed) {
     app.innerHTML = `
       ${tally()}
+      ${modeSwitch()}
       ${progress()}
       <div class="stage">
-        <p class="kana" lang="ja">${card.reading}</p>
+        <p class="kana" lang="ja">${side.prompt}</p>
       </div>
       <div class="actions">
         <button class="btn" id="show">Show answer</button>
       </div>`
+    bindModeSwitch()
     document.getElementById('show').addEventListener('click', () => {
       state.revealed = true
       render()
@@ -165,12 +203,13 @@ function render() {
 
   app.innerHTML = `
     ${tally()}
+    ${modeSwitch()}
     ${progress()}
     <div class="stage">
-      <p class="kanji" lang="ja">${card.written}</p>
+      <p class="kanji" lang="ja">${side.answer}</p>
       <div class="gloss">
         <p class="meaning">${card.meaning}</p>
-        <p class="meaning meaning--reading" lang="ja">${card.reading}</p>
+        <p class="meaning meaning--reading" lang="ja">${side.echo}</p>
       </div>
     </div>
     <div class="actions">
@@ -181,6 +220,7 @@ function render() {
     </div>`
   document.getElementById('right').addEventListener('click', () => choose('correct'))
   document.getElementById('wrong').addEventListener('click', () => choose('incorrect'))
+  bindModeSwitch()
 }
 
 restart()

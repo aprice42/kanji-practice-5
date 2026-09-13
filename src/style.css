@@ -66,6 +66,38 @@ html, body {
 .tally__icon { font-size: 1.1em; line-height: 1; }
 .tally__count { font-variant-numeric: tabular-nums; min-width: 1.5ch; text-align: center; }
 
+/* Practice direction switch ---------------------------------------------- */
+.mode {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--rule);
+  margin: 0 auto;
+}
+.mode__btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: clamp(0.95rem, 3vw, 1.1rem);
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mode__btn.is-active {
+  background: var(--teal);
+  color: #ffffff;
+  font-weight: 600;
+}
+.mode__btn:not(.is-active):hover {
+  color: var(--ink);
+}
+
 /* Progress --------------------------------------------------------------- */
 .progress {
   display: flex;
