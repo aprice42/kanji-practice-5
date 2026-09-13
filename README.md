@@ -2,24 +2,35 @@
 
 Flashcard PWA for the 51-item review kanji list in `content/content.md`.
 
-Shows the reading (かな) → tap **Show answer** → written form + meaning → tap ✅ or 🚫,
-which scores the card and advances straight to the next one. Tallies run along the top.
-
-A switch above the card flips the practice direction:
+The app opens on a home screen where you pick a mode. Both modes share the same deck,
+scoring, progress bar and results screen, and both support the direction switch:
 
 - **かな → 漢字** — see the reading, recall the written form (default)
 - **漢字 → かな** — see the written form, recall the reading
 
-Either way the answer side shows the meaning and echoes the prompt underneath, so both
-halves of the card are visible together. The direction can be changed at any point,
-including mid-card, and it does not affect scoring.
+### Flash cards
 
-At the end you get a score, a table of the missed cards and a table of the correct ones
-(reading + written form), and two buttons: **Practice the N missed** — which runs another
-round with just those — and **Start over**, which reshuffles all 51 and clears the score.
-Retry rounds keep going until nothing is missed; getting a card right on a retry flips it
-from missed to correct, so the score climbs toward 51/51. Clear the whole set and you get
-confetti (skipped for `prefers-reduced-motion`).
+Prompt → tap **Show answer** → the other side plus the meaning → tap ✅ or 🚫, which scores
+the card and advances. Self-marked.
+
+### Multiple choice
+
+Prompt plus three options — the right answer and two distractors drawn from other cards.
+Tapping an option marks it right or wrong, reveals the meaning, and advances on its own
+after a short pause (longer when wrong, so there is time to read the correct answer).
+
+### Menu
+
+The ☰ menu in the top bar switches to the other mode (restarting the round in it), starts
+over, or returns home.
+
+### Results
+
+A score, a table of the missed cards and a table of the correct ones (reading + written
+form), and two buttons: **Practice the N missed** — another round with just those — and
+**Start over**. Getting a card right on a retry flips it from missed to correct, so the
+score climbs toward 51/51. Clear the whole set and you get confetti (skipped for
+`prefers-reduced-motion`).
 
 ## Local
 

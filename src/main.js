@@ -7,17 +7,37 @@ const cards = rawCards.map((card, id) => ({ ...card, id }))
 
 const app = document.getElementById('app')
 
+const CHOICE_COUNT = 3
+const PAUSE_CORRECT = 800
+const PAUSE_WRONG = 1600
+
+const MODES = {
+  flashcards: { label: 'Flash cards', icon: '🃏', hint: 'Show the answer, then mark yourself' },
+  choice: { label: 'Multiple choice', icon: '🔢', hint: 'Pick the right answer from three' },
+}
+
+const DIRECTIONS = [
+  { id: 'reading-first', label: 'かな → 漢字', hint: 'See the reading, recall the written form' },
+  { id: 'written-first', label: '漢字 → かな', hint: 'See the written form, recall the reading' },
+]
+
 const state = {
+  screen: 'home', // 'home' | 'practice' | 'results'
+  mode: 'flashcards', // 'flashcards' | 'choice'
+  direction: 'reading-first',
   // id -> 'correct' | 'incorrect'. The source of truth for the score: a card
   // answered wrong in round 1 and right in round 2 simply flips to 'correct'.
   status: new Map(),
   deck: [],
   index: 0,
   revealed: false,
-  done: false,
-  // 'reading-first': see かな, recall the kanji. 'written-first': the reverse.
-  mode: 'reading-first',
+  choices: [], // multiple-choice options for the current card
+  picked: null, // the option the user tapped, while the pause plays out
+  locked: false, // ignore taps during that pause
+  timer: null,
 }
+
+/* State helpers ---------------------------------------------------------- */
 
 function shuffle(list) {
   const out = list.slice()
@@ -32,11 +52,57 @@ function byStatus(kind) {
   return cards.filter((card) => state.status.get(card.id) === kind)
 }
 
+// The card's two sides, per direction.
+function faces(card) {
+  return state.direction === 'reading-first'
+    ? { prompt: card.reading, answer: card.written, echo: card.reading }
+    : { prompt: card.written, answer: card.reading, echo: card.written }
+}
+
+function answerFace(card) {
+  return faces(card).answer
+}
+
+// Cancel any pending auto-advance so a mode switch mid-pause can't fire later.
+function clearTimer() {
+  if (state.timer) {
+    clearTimeout(state.timer)
+    state.timer = null
+  }
+}
+
+// Correct answer plus distractors drawn from other cards, de-duplicated by the
+// text actually shown so two options can never read identically.
+function buildChoices(card) {
+  const correct = answerFace(card)
+  const seen = new Set([correct])
+  const pool = shuffle(cards.filter((c) => c.id !== card.id))
+  const options = [card]
+
+  for (const other of pool) {
+    if (options.length >= CHOICE_COUNT) break
+    const face = answerFace(other)
+    if (seen.has(face)) continue
+    seen.add(face)
+    options.push(other)
+  }
+
+  return shuffle(options)
+}
+
+function prepareCard() {
+  state.revealed = false
+  state.picked = null
+  state.locked = false
+  state.choices = state.mode === 'choice' ? buildChoices(state.deck[state.index]) : []
+}
+
 function startRound(deck) {
+  clearTimer()
   state.deck = shuffle(deck)
   state.index = 0
-  state.revealed = false
-  state.done = false
+  state.screen = 'practice'
+  prepareCard()
   render()
 }
 
@@ -49,13 +115,32 @@ function practiceMissed() {
   startRound(byStatus('incorrect'))
 }
 
-function choose(kind) {
-  state.status.set(state.deck[state.index].id, kind)
-  state.revealed = false
-  if (state.index + 1 >= state.deck.length) state.done = true
-  else state.index++
+function goHome() {
+  clearTimer()
+  state.screen = 'home'
   render()
 }
+
+function setMode(mode) {
+  if (state.mode === mode && state.screen === 'practice') return
+  state.mode = mode
+  restart()
+}
+
+function score(kind) {
+  state.status.set(state.deck[state.index].id, kind)
+  if (state.index + 1 >= state.deck.length) {
+    clearTimer()
+    state.screen = 'results'
+    render()
+    return
+  }
+  state.index++
+  prepareCard()
+  render()
+}
+
+/* Shared chrome ---------------------------------------------------------- */
 
 function tally() {
   const correct = byStatus('correct').length
@@ -75,37 +160,94 @@ function tally() {
     </div>`
 }
 
-const MODES = [
-  { id: 'reading-first', label: 'かな → 漢字', hint: 'See the reading, recall the written form' },
-  { id: 'written-first', label: '漢字 → かな', hint: 'See the written form, recall the reading' },
-]
-
-function modeSwitch() {
+function menu() {
+  const other = state.mode === 'flashcards' ? 'choice' : 'flashcards'
   return `
-    <div class="mode" role="group" aria-label="Practice direction">
-      ${MODES.map(
-        (m) => `<button class="mode__btn ${state.mode === m.id ? 'is-active' : ''}"
-                    data-mode="${m.id}" aria-pressed="${state.mode === m.id}"
-                    title="${m.hint}" lang="ja">${m.label}</button>`
-      ).join('')}
+    <div class="menu">
+      <button class="menu__trigger" id="menu-trigger" aria-haspopup="true"
+              aria-expanded="false" aria-controls="menu-panel">
+        <span aria-hidden="true">☰</span>
+        <span class="visually-hidden">Menu</span>
+      </button>
+      <div class="menu__panel" id="menu-panel" role="menu" hidden>
+        <p class="menu__heading" id="menu-heading">Switch mode</p>
+        <button role="menuitem" data-act="mode:${other}">
+          <span aria-hidden="true">${MODES[other].icon}</span> ${MODES[other].label}
+        </button>
+        <hr />
+        <button role="menuitem" data-act="restart">Start over</button>
+        <button role="menuitem" data-act="home">Home</button>
+      </div>
     </div>`
 }
 
-function bindModeSwitch() {
-  for (const btn of app.querySelectorAll('.mode__btn')) {
-    btn.addEventListener('click', () => {
-      if (state.mode === btn.dataset.mode) return
-      state.mode = btn.dataset.mode
-      render()
+function bindMenu() {
+  const trigger = document.getElementById('menu-trigger')
+  if (!trigger) return
+  const panel = document.getElementById('menu-panel')
+
+  const close = () => {
+    panel.hidden = true
+    trigger.setAttribute('aria-expanded', 'false')
+    document.removeEventListener('click', onOutside, true)
+    document.removeEventListener('keydown', onKey)
+  }
+  const onOutside = (event) => {
+    if (!event.target.closest('.menu')) close()
+  }
+  const onKey = (event) => {
+    if (event.key === 'Escape') {
+      close()
+      trigger.focus()
+    }
+  }
+
+  trigger.addEventListener('click', () => {
+    if (panel.hidden) {
+      panel.hidden = false
+      trigger.setAttribute('aria-expanded', 'true')
+      panel.querySelector('button').focus()
+      document.addEventListener('click', onOutside, true)
+      document.addEventListener('keydown', onKey)
+    } else {
+      close()
+    }
+  })
+
+  for (const item of panel.querySelectorAll('[data-act]')) {
+    item.addEventListener('click', () => {
+      const act = item.dataset.act
+      close()
+      if (act === 'restart') restart()
+      else if (act === 'home') goHome()
+      else if (act.startsWith('mode:')) setMode(act.slice(5))
     })
   }
 }
 
-// The card's two sides, per direction.
-function faces(card) {
-  return state.mode === 'reading-first'
-    ? { prompt: card.reading, answer: card.written, echo: card.reading }
-    : { prompt: card.written, answer: card.reading, echo: card.written }
+function directionSwitch() {
+  return `
+    <div class="mode" role="group" aria-label="Practice direction">
+      ${DIRECTIONS.map(
+        (d) => `<button class="mode__btn ${state.direction === d.id ? 'is-active' : ''}"
+                    data-direction="${d.id}" aria-pressed="${state.direction === d.id}"
+                    title="${d.hint}" lang="ja">${d.label}</button>`
+      ).join('')}
+    </div>`
+}
+
+function bindDirectionSwitch() {
+  for (const btn of app.querySelectorAll('.mode__btn')) {
+    btn.addEventListener('click', () => {
+      if (state.direction === btn.dataset.direction) return
+      state.direction = btn.dataset.direction
+      // Options are built from the answer face, so they must be rebuilt.
+      if (state.screen === 'practice' && state.mode === 'choice' && !state.picked) {
+        state.choices = buildChoices(state.deck[state.index])
+      }
+      render()
+    })
+  }
 }
 
 function progress() {
@@ -120,6 +262,151 @@ function progress() {
       </div>
       <p class="progress__label">${position} of ${total}</p>
     </div>`
+}
+
+function practiceChrome() {
+  return `
+    <header class="topbar">
+      ${menu()}
+      ${tally()}
+      <span class="topbar__spacer"></span>
+    </header>
+    ${directionSwitch()}
+    ${progress()}`
+}
+
+function bindChrome() {
+  bindMenu()
+  bindDirectionSwitch()
+}
+
+/* Screens ---------------------------------------------------------------- */
+
+function renderHome() {
+  app.innerHTML = `
+    <div class="home">
+      <h1 class="home__title" lang="ja">漢字の練習</h1>
+      <p class="home__subtitle">${cards.length} cards · pick a mode to start</p>
+      <div class="home__modes">
+        ${Object.entries(MODES)
+          .map(
+            ([id, m]) => `
+              <button class="card-btn" data-start="${id}">
+                <span class="card-btn__icon" aria-hidden="true">${m.icon}</span>
+                <span class="card-btn__label">${m.label}</span>
+                <span class="card-btn__hint">${m.hint}</span>
+              </button>`
+          )
+          .join('')}
+      </div>
+      <div class="home__direction">
+        <p class="home__direction-label" id="dir-label">Direction</p>
+        ${directionSwitch()}
+      </div>
+    </div>`
+
+  for (const btn of app.querySelectorAll('[data-start]')) {
+    btn.addEventListener('click', () => setMode(btn.dataset.start))
+  }
+  bindDirectionSwitch()
+}
+
+function renderFlashcard() {
+  const card = state.deck[state.index]
+  const side = faces(card)
+
+  if (!state.revealed) {
+    app.innerHTML = `
+      ${practiceChrome()}
+      <div class="stage">
+        <p class="kana" lang="ja">${side.prompt}</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="show">Show answer</button>
+      </div>`
+    bindChrome()
+    document.getElementById('show').addEventListener('click', () => {
+      state.revealed = true
+      render()
+    })
+    return
+  }
+
+  app.innerHTML = `
+    ${practiceChrome()}
+    <div class="stage">
+      <p class="kanji" lang="ja">${side.answer}</p>
+      <div class="gloss">
+        <p class="meaning">${card.meaning}</p>
+        <p class="meaning meaning--reading" lang="ja">${side.echo}</p>
+      </div>
+    </div>
+    <div class="actions">
+      <div class="judge">
+        <button class="judge__btn" id="right" aria-label="I got it right — next card">✅</button>
+        <button class="judge__btn" id="wrong" aria-label="I got it wrong — next card">🚫</button>
+      </div>
+    </div>`
+  bindChrome()
+  document.getElementById('right').addEventListener('click', () => score('correct'))
+  document.getElementById('wrong').addEventListener('click', () => score('incorrect'))
+}
+
+function renderChoice() {
+  const card = state.deck[state.index]
+  const side = faces(card)
+  const correctFace = side.answer
+  const picked = state.picked
+  const gotIt = picked === correctFace
+
+  app.innerHTML = `
+    ${practiceChrome()}
+    <div class="stage stage--choice">
+      <p class="kana kana--choice" lang="ja">${side.prompt}</p>
+      <p class="meaning ${picked ? '' : 'is-hidden'}">${card.meaning}</p>
+    </div>
+    <div class="actions">
+      <p class="feedback" role="status" aria-live="polite">
+        ${picked ? (gotIt ? 'Correct! 🎉' : 'Not quite — the answer is highlighted') : ''}
+      </p>
+      <div class="choices">
+        ${state.choices
+          .map((option) => {
+            const face = answerFace(option)
+            const isCorrect = face === correctFace
+            let cls = ''
+            if (picked) {
+              if (isCorrect) cls = 'is-correct'
+              else if (face === picked) cls = 'is-wrong'
+              else cls = 'is-dimmed'
+            }
+            return `<button class="choice ${cls}" data-face="${face}" lang="ja"
+                      ${picked ? 'disabled' : ''}>${face}</button>`
+          })
+          .join('')}
+      </div>
+    </div>`
+  bindChrome()
+
+  if (picked) return
+
+  for (const btn of app.querySelectorAll('.choice')) {
+    btn.addEventListener('click', () => {
+      if (state.locked) return
+      state.locked = true
+      state.picked = btn.dataset.face
+      const right = state.picked === correctFace
+      render()
+      // Pause so the result registers — longer when wrong, to read the answer.
+      state.timer = setTimeout(
+        () => {
+          state.timer = null
+          score(right ? 'correct' : 'incorrect')
+        },
+        right ? PAUSE_CORRECT : PAUSE_WRONG
+      )
+    })
+  }
 }
 
 function table(caption, list) {
@@ -148,7 +435,11 @@ function renderResults() {
   const missed = byStatus('incorrect')
 
   app.innerHTML = `
-    ${tally()}
+    <header class="topbar">
+      ${menu()}
+      ${tally()}
+      <span class="topbar__spacer"></span>
+    </header>
     <div class="results">
       <p class="results__score">${correct.length} / ${cards.length}</p>
       <p class="results__label">
@@ -168,6 +459,7 @@ function renderResults() {
       <button class="btn btn--secondary" id="restart">Start over</button>
     </div>`
 
+  bindMenu()
   if (missed.length) {
     document.getElementById('retry').addEventListener('click', practiceMissed)
   }
@@ -177,50 +469,9 @@ function renderResults() {
 }
 
 function render() {
-  if (state.done) return renderResults()
-
-  const card = state.deck[state.index]
-  const side = faces(card)
-
-  if (!state.revealed) {
-    app.innerHTML = `
-      ${tally()}
-      ${modeSwitch()}
-      ${progress()}
-      <div class="stage">
-        <p class="kana" lang="ja">${side.prompt}</p>
-      </div>
-      <div class="actions">
-        <button class="btn" id="show">Show answer</button>
-      </div>`
-    bindModeSwitch()
-    document.getElementById('show').addEventListener('click', () => {
-      state.revealed = true
-      render()
-    })
-    return
-  }
-
-  app.innerHTML = `
-    ${tally()}
-    ${modeSwitch()}
-    ${progress()}
-    <div class="stage">
-      <p class="kanji" lang="ja">${side.answer}</p>
-      <div class="gloss">
-        <p class="meaning">${card.meaning}</p>
-        <p class="meaning meaning--reading" lang="ja">${side.echo}</p>
-      </div>
-    </div>
-    <div class="actions">
-      <div class="judge">
-        <button class="judge__btn" id="right" aria-label="I got it right — next card">✅</button>
-        <button class="judge__btn" id="wrong" aria-label="I got it wrong — next card">🚫</button>
-      </div>
-    </div>`
-  document.getElementById('right').addEventListener('click', () => choose('correct'))
-  document.getElementById('wrong').addEventListener('click', () => choose('incorrect'))
-  bindModeSwitch()
+  if (state.screen === 'home') return renderHome()
+  if (state.screen === 'results') return renderResults()
+  return state.mode === 'choice' ? renderChoice() : renderFlashcard()
 }
 
-restart()
+render()

@@ -8,6 +8,9 @@
   --bg: #ffffff;
   --focus: #1b5fd0;
   --rule: #e2e2e2;
+  --surface: #f6f6f6;
+  --good: #1d7a45;
+  --bad: #b3261e;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,6 +23,9 @@
     --bg: #121212;
     --focus: #8ab4ff;
     --rule: #333333;
+    --surface: #1e1e1e;
+    --good: #6ede9a;
+    --bad: #ff9d94;
   }
 }
 
@@ -97,6 +103,181 @@ html, body {
 .mode__btn:not(.is-active):hover {
   color: var(--ink);
 }
+
+/* Top bar + menu ---------------------------------------------------------- */
+.topbar {
+  display: grid;
+  grid-template-columns: 3rem 1fr 3rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+.topbar__spacer { display: block; }
+
+.menu { position: relative; justify-self: start; }
+.menu__trigger {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.5rem;
+  line-height: 1;
+  width: 44px;
+  height: 44px;
+  border-radius: 0.75rem;
+  cursor: pointer;
+}
+.menu__trigger:hover { background: var(--surface); }
+
+.menu__panel {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  z-index: 20;
+  min-width: 13rem;
+  padding: 0.375rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.875rem;
+  background: var(--bg);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.18);
+  text-align: left;
+}
+.menu__heading {
+  margin: 0;
+  padding: 0.5rem 0.75rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.menu__panel button {
+  display: block;
+  width: 100%;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+  padding: 0.75rem;
+  min-height: 44px;
+  border-radius: 0.625rem;
+  cursor: pointer;
+}
+.menu__panel button:hover { background: var(--surface); }
+.menu__panel hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 0.375rem 0.25rem;
+}
+
+/* Home -------------------------------------------------------------------- */
+.home {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  text-align: center;
+}
+.home__title {
+  margin: 0;
+  font-size: clamp(2.5rem, 11vw, 4.5rem);
+  font-weight: 500;
+}
+.home__subtitle {
+  margin: 0 0 0.5rem;
+  font-size: clamp(0.95rem, 3.5vw, 1.125rem);
+  color: var(--muted);
+}
+.home__modes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 34rem;
+}
+.card-btn {
+  flex: 1 1 13rem;
+  appearance: none;
+  border: 2px solid var(--rule);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  padding: 1.5rem 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+.card-btn:hover { border-color: var(--teal-text); }
+.card-btn__icon { font-size: 2.25rem; line-height: 1; }
+.card-btn__label { font-size: 1.25rem; font-weight: 600; }
+.card-btn__hint { font-size: 0.9rem; color: var(--muted); }
+
+.home__direction { margin-top: 0.5rem; }
+.home__direction-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Multiple choice --------------------------------------------------------- */
+.stage--choice { gap: 1rem; }
+.kana--choice { font-size: clamp(3rem, 13vw, 7rem); }
+.is-hidden { visibility: hidden; }
+
+.feedback {
+  margin: 0;
+  min-height: 1.5em;
+  font-size: clamp(1rem, 3.5vw, 1.25rem);
+  font-weight: 600;
+  text-align: center;
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 30rem;
+}
+.choice {
+  appearance: none;
+  border: 2px solid var(--rule);
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: clamp(1.75rem, 7vw, 2.75rem);
+  padding: 0.75rem 1rem;
+  min-height: 72px;
+  cursor: pointer;
+}
+.choice:hover:not(:disabled) { border-color: var(--teal-text); }
+.choice:disabled { cursor: default; }
+/* Marked with an icon as well as colour, so the result never rests on colour alone. */
+.choice.is-correct {
+  border-color: var(--good);
+  color: var(--good);
+  font-weight: 600;
+}
+.choice.is-correct::after { content: ' ✅'; font-size: 0.7em; }
+.choice.is-wrong {
+  border-color: var(--bad);
+  color: var(--bad);
+  text-decoration: line-through;
+}
+.choice.is-wrong::after { content: ' 🚫'; font-size: 0.7em; }
+.choice.is-dimmed { opacity: 0.45; }
 
 /* Progress --------------------------------------------------------------- */
 .progress {
