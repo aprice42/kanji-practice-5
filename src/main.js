@@ -547,7 +547,7 @@ function table(caption, list, tone) {
   return `
     <table class="results__table">
       <caption class="${tone}">${caption}</caption>
-      <thead>
+      <thead class="visually-hidden">
         <tr><th scope="col">Reading</th><th scope="col">Written form</th></tr>
       </thead>
       <tbody>
@@ -568,18 +568,17 @@ function renderResults() {
   const missed = byStatus('incorrect')
 
   app.innerHTML = `
-    <header class="topbar">
+    <header class="topbar topbar--results">
       ${menu()}
       ${tally()}
       <span class="topbar__spacer"></span>
     </header>
     <div class="results">
-      <p class="results__score">${correct.length} / ${cards.length}</p>
       <p class="results__label ${missed.length ? '' : 'is-good'}">
         ${
           missed.length
             ? `${missed.length} still to get`
-            : `${icon('spark', 'icon--spark')} Every one correct`
+            : `${icon('spark', 'icon--spark')} Way to Go!`
         }
       </p>
       <div class="results__tables">

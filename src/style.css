@@ -373,6 +373,15 @@ html, body {
 }
 .topbar__spacer { display: block; }
 
+/* On the results screen the tally IS the score, so it gets display size.
+   Left alone elsewhere, where vertical space is tight. */
+.topbar--results .tally {
+  font-size: clamp(2rem, min(9vw, 7vh), 3.25rem);
+  gap: clamp(1.25rem, 5vw, 2.5rem);
+  font-weight: 600;
+}
+.topbar--results .icon--tally { width: 0.9em; height: 0.9em; }
+
 .menu { position: relative; justify-self: start; }
 .menu__trigger {
   appearance: none;
@@ -729,12 +738,6 @@ html, body {
   gap: 0.5rem;
   text-align: center;
 }
-.results__score {
-  margin: 0;
-  font-size: clamp(2.5rem, 11vw, 5rem);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
 .results__label {
   display: flex;
   align-items: center;
@@ -762,6 +765,10 @@ html, body {
 }
 
 .results__table {
+  /* The visually-hidden <thead> is absolutely positioned; without a positioned
+     ancestor it resolves against the document and escapes #app's clipping,
+     which made the page scroll by the height of the second table. */
+  position: relative;
   width: 100%;
   border-collapse: collapse;
   font-size: clamp(1rem, 3.5vw, 1.25rem);

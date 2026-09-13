@@ -110,8 +110,10 @@ distinguished by shape as well as colour, and each carries a text label for scre
 
 ### Results
 
-A score, a table of the missed cards and a table of the correct ones (reading + written
-form), and two buttons: **Practice the N missed** — another round with just those — and
+The tally at the top carries the score at display size, then a table of the missed cards
+and a table of the correct ones (reading + written form). The column headers are present
+for screen readers but hidden visually — the two columns are obvious by script. Two
+buttons: **Practice the N missed** — another round with just those — and
 **Start over**. Getting a card right on a retry flips it from missed to correct, so the
 score climbs toward a clean sweep. Clear the whole set and you get confetti (skipped for
 `prefers-reduced-motion`).
