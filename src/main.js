@@ -14,6 +14,12 @@ const MODES = {
   choice: { label: 'Multiple choice', icon: '🔢', hint: 'Pick the right answer from three' },
 }
 
+const THEMES = [
+  { id: 'system', label: 'Auto', hint: 'Follow the device setting' },
+  { id: 'light', label: 'Light', hint: 'Always light' },
+  { id: 'dark', label: 'Dark', hint: 'Always dark' },
+]
+
 const DIRECTIONS = [
   { id: 'reading-first', label: 'かな → 漢字', hint: 'See the reading, recall the written form' },
   { id: 'written-first', label: '漢字 → かな', hint: 'See the written form, recall the reading' },
@@ -31,6 +37,67 @@ const state = {
   revealed: false,
   choices: [], // multiple-choice options for the current card
   picked: null, // the option the user tapped, until they continue
+  theme: 'system', // 'system' | 'light' | 'dark'
+}
+
+/* Theme ------------------------------------------------------------------ */
+
+const THEME_KEY = 'kanji-practice:theme'
+
+function applyTheme() {
+  const root = document.documentElement
+  if (state.theme === 'system') root.removeAttribute('data-theme')
+  else root.setAttribute('data-theme', state.theme)
+
+  // Keep the browser/PWA chrome in step with the chosen theme.
+  const dark =
+    state.theme === 'dark' ||
+    (state.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  const meta = document.querySelector('meta[name="theme-color"]')
+  if (meta) meta.setAttribute('content', dark ? '#121212' : '#ffffff')
+}
+
+function loadTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY)
+    if (THEMES.some((t) => t.id === saved)) state.theme = saved
+  } catch {
+    // Private browsing or blocked storage — stay on the default.
+  }
+  applyTheme()
+}
+
+function setTheme(theme) {
+  state.theme = theme
+  applyTheme()
+  try {
+    localStorage.setItem(THEME_KEY, theme)
+  } catch {
+    // Not persisting is survivable; the choice still applies for this session.
+  }
+  // Update every theme control in place so an open menu stays open.
+  for (const btn of document.querySelectorAll('.theme__btn')) {
+    const on = btn.dataset.theme === theme
+    btn.classList.toggle('is-active', on)
+    btn.setAttribute('aria-pressed', String(on))
+  }
+}
+
+function themeSwitch() {
+  return `
+    <div class="theme" role="group" aria-label="Colour theme">
+      ${THEMES.map(
+        (t) => `<button class="theme__btn ${state.theme === t.id ? 'is-active' : ''}"
+                    data-theme="${t.id}" aria-pressed="${state.theme === t.id}"
+                    title="${t.hint}">${t.label}</button>`
+      ).join('')}
+    </div>`
+}
+
+function bindThemeSwitch() {
+  for (const btn of document.querySelectorAll('.theme__btn')) {
+    btn.addEventListener('click', () => setTheme(btn.dataset.theme))
+  }
 }
 
 /* State helpers ---------------------------------------------------------- */
@@ -159,6 +226,9 @@ function menu() {
           <span aria-hidden="true">${MODES[other].icon}</span> ${MODES[other].label}
         </button>
         <hr />
+        <p class="menu__heading">Theme</p>
+        ${themeSwitch()}
+        <hr />
         <button role="menuitem" data-act="restart">Start over</button>
         <button role="menuitem" data-act="home">Home</button>
       </div>
@@ -197,6 +267,8 @@ function bindMenu() {
       close()
     }
   })
+
+  bindThemeSwitch()
 
   for (const item of panel.querySelectorAll('[data-act]')) {
     item.addEventListener('click', () => {
@@ -283,9 +355,15 @@ function renderHome() {
           )
           .join('')}
       </div>
-      <div class="home__direction">
-        <p class="home__direction-label" id="dir-label">Direction</p>
-        ${directionSwitch()}
+      <div class="home__settings">
+        <div>
+          <p class="home__direction-label">Direction</p>
+          ${directionSwitch()}
+        </div>
+        <div>
+          <p class="home__direction-label">Theme</p>
+          ${themeSwitch()}
+        </div>
       </div>
     </div>`
 
@@ -293,6 +371,7 @@ function renderHome() {
     btn.addEventListener('click', () => setMode(btn.dataset.start))
   }
   bindDirectionSwitch()
+  bindThemeSwitch()
 }
 
 function renderFlashcard() {
@@ -460,4 +539,5 @@ function render() {
   return state.mode === 'choice' ? renderChoice() : renderFlashcard()
 }
 
+loadTheme()
 render()

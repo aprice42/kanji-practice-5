@@ -22,8 +22,14 @@ that button is tapped, so there is no time pressure on reading the answer.
 
 ### Menu
 
-The ☰ menu in the top bar switches to the other mode (restarting the round in it), starts
-over, or returns home.
+The ☰ menu in the top bar switches to the other mode (restarting the round in it), sets the
+theme, starts over, or returns home.
+
+### Theme
+
+**Auto / Light / Dark**, on the home screen and in the menu. Auto follows the device
+setting; Light and Dark override it. The choice is saved to `localStorage` and also drives
+the `theme-color` meta tag, so the browser and PWA chrome match.
 
 ### Results
 
