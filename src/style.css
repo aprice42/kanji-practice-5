@@ -1,4 +1,27 @@
 /* ---------------------------------------------------------------------------
+   Klee One (教科書体 — textbook style), self-hosted and subset to the characters
+   these cards use. Shipping the font rather than relying on the device's CJK
+   fallback is what guarantees Japanese glyph shapes: 言 and friends are drawn
+   differently in Chinese fonts, and Unicode gives both the same code point, so
+   a device that substitutes a Chinese face renders the wrong character.
+   See public/fonts/README.md before adding cards with new kanji.
+   --------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Klee One';
+  src: url('/fonts/klee-one-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Klee One';
+  src: url('/fonts/klee-one-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------------------------------------------------------------------------
    Palettes. Each is a complete token set for light and dark, validated so
    every text pair clears 4.5:1, control edges clear 3:1, and the primary,
    correct and incorrect hues stay far enough apart to never be confused.
@@ -212,13 +235,22 @@
 
 * { box-sizing: border-box; }
 
+/* Anything tagged Japanese gets the Japanese face — the markup carries lang="ja"
+   on every kanji and kana string, so this needs no per-component rule.
+   Scoped through :root purely for specificity: plain `:lang(ja)` ties with a
+   single class, and component rules using `font: inherit` would otherwise win
+   and quietly drop the face on buttons. */
+:root :lang(ja) {
+  font-family: 'Klee One', "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+}
+
 html, body {
   margin: 0;
   height: 100%;
   background: var(--bg);
   color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans",
-    "Yu Gothic", "Noto Sans JP", "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+    Arial, sans-serif;
   -webkit-text-size-adjust: 100%;
 }
 

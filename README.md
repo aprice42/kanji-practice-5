@@ -50,6 +50,29 @@ live `--bg` token, so browser and PWA chrome match whichever scheme is active.
 Palette tokens live at the top of `src/style.css` as `[data-palette]` blocks; `main.js`
 stamps `data-palette` and `data-theme` on the root element.
 
+### Typeface
+
+Japanese text is set in **Klee One** (教科書体, textbook style), self-hosted from
+`public/fonts/` and subset to just the characters these cards use — about 50 KB per weight
+instead of several megabytes, and precached by the service worker so it works offline.
+
+This is not only a style choice. 言 and other characters are drawn differently in Japanese
+and Chinese fonts while sharing a Unicode code point, so a device that falls back to a
+Chinese CJK font renders the wrong shape — which is what happened before the font was
+bundled. Shipping the font removes the guesswork.
+
+`:root :lang(ja)` in `src/style.css` applies the face; every kanji and kana string in
+`main.js` carries `lang="ja"`, so no per-component rule is needed. **If you add cards with
+new kanji, regenerate the subset** or those characters will fall back to a system font —
+see `public/fonts/README.md`.
+
+### Icons
+
+No emoji. Every mark is inline SVG on a 48×48 grid stroked with `currentColor` (`ICONS` in
+`src/main.js`), so it takes the active palette: a tick for correct, a cross for wrong, a
+sparkle for a clean sweep, and card/list glyphs for the two modes. Correct and wrong are
+distinguished by shape as well as colour, and each carries a text label for screen readers.
+
 ### Results
 
 A score, a table of the missed cards and a table of the correct ones (reading + written

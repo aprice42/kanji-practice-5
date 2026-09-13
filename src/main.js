@@ -526,7 +526,11 @@ function renderChoice() {
         picked
           ? `<div class="verdict ${gotIt ? 'verdict--good' : 'verdict--bad'}" role="status" aria-live="polite">
               <p class="verdict__text">
-                ${gotIt ? `${icon('check', 'icon--verdict')} Correct` : `${icon('cross', 'icon--verdict')} Not quite — it's ${correctFace}`}
+                ${
+                  gotIt
+                    ? `${icon('check', 'icon--verdict')} Correct`
+                    : `${icon('cross', 'icon--verdict')} Not quite — it's <span lang="ja">${correctFace}</span>`
+                }
               </p>
               <button class="btn" id="continue">Continue</button>
             </div>`
