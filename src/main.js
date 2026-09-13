@@ -1,6 +1,7 @@
 import { cards as rawCards } from './cards.js'
 import { shuffle, facesOf, buildChoices } from './choices.js'
 import { confetti } from './confetti.js'
+import { isUpdateReady, onUpdateReady, checkForUpdate, applyUpdate } from './update.js'
 import './style.css'
 
 // Stable id per card so a card's status survives across practice rounds.
@@ -412,6 +413,11 @@ function renderHome() {
     <div class="home">
       <h1 class="home__title" lang="ja">漢字の練習</h1>
       <p class="home__subtitle">${cards.length} cards · pick a mode to start</p>
+      ${
+        isUpdateReady()
+          ? `<button class="btn btn--update" id="update">Update the app</button>`
+          : ''
+      }
       <div class="home__modes">
         ${Object.entries(MODES)
           .map(
@@ -446,6 +452,13 @@ function renderHome() {
   bindDirectionSwitch()
   bindThemeSwitch()
   bindPaletteSwitch()
+
+  const update = document.getElementById('update')
+  if (update) update.addEventListener('click', applyUpdate)
+
+  // Every visit to the home screen is a chance to notice a new version. The
+  // answer arrives asynchronously, hence onUpdateReady below.
+  checkForUpdate()
 }
 
 function renderFlashcard() {
@@ -673,6 +686,13 @@ function render() {
   if (state.screen === 'results') return renderResults()
   return state.mode === 'choice' ? renderChoice() : renderFlashcard()
 }
+
+/* An update found after the home screen has drawn re-renders it, so the button
+   appears without him having to leave and come back. Only on the home screen:
+   nothing interrupts a round in progress. */
+onUpdateReady(() => {
+  if (state.screen === 'home') render()
+})
 
 loadPrefs()
 render()

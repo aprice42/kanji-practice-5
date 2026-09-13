@@ -172,6 +172,32 @@ before, and the build config itself was fine.
 
 The app installs to the home screen and works offline once loaded.
 
+### Getting an update onto his phone
+
+Because the service worker precaches everything, a deploy is invisible to an already
+installed copy until the worker is replaced. That used to happen on its own
+(`registerType: 'autoUpdate'`), which meant it could happen mid-round — the page
+reloading between two cards.
+
+It is now `prompt`: a new worker installs and waits. `src/update.js` asks the browser to
+look for one every time the home screen renders, and when one is waiting the home screen
+grows an **Update the app** button above the mode cards. Tapping it activates the waiting
+worker and reloads onto it. Nothing interrupts a round in progress, and the button is not
+shown anywhere except the home screen.
+
+Two things worth knowing if you touch this:
+
+- The generated worker never calls `clients.claim()`, so activating it does **not** make it
+  take over the open page and no `controllerchange` event fires. `vite-plugin-pwa`'s own
+  `updateSW(true)` waits for exactly that event, so it sends the skip-waiting message and
+  then never reloads — the update applies but the screen does not change. `applyUpdate()`
+  in `src/update.js` watches the new worker reach `activated` and reloads itself instead.
+- The check needs the network, so offline it simply finds nothing. That is the normal case
+  on his phone and is swallowed deliberately.
+
+Testing it needs the built output, not the dev server: `npm run build && npm run preview`,
+load it, rebuild with a visible change, reload once, and the button should appear.
+
 ## Adding cards from a new worksheet
 
 Andy adds a scan of a worksheet from his son's teacher to `content/`. Turning one into
@@ -290,6 +316,7 @@ not just the resting state.
 | `src/main.js` | state, screens, rendering, icons |
 | `src/style.css` | palettes and all layout; every colour is a token |
 | `src/confetti.js` | the clean-sweep animation |
+| `src/update.js` | service-worker update check behind the home screen's update button |
 | `public/fonts/` | the Klee One subset, its licence, and regeneration notes |
 | `scripts/` | the three `npm run` helpers above |
 | `wrangler.jsonc` | Cloudflare deploy config — points at `dist/` |
@@ -309,6 +336,7 @@ Each of these was a deliberate choice with a reason; the detail is in the sectio
 | Four palettes behind CSS tokens | See **Theme and colour scheme**. |
 | Distractors scored, not random | Otherwise most cards are answerable without reading. See **Choosing distractors**. |
 | Sized to fit a phone without scrolling | `min(vw, vh)` clamps rather than breakpoints. |
+| Updates offered on a button, not applied automatically | `autoUpdate` could reload the page mid-round. See **Getting an update onto his phone**. |
 
 ## Non-goals
 

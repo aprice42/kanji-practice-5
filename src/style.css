@@ -916,6 +916,24 @@ html, body {
   border-color: var(--primary-text);
   color: var(--primary-text);
 }
+/* Only on screen when there is actually an update waiting, so it may take the
+   space it needs — but it is not what he came here to press, hence the quieter
+   fill and the smaller size. */
+.btn--update {
+  background: var(--surface);
+  color: var(--primary-text);
+  border: 2px solid var(--primary-text);
+  font-size: clamp(0.9rem, 3vw, 1.05rem);
+  min-width: 0;
+  padding: 0.5rem 1.25rem;
+  min-height: 44px;
+  margin-bottom: 0.25rem;
+}
+.btn--update:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary-text) 14%, var(--surface));
+  color: var(--primary-text);
+}
+
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .judge { display: flex; gap: clamp(1.5rem, 8vw, 3.5rem); }

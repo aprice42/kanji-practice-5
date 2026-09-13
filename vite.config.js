@@ -5,7 +5,12 @@ export default defineConfig({
   base: './',
   plugins: [
     VitePWA({
-      registerType: 'autoUpdate',
+      /* `prompt`, not `autoUpdate`: a new worker installs and waits rather than
+         swapping itself in and reloading the page mid-round. src/update.js
+         surfaces it as a button on the home screen. */
+      registerType: 'prompt',
+      // Registration is done by src/update.js, which needs the callbacks.
+      injectRegister: null,
       includeAssets: ['icon-192.png', 'icon-512.png'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
