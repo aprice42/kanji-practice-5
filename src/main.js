@@ -10,8 +10,36 @@ const app = document.getElementById('app')
 const CHOICE_COUNT = 3
 
 const MODES = {
-  flashcards: { label: 'Flash cards', icon: '🃏', hint: 'Show the answer, then mark yourself' },
-  choice: { label: 'Multiple choice', icon: '🔢', hint: 'Pick the right answer from three' },
+  flashcards: { label: 'Flash cards', icon: 'cards', hint: 'Show the answer, then mark yourself' },
+  choice: { label: 'Multiple choice', icon: 'choice', hint: 'Pick the right answer from three' },
+}
+
+/* Icons -------------------------------------------------------------------
+   Inline SVG on a 48x48 grid, stroked with currentColor so every mark takes
+   the active palette. Correct and wrong differ in shape as well as colour.
+   ------------------------------------------------------------------------- */
+
+const ICONS = {
+  check:
+    '<path d="M11 25l9 9 17-20" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  cross:
+    '<path d="M14 14L34 34M34 14L14 34" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>',
+  spark:
+    '<path d="M24 6l3.6 11.4L39 21l-11.4 3.6L24 36l-3.6-11.4L9 21l11.4-3.6Z" fill="currentColor"/>' +
+    '<path d="M38 30l1.6 5 5 1.6-5 1.6-1.6 5-1.6-5-5-1.6 5-1.6Z" fill="currentColor" opacity=".65"/>',
+  cards:
+    '<rect x="9" y="14" width="21" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="3"/>' +
+    '<path d="M18 10h15a3 3 0 0 1 3 3v22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
+  choice:
+    '<circle cx="13" cy="15" r="4.5" fill="none" stroke="currentColor" stroke-width="3"/>' +
+    '<circle cx="13" cy="33" r="4.5" fill="currentColor"/>' +
+    '<path d="M24 15h15M24 33h15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
+  menu:
+    '<path d="M9 15h30M9 24h30M9 33h30" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>',
+}
+
+function icon(name, cls = '') {
+  return `<svg class="icon${cls ? ' ' + cls : ''}" viewBox="0 0 48 48" aria-hidden="true" focusable="false">${ICONS[name]}</svg>`
 }
 
 const PALETTES = [
@@ -252,13 +280,13 @@ function tally() {
   return `
     <div class="tally" role="status" aria-live="polite">
       <span class="tally__group">
-        <span class="tally__icon" aria-hidden="true">✅</span>
+        ${icon('check', 'icon--tally is-good')}
         <span class="tally__count">${correct}</span>
         <span class="visually-hidden">correct</span>
       </span>
       <span class="tally__group">
         <span class="tally__count">${incorrect}</span>
-        <span class="tally__icon" aria-hidden="true">🚫</span>
+        ${icon('cross', 'icon--tally is-bad')}
         <span class="visually-hidden">incorrect</span>
       </span>
     </div>`
@@ -270,17 +298,19 @@ function menu() {
     <div class="menu">
       <button class="menu__trigger" id="menu-trigger" aria-haspopup="true"
               aria-expanded="false" aria-controls="menu-panel">
-        <span aria-hidden="true">☰</span>
+        ${icon('menu', 'icon--menu')}
         <span class="visually-hidden">Menu</span>
       </button>
       <div class="menu__panel" id="menu-panel" role="menu" hidden>
         <p class="menu__heading" id="menu-heading">Switch mode</p>
         <button role="menuitem" data-act="mode:${other}">
-          <span aria-hidden="true">${MODES[other].icon}</span> ${MODES[other].label}
+          ${icon(MODES[other].icon, 'icon--menu-item')} ${MODES[other].label}
         </button>
         <hr />
         <p class="menu__heading">Theme</p>
         ${themeSwitch()}
+        <p class="menu__heading">Colour scheme</p>
+        ${paletteSwitch()}
         <hr />
         <button role="menuitem" data-act="restart">Start over</button>
         <button role="menuitem" data-act="home">Home</button>
@@ -322,6 +352,7 @@ function bindMenu() {
   })
 
   bindThemeSwitch()
+  bindPaletteSwitch()
 
   for (const item of panel.querySelectorAll('[data-act]')) {
     item.addEventListener('click', () => {
@@ -401,7 +432,7 @@ function renderHome() {
           .map(
             ([id, m]) => `
               <button class="card-btn" data-start="${id}">
-                <span class="card-btn__icon" aria-hidden="true">${m.icon}</span>
+                <span class="card-btn__icon">${icon(m.icon)}</span>
                 <span class="card-btn__label">${m.label}</span>
                 <span class="card-btn__hint">${m.hint}</span>
               </button>`
@@ -464,8 +495,12 @@ function renderFlashcard() {
     </div>
     <div class="actions">
       <div class="judge">
-        <button class="judge__btn" id="right" aria-label="I got it right — next card">✅</button>
-        <button class="judge__btn" id="wrong" aria-label="I got it wrong — next card">🚫</button>
+        <button class="judge__btn is-good" id="right" aria-label="I got it right — next card">
+          ${icon('check', 'icon--judge')}
+        </button>
+        <button class="judge__btn is-bad" id="wrong" aria-label="I got it wrong — next card">
+          ${icon('cross', 'icon--judge')}
+        </button>
       </div>
     </div>`
   bindChrome()
@@ -491,7 +526,7 @@ function renderChoice() {
         picked
           ? `<div class="verdict ${gotIt ? 'verdict--good' : 'verdict--bad'}" role="status" aria-live="polite">
               <p class="verdict__text">
-                ${gotIt ? 'Correct! 🎉' : `Not quite — it's ${correctFace}`}
+                ${gotIt ? `${icon('check', 'icon--verdict')} Correct` : `${icon('cross', 'icon--verdict')} Not quite — it's ${correctFace}`}
               </p>
               <button class="btn" id="continue">Continue</button>
             </div>`
@@ -508,8 +543,11 @@ function renderChoice() {
               else if (face === picked) cls = 'is-wrong'
               else cls = 'is-dimmed'
             }
+            let mark = ''
+            if (picked && isCorrect) mark = icon('check', 'icon--mark')
+            else if (picked && face === picked) mark = icon('cross', 'icon--mark')
             return `<button class="choice ${cls}" data-face="${face}" lang="ja"
-                      ${picked ? 'disabled' : ''}>${face}</button>`
+                      ${picked ? 'disabled' : ''}><span>${face}</span>${mark}</button>`
           })
           .join('')}
       </div>
@@ -532,11 +570,11 @@ function renderChoice() {
   }
 }
 
-function table(caption, list) {
+function table(caption, list, tone) {
   if (!list.length) return ''
   return `
     <table class="results__table">
-      <caption>${caption}</caption>
+      <caption class="${tone}">${caption}</caption>
       <thead>
         <tr><th scope="col">Reading</th><th scope="col">Written form</th></tr>
       </thead>
@@ -565,12 +603,16 @@ function renderResults() {
     </header>
     <div class="results">
       <p class="results__score">${correct.length} / ${cards.length}</p>
-      <p class="results__label">
-        ${missed.length ? `${missed.length} still to get` : 'All correct — nice work! 🎉'}
+      <p class="results__label ${missed.length ? '' : 'is-good'}">
+        ${
+          missed.length
+            ? `${missed.length} still to get`
+            : `${icon('spark', 'icon--spark')} Every one correct`
+        }
       </p>
       <div class="results__tables">
-        ${table(`🚫 Missed (${missed.length})`, missed)}
-        ${table(`✅ Correct (${correct.length})`, correct)}
+        ${table(`${icon('cross', 'icon--caption')} Missed (${missed.length})`, missed, 'is-bad')}
+        ${table(`${icon('check', 'icon--caption')} Correct (${correct.length})`, correct, 'is-good')}
       </div>
     </div>
     <div class="actions">

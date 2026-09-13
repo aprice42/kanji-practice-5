@@ -243,6 +243,26 @@ html, body {
   white-space: nowrap;
 }
 
+/* Icons ------------------------------------------------------------------ */
+.icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.14em;
+  flex: none;
+}
+.is-good { color: var(--good); }
+.is-bad { color: var(--bad); }
+
+.icon--tally { width: 1.15em; height: 1.15em; }
+.icon--menu { width: 1.35rem; height: 1.35rem; }
+.icon--menu-item { width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
+.icon--judge { width: 1em; height: 1em; }
+.icon--verdict { width: 1.15em; height: 1.15em; }
+.icon--caption { width: 1.15em; height: 1.15em; }
+.icon--spark { width: 1.3em; height: 1.3em; }
+.icon--mark { width: 0.7em; height: 0.7em; }
+
 /* Tally ------------------------------------------------------------------ */
 .tally {
   display: flex;
@@ -253,7 +273,7 @@ html, body {
   font-weight: 500;
 }
 .tally__group { display: inline-flex; align-items: center; gap: 0.5rem; }
-.tally__icon { font-size: 1.1em; line-height: 1; }
+
 .tally__count { font-variant-numeric: tabular-nums; min-width: 1.5ch; text-align: center; }
 
 /* Practice direction switch ---------------------------------------------- */
@@ -297,11 +317,28 @@ html, body {
   font-size: clamp(0.8rem, 2.6vw, 0.95rem);
   padding: 0.375rem 0.75rem;
 }
-.menu .theme {
+.menu .theme,
+.menu .palette {
   width: 100%;
   margin: 0.25rem 0;
 }
-.menu .theme__btn { flex: 1; }
+/* These sit inside .menu__panel, whose `button { display: block }` rule is more
+   specific than the pill classes — restate the flex layout at higher
+   specificity or the swatches collapse to zero-width inline spans. */
+.menu__panel .theme__btn,
+.menu__panel .palette__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  text-align: center;
+}
+.menu__panel .theme__btn { flex: 1; }
+/* Two per row in the narrow panel, rather than four cramped ones. */
+.menu__panel .palette__btn {
+  flex: 1 1 calc(50% - 0.3rem);
+  min-height: 44px;
+}
 
 /* Top bar + menu ---------------------------------------------------------- */
 .topbar {
@@ -318,6 +355,9 @@ html, body {
   border: 0;
   background: transparent;
   color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1.5rem;
   line-height: 1;
   width: 44px;
@@ -332,7 +372,10 @@ html, body {
   top: calc(100% + 0.375rem);
   left: 0;
   z-index: 20;
-  min-width: 13rem;
+  min-width: 14rem;
+  /* Never taller than the space below the trigger. */
+  max-height: calc(100dvh - 5rem);
+  overflow-y: auto;
   padding: 0.375rem;
   border: 1px solid var(--edge);
   border-radius: 0.875rem;
@@ -469,7 +512,7 @@ html, body {
   gap: 0.375rem;
 }
 .card-btn:hover { border-color: var(--primary-text); }
-.card-btn__icon { font-size: clamp(1.75rem, min(8vw, 4.5vh), 2.25rem); line-height: 1; }
+.card-btn__icon { font-size: clamp(1.75rem, min(8vw, 4.5vh), 2.25rem); line-height: 1; color: var(--primary-text); }
 .card-btn__label { font-size: 1.25rem; font-weight: 600; }
 .card-btn__hint { font-size: 0.9rem; color: var(--muted); }
 
@@ -508,6 +551,10 @@ html, body {
 .verdict--empty { min-height: clamp(84px, 14vh, 116px); }
 .verdict__text {
   margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   font-size: clamp(1.05rem, 3.8vw, 1.4rem);
   font-weight: 600;
   overflow-wrap: anywhere;
@@ -524,6 +571,10 @@ html, body {
 }
 .choice {
   appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   border: 2px solid var(--edge);
   border-radius: 1rem;
   background: var(--surface);
@@ -542,13 +593,14 @@ html, body {
   color: var(--good);
   font-weight: 600;
 }
-.choice.is-correct::after { content: ' ✅'; font-size: 0.7em; }
+
 .choice.is-wrong {
   border-color: var(--bad);
   color: var(--bad);
-  text-decoration: line-through;
 }
-.choice.is-wrong::after { content: ' 🚫'; font-size: 0.7em; }
+/* Strike the answer, not the mark beside it. */
+.choice.is-wrong > span { text-decoration: line-through; }
+
 .choice.is-dimmed { opacity: 0.45; }
 
 /* Progress --------------------------------------------------------------- */
@@ -644,10 +696,15 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 .results__label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   margin: 0 0 0.5rem;
   font-size: clamp(1rem, 3.5vw, 1.375rem);
   color: var(--muted);
 }
+.results__label.is-good { color: var(--good); }
 
 /* The tables can run to 51 rows, so they scroll inside the screen and the
    action buttons stay put at the bottom. */
@@ -673,7 +730,12 @@ html, body {
   text-align: left;
   font-weight: 600;
   padding-bottom: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
+.results__table caption.is-good { color: var(--good); }
+.results__table caption.is-bad { color: var(--bad); }
 .results__table th,
 .results__table td {
   text-align: left;
@@ -724,11 +786,14 @@ html, body {
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .judge { display: flex; gap: clamp(1.5rem, 8vw, 3.5rem); }
+.judge__btn.is-good { color: var(--good); }
+.judge__btn.is-bad { color: var(--bad); }
 .judge__btn {
   appearance: none;
   background: transparent;
   border: 3px solid transparent;
   border-radius: 1rem;
+  color: var(--ink);
   font-size: clamp(2.25rem, min(11vw, 8vh), 4rem);
   line-height: 1;
   padding: clamp(0.25rem, 0.8vh, 0.5rem) 0.75rem;

@@ -10,27 +10,28 @@ scoring, progress bar and results screen, and both support the direction switch:
 
 ### Flash cards
 
-Prompt → tap **Show answer** → the other side plus the meaning → tap ✅ or 🚫, which scores
+Prompt → tap **Show answer** → the other side plus the meaning → tap ✓ or ✕, which scores
 the card and advances. Self-marked.
 
 ### Multiple choice
 
 Prompt plus three options — the right answer and two distractors drawn from other cards.
 Tapping an option marks it right or wrong and reveals the meaning, then a verdict appears
-("Correct! 🎉" or "Not quite — it's 魚") with a **Continue** button. Nothing advances until
+("Correct" or "Not quite — it's 魚") with a **Continue** button. Nothing advances until
 that button is tapped, so there is no time pressure on reading the answer.
 
 ### Menu
 
 The ☰ menu in the top bar switches to the other mode (restarting the round in it), sets the
-theme, starts over, or returns home.
+theme and colour scheme, starts over, or returns home. Theme and scheme are also on the
+home screen; the two controls stay in sync.
 
 ### Theme and colour scheme
 
 **Auto / Light / Dark** on the home screen and in the menu — Auto follows the device
 setting, Light and Dark override it.
 
-**Colour scheme** on the home screen, four options, default Indigo:
+**Colour scheme** on the home screen and in the menu, four options, default Indigo:
 
 | Scheme | Primary | Correct | Wrong |
 | --- | --- | --- | --- |
