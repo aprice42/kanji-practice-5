@@ -16,8 +16,9 @@ the card and advances. Self-marked.
 ### Multiple choice
 
 Prompt plus three options — the right answer and two distractors drawn from other cards.
-Tapping an option marks it right or wrong, reveals the meaning, and advances on its own
-after a short pause (longer when wrong, so there is time to read the correct answer).
+Tapping an option marks it right or wrong and reveals the meaning, then a verdict appears
+("Correct! 🎉" or "Not quite — it's 魚") with a **Continue** button. Nothing advances until
+that button is tapped, so there is no time pressure on reading the answer.
 
 ### Menu
 

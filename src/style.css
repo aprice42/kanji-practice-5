@@ -232,16 +232,29 @@ html, body {
 
 /* Multiple choice --------------------------------------------------------- */
 .stage--choice { gap: 1rem; }
+.actions:has(.verdict) { gap: 1rem; }
 .kana--choice { font-size: clamp(3rem, 13vw, 7rem); }
 .is-hidden { visibility: hidden; }
 
-.feedback {
-  margin: 0;
-  min-height: 1.5em;
-  font-size: clamp(1rem, 3.5vw, 1.25rem);
-  font-weight: 600;
+/* Verdict + continue. Reserving the row's height stops the options jumping
+   when the verdict appears. */
+.verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 116px;
   text-align: center;
 }
+.verdict--empty { min-height: 116px; }
+.verdict__text {
+  margin: 0;
+  font-size: clamp(1.05rem, 3.8vw, 1.4rem);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.verdict--good .verdict__text { color: var(--good); }
+.verdict--bad .verdict__text { color: var(--bad); }
 
 .choices {
   display: flex;

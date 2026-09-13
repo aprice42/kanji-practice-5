@@ -8,8 +8,6 @@ const cards = rawCards.map((card, id) => ({ ...card, id }))
 const app = document.getElementById('app')
 
 const CHOICE_COUNT = 3
-const PAUSE_CORRECT = 800
-const PAUSE_WRONG = 1600
 
 const MODES = {
   flashcards: { label: 'Flash cards', icon: '🃏', hint: 'Show the answer, then mark yourself' },
@@ -32,9 +30,7 @@ const state = {
   index: 0,
   revealed: false,
   choices: [], // multiple-choice options for the current card
-  picked: null, // the option the user tapped, while the pause plays out
-  locked: false, // ignore taps during that pause
-  timer: null,
+  picked: null, // the option the user tapped, until they continue
 }
 
 /* State helpers ---------------------------------------------------------- */
@@ -63,14 +59,6 @@ function answerFace(card) {
   return faces(card).answer
 }
 
-// Cancel any pending auto-advance so a mode switch mid-pause can't fire later.
-function clearTimer() {
-  if (state.timer) {
-    clearTimeout(state.timer)
-    state.timer = null
-  }
-}
-
 // Correct answer plus distractors drawn from other cards, de-duplicated by the
 // text actually shown so two options can never read identically.
 function buildChoices(card) {
@@ -93,12 +81,10 @@ function buildChoices(card) {
 function prepareCard() {
   state.revealed = false
   state.picked = null
-  state.locked = false
   state.choices = state.mode === 'choice' ? buildChoices(state.deck[state.index]) : []
 }
 
 function startRound(deck) {
-  clearTimer()
   state.deck = shuffle(deck)
   state.index = 0
   state.screen = 'practice'
@@ -116,7 +102,6 @@ function practiceMissed() {
 }
 
 function goHome() {
-  clearTimer()
   state.screen = 'home'
   render()
 }
@@ -130,7 +115,6 @@ function setMode(mode) {
 function score(kind) {
   state.status.set(state.deck[state.index].id, kind)
   if (state.index + 1 >= state.deck.length) {
-    clearTimer()
     state.screen = 'results'
     render()
     return
@@ -366,9 +350,16 @@ function renderChoice() {
       <p class="meaning ${picked ? '' : 'is-hidden'}">${card.meaning}</p>
     </div>
     <div class="actions">
-      <p class="feedback" role="status" aria-live="polite">
-        ${picked ? (gotIt ? 'Correct! 🎉' : 'Not quite — the answer is highlighted') : ''}
-      </p>
+      ${
+        picked
+          ? `<div class="verdict ${gotIt ? 'verdict--good' : 'verdict--bad'}" role="status" aria-live="polite">
+              <p class="verdict__text">
+                ${gotIt ? 'Correct! 🎉' : `Not quite — it's ${correctFace}`}
+              </p>
+              <button class="btn" id="continue">Continue</button>
+            </div>`
+          : '<div class="verdict verdict--empty"></div>'
+      }
       <div class="choices">
         ${state.choices
           .map((option) => {
@@ -388,23 +379,18 @@ function renderChoice() {
     </div>`
   bindChrome()
 
-  if (picked) return
+  if (picked) {
+    const next = document.getElementById('continue')
+    next.addEventListener('click', () => score(gotIt ? 'correct' : 'incorrect'))
+    next.focus()
+    return
+  }
 
   for (const btn of app.querySelectorAll('.choice')) {
     btn.addEventListener('click', () => {
-      if (state.locked) return
-      state.locked = true
+      if (state.picked) return
       state.picked = btn.dataset.face
-      const right = state.picked === correctFace
       render()
-      // Pause so the result registers — longer when wrong, to read the answer.
-      state.timer = setTimeout(
-        () => {
-          state.timer = null
-          score(right ? 'correct' : 'incorrect')
-        },
-        right ? PAUSE_CORRECT : PAUSE_WRONG
-      )
     })
   }
 }
