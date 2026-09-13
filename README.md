@@ -1,8 +1,14 @@
 # Kanji Practice
 
-Flashcard PWA for a kanji review list — currently 51 cards, transcribed from worksheets
-his teacher sends home. The card data lives in `content/content.md`; see **Adding cards
-from a new worksheet** below.
+Flashcard PWA for a 5th-grader's kanji homework.
+
+His teacher sends home worksheets of kanji to review; they get transcribed into
+`content/content.md` and become the deck. He practises on a phone (a Pixel) and an iPad,
+usually installed to the home screen, sometimes without a network — which is why this is a
+PWA that precaches everything, fonts included.
+
+That one sentence explains most of the decisions below: **it is his homework, so the app
+must show exactly what his teacher asks for**, and it must work offline on a phone.
 
 The app opens on a home screen where you pick a mode. Both modes share the same deck,
 scoring, progress bar and results screen, and both support the direction switch:
@@ -110,13 +116,19 @@ distinguished by shape as well as colour, and each carries a text label for scre
 
 ### Results
 
-The tally at the top carries the score at display size, then a table of the missed cards
+The tally at the top carries the score at display size, under it a line of encouragement
+chosen by percentage correct — **Good job!** (≤25%), **Great work!** (≤50%), **Almost
+there!** (≤95%), **So close!** (95–99%), **You did it!** (100%) — then a table of the missed cards
 and a table of the correct ones (reading + written form). The column headers are present
 for screen readers but hidden visually — the two columns are obvious by script. Two
 buttons: **Practice the N missed** — another round with just those — and
 **Start over**. Getting a card right on a retry flips it from missed to correct, so the
-score climbs toward a clean sweep. Clear the whole set and you get confetti (skipped for
-`prefers-reduced-motion`).
+score climbs toward a clean sweep.
+
+Every finished round gets confetti, scaled in six steps that grow as the score crosses
+25 / 50 / 75 / 95 / 100 percent — only a clean sweep gets the full barrage. Skipped
+entirely for `prefers-reduced-motion`. The message and the confetti level come from the
+same band in `celebrationFor()` in `src/main.js`.
 
 ## Local
 
@@ -125,12 +137,40 @@ npm install
 npm run dev
 ```
 
-## Deploy to Cloudflare Pages
+| Command | |
+| --- | --- |
+| `npm run dev` | dev server |
+| `npm run build` | production build into `dist/` |
+| `npm run preview` | serve the built output, to check the service worker and offline behaviour |
+| `npm run cards` | `content/content.md` → `src/cards.js` |
+| `npm run fonts` | rebuild the Klee One subset for the current deck (needs network) |
+| `npm run audit` | how guessable the multiple-choice questions are |
 
-- Build command: `npm run build`
-- Output directory: `dist`
+## Deployment
 
-Installable as a PWA (Add to Home Screen) and works offline once loaded.
+Deployed as a **Cloudflare Worker serving static assets** — not Cloudflare Pages, despite
+the name similarity. `wrangler.jsonc` points at Vite's `dist/` output and sets
+`single-page-application` fallback so a bookmark or PWA launch to any path still loads.
+
+**Pushing to `main` deploys it.** Cloudflare Workers Builds watches the GitHub repo and
+runs `npm run build` then `npx wrangler deploy` on its own. There is no GitHub Actions
+workflow, and adding one would duplicate the builds.
+
+To deploy by hand (needs `npx wrangler login` first):
+
+```
+npm run build && npx wrangler deploy
+```
+
+Run that from the project directory. From the parent folder wrangler will not find
+`wrangler.jsonc`, will invent a Worker name from the directory, and will publish the
+unbuilt source.
+
+If a push does not deploy, check **Workers & Pages → kanji-practice-5 → Settings → Build**
+for a "disconnected from your Git account" banner — the GitHub authorization has lapsed
+before, and the build config itself was fine.
+
+The app installs to the home screen and works offline once loaded.
 
 ## Adding cards from a new worksheet
 
@@ -215,6 +255,30 @@ ending). That is information, not a failure — see **`npm run audit`** above.
 - nothing overflows vertically at phone size — the app is built to fit without scrolling,
   so check at roughly 412×730 and shorter
 
+## How this gets verified
+
+**There is no test suite.** Nothing here is covered by a test framework, and for an app
+this size with no backend that has been a reasonable trade. Verification happens two ways:
+
+- **`npm run audit`** — the only scripted check. Reports how guessable the
+  multiple-choice questions are.
+- **Driving the real app in a browser** — open `npm run dev`, walk the deck, and measure
+  the DOM directly (computed styles, contrast ratios, element geometry).
+
+That second one is not busywork; it has caught every bug in this project that mattered,
+and several were invisible in a screenshot:
+
+| Found by measuring | Would not have been found by |
+| --- | --- |
+| Buttons unreadable on hover (two separate causes) | Looking at the page — hover is not in a screenshot |
+| The results page scrolling 184px | Looking at a tall desktop window |
+| Multiple choice answerable without reading kanji | Playing a few rounds by hand |
+| A kanji rendering in a Chinese font | Reading the source, where it looks correct |
+
+So when changing anything visual, check the actual numbers: contrast in all eight
+palette × theme combinations, page overflow at ~412×730 and shorter, and hover states —
+not just the resting state.
+
 ## Project layout
 
 | Path | |
@@ -228,6 +292,35 @@ ending). That is information, not a failure — see **`npm run audit`** above.
 | `src/confetti.js` | the clean-sweep animation |
 | `public/fonts/` | the Klee One subset, its licence, and regeneration notes |
 | `scripts/` | the three `npm run` helpers above |
+| `wrangler.jsonc` | Cloudflare deploy config — points at `dist/` |
+| `CLAUDE.md` | short orientation for an agent picking this up |
+
+## Decisions already settled
+
+Each of these was a deliberate choice with a reason; the detail is in the section named.
+
+| Decision | Why |
+| --- | --- |
+| No framework, no backend, no build beyond Vite | One kid, a phone and an iPad, 51 cards. The whole app is five files in `src/`. |
+| Card data in Markdown, generated into JS | Andy edits a table, not JavaScript. See **Adding cards**. |
+| Written forms copied literally from the worksheet | でん車, not 電車 — the full kanji is not what his teacher is asking for. |
+| Klee One, self-hosted and subset | Guarantees Japanese glyph shapes and works offline. See **Typeface**. |
+| Icons as inline SVG, no emoji | Emoji carry fixed colours that ignore the palette. See **Icons**. |
+| Four palettes behind CSS tokens | See **Theme and colour scheme**. |
+| Distractors scored, not random | Otherwise most cards are answerable without reading. See **Choosing distractors**. |
+| Sized to fit a phone without scrolling | `min(vw, vh)` clamps rather than breakpoints. |
+
+## Non-goals
+
+Things deliberately not built. Worth asking before adding any of them:
+
+- **No accounts, no sync, no backend.** Progress is per-session; theme and palette are the
+  only things persisted, in `localStorage`.
+- **No spaced repetition or long-term progress tracking.** The retry loop ("Practice the N
+  missed") is the whole learning mechanic.
+- **No analytics.**
+- **No stroke-order practice or handwriting input.** He writes on paper; this is recall.
+- **No romaji anywhere.** Readings are kana.
 
 ## Conventions worth keeping
 

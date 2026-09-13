@@ -1,8 +1,14 @@
 # Kanji Practice
 
-A flashcard PWA for a 5th-grader's kanji homework. Read `README.md` before changing
-anything — it documents the workflow, the conventions, and several decisions that look
-arbitrary but are not.
+A flashcard PWA for a 5th-grader's kanji homework, built from worksheets his teacher sends
+home. Read `README.md` before changing anything — particularly **Decisions already
+settled**, **Non-goals** and **How this gets verified**. Several choices here look
+arbitrary and are not.
+
+There is no test suite. Visual and layout changes are verified by driving the app in a
+browser and measuring the DOM — contrast across all eight palette × theme combinations,
+page overflow at phone height, and hover states. Every bug that mattered in this project
+was found that way and would have been missed by looking at a screenshot.
 
 ## If you are here to add cards from a worksheet scan
 
@@ -15,6 +21,11 @@ have gone wrong before:
 2. **Run `npm run fonts` afterwards.** The bundled font is subset to the characters the
    cards use. New kanji missing from it fall back to a system font, which on some devices
    renders Chinese glyph shapes.
+
+## Deploying
+
+Pushing to `main` deploys it — Cloudflare Workers Builds watches the repo. It is a Worker
+serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
 
 ## Commands
 
