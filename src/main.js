@@ -559,45 +559,93 @@ function renderChoice() {
   }
 }
 
-function table(caption, list, tone) {
-  if (!list.length) return ''
+/* One result row. The written form leads at reading size and the reading sits
+   beside it, muted — the same pair the old table showed, minus the table. */
+function resultRow(card) {
   return `
-    <table class="results__table">
-      <caption class="${tone}">${caption}</caption>
-      <thead class="visually-hidden">
-        <tr><th scope="col">Reading</th><th scope="col">Written form</th></tr>
-      </thead>
-      <tbody>
-        ${list
-          .map(
-            (card) => `<tr>
-              <td lang="ja">${card.reading}</td>
-              <td lang="ja">${card.written}</td>
-            </tr>`
-          )
-          .join('')}
-      </tbody>
-    </table>`
+    <li class="result">
+      <span class="result__written" lang="ja">${card.written}</span>
+      <span class="result__reading" lang="ja">${card.reading}</span>
+    </li>`
+}
+
+function resultList(list, tone) {
+  return `<ul class="results__list results__list--${tone}">${list.map(resultRow).join('')}</ul>`
+}
+
+/* The score as an arc. Decorative — `scoreRing` is followed by the same figure
+   in words, which is what a screen reader announces. */
+function scoreRing(correct, total) {
+  const r = 52
+  const circumference = 2 * Math.PI * r
+  const filled = total ? (correct / total) * circumference : 0
+  return `
+    <svg class="score__ring" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+      <circle class="score__track" cx="60" cy="60" r="${r}" />
+      <circle class="score__arc" cx="60" cy="60" r="${r}"
+              stroke-dasharray="${filled.toFixed(1)} ${circumference.toFixed(1)}" />
+    </svg>`
 }
 
 function renderResults() {
   const correct = byStatus('correct')
   const missed = byStatus('incorrect')
-  const celebration = celebrationFor(correct.length, cards.length)
+  const total = cards.length
+  const celebration = celebrationFor(correct.length, total)
+
+  /* With nothing missed the correct list is the only list, so it is shown
+     outright; otherwise it folds away behind a summary, because the missed
+     cards are what the retry button acts on. */
+  const correctSection = !correct.length
+    ? ''
+    : missed.length
+      ? `<details class="results__fold">
+           <summary class="results__summary">
+             ${icon('check', 'icon--caption is-good')}
+             <span>${correct.length} correct</span>
+           </summary>
+           ${resultList(correct, 'good')}
+         </details>`
+      : `<div class="results__group">
+           <h2 class="results__caption is-good">
+             ${icon('check', 'icon--caption')} Correct (${correct.length})
+           </h2>
+           ${resultList(correct, 'good')}
+         </div>`
 
   app.innerHTML = `
     <header class="topbar topbar--results">
       ${menu()}
-      ${tally()}
+      <span class="topbar__spacer"></span>
       <span class="topbar__spacer"></span>
     </header>
     <div class="results">
-      <p class="results__label ${missed.length ? '' : 'is-good'}">
-        ${icon('spark', 'icon--spark')} ${celebration.message}
-      </p>
-      <div class="results__tables">
-        ${table(`${icon('cross', 'icon--caption')} Missed (${missed.length})`, missed, 'is-bad')}
-        ${table(`${icon('check', 'icon--caption')} Correct (${correct.length})`, correct, 'is-good')}
+      <div class="score" role="status" aria-live="polite">
+        <div class="score__dial">
+          ${scoreRing(correct.length, total)}
+          <p class="score__figure">
+            <span class="score__count">${correct.length}</span>
+            <span class="score__total">of ${total}</span>
+          </p>
+        </div>
+        <p class="results__label ${missed.length ? '' : 'is-good'}">
+          ${icon('spark', 'icon--spark')} ${celebration.message}
+        </p>
+        <span class="visually-hidden">${correct.length} of ${total} correct</span>
+      </div>
+
+      <div class="results__body">
+        ${
+          missed.length
+            ? `<div class="results__group">
+                 <h2 class="results__caption is-bad">
+                   ${icon('cross', 'icon--caption')} Missed (${missed.length})
+                 </h2>
+                 ${resultList(missed, 'bad')}
+               </div>`
+            : ''
+        }
+        ${correctSection}
       </div>
     </div>
     <div class="actions">
