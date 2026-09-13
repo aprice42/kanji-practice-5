@@ -14,6 +14,13 @@ const MODES = {
   choice: { label: 'Multiple choice', icon: '🔢', hint: 'Pick the right answer from three' },
 }
 
+const PALETTES = [
+  { id: 'indigo', label: 'Indigo', hint: 'Indigo & persimmon — washi paper' },
+  { id: 'ink', label: 'Ink', hint: 'Ink & seal — a marked-up page' },
+  { id: 'matcha', label: 'Matcha', hint: 'The original teal, harmonised' },
+  { id: 'plum', label: 'Plum', hint: 'Plum & citrus' },
+]
+
 const THEMES = [
   { id: 'system', label: 'Auto', hint: 'Follow the device setting' },
   { id: 'light', label: 'Light', hint: 'Always light' },
@@ -38,33 +45,79 @@ const state = {
   choices: [], // multiple-choice options for the current card
   picked: null, // the option the user tapped, until they continue
   theme: 'system', // 'system' | 'light' | 'dark'
+  palette: 'indigo',
 }
 
 /* Theme ------------------------------------------------------------------ */
 
 const THEME_KEY = 'kanji-practice:theme'
+const PALETTE_KEY = 'kanji-practice:palette'
 
 function applyTheme() {
   const root = document.documentElement
   if (state.theme === 'system') root.removeAttribute('data-theme')
   else root.setAttribute('data-theme', state.theme)
+  root.setAttribute('data-palette', state.palette)
 
   // Keep the browser/PWA chrome in step with the chosen theme.
   const dark =
     state.theme === 'dark' ||
     (state.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute('content', dark ? '#121212' : '#ffffff')
+  if (meta) {
+    // Read it back from the palette rather than hardcoding, so the browser
+    // chrome matches whichever scheme is active.
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
+    if (bg) meta.setAttribute('content', bg)
+  }
+  return dark
 }
 
-function loadTheme() {
+function loadPrefs() {
   try {
-    const saved = localStorage.getItem(THEME_KEY)
-    if (THEMES.some((t) => t.id === saved)) state.theme = saved
+    const savedTheme = localStorage.getItem(THEME_KEY)
+    if (THEMES.some((t) => t.id === savedTheme)) state.theme = savedTheme
+    const savedPalette = localStorage.getItem(PALETTE_KEY)
+    if (PALETTES.some((p) => p.id === savedPalette)) state.palette = savedPalette
   } catch {
-    // Private browsing or blocked storage — stay on the default.
+    // Private browsing or blocked storage — stay on the defaults.
   }
   applyTheme()
+}
+
+function setPalette(palette) {
+  state.palette = palette
+  applyTheme()
+  try {
+    localStorage.setItem(PALETTE_KEY, palette)
+  } catch {
+    // Not persisting is survivable; the choice still applies for this session.
+  }
+  for (const btn of document.querySelectorAll('.palette__btn')) {
+    const on = btn.dataset.palette === palette
+    btn.classList.toggle('is-active', on)
+    btn.setAttribute('aria-pressed', String(on))
+  }
+}
+
+function paletteSwitch() {
+  return `
+    <div class="palette" role="group" aria-label="Colour scheme">
+      ${PALETTES.map(
+        (p) => `<button class="palette__btn ${state.palette === p.id ? 'is-active' : ''}"
+                    data-palette="${p.id}" aria-pressed="${state.palette === p.id}"
+                    title="${p.hint}">
+                  <span class="palette__swatch" data-swatch="${p.id}" aria-hidden="true"></span>
+                  ${p.label}
+                </button>`
+      ).join('')}
+    </div>`
+}
+
+function bindPaletteSwitch() {
+  for (const btn of document.querySelectorAll('.palette__btn')) {
+    btn.addEventListener('click', () => setPalette(btn.dataset.palette))
+  }
 }
 
 function setTheme(theme) {
@@ -365,6 +418,10 @@ function renderHome() {
           ${themeSwitch()}
         </div>
       </div>
+      <div class="home__palette">
+        <p class="home__direction-label">Colour scheme</p>
+        ${paletteSwitch()}
+      </div>
     </div>`
 
   for (const btn of app.querySelectorAll('[data-start]')) {
@@ -372,6 +429,7 @@ function renderHome() {
   }
   bindDirectionSwitch()
   bindThemeSwitch()
+  bindPaletteSwitch()
 }
 
 function renderFlashcard() {
@@ -539,5 +597,5 @@ function render() {
   return state.mode === 'choice' ? renderChoice() : renderFlashcard()
 }
 
-loadTheme()
+loadPrefs()
 render()

@@ -1,48 +1,213 @@
-:root {
-  /* Design teal, darkened so white label text clears 4.5:1 (5.0:1 on #367a72). */
-  --teal: #367a72;
-  --teal-hover: #2d6a63;
-  --teal-text: #2f6f68; /* teal as text on the page background: 5.8:1 */
-  --ink: #111111;
-  --muted: #555555;
-  --bg: #ffffff;
-  --focus: #1b5fd0;
-  --rule: #e2e2e2;
-  --surface: #f6f6f6;
-  --good: #1d7a45;
-  --bad: #b3261e;
+/* ---------------------------------------------------------------------------
+   Palettes. Each is a complete token set for light and dark, validated so
+   every text pair clears 4.5:1, control edges clear 3:1, and the primary,
+   correct and incorrect hues stay far enough apart to never be confused.
+   The root always carries a data-palette attribute (set by main.js); the
+   bare :root below is the default so the page is never unstyled.
+   --------------------------------------------------------------------------- */
+:root,
+:root[data-palette='indigo'] {
+  --bg: #faf7f1;
+  --surface: #f2ede3;
+  --ink: #1f2430;
+  --muted: #5b6070;
+  --rule: #ddd5c7;
+  --edge: #8b8673;
+  --primary: #2f4a7d;
+  --primary-hover: #273d67;
+  --primary-text: #2f4a7d;
+  --on-primary: #ffffff;
+  --good: #3f6b3a;
+  --bad: #b4471f;
+  --focus: #2f4a7d;
+  color-scheme: light;
 }
 
-/* Dark palette applies when the OS asks for it and the user has not forced
-   light, or whenever the user has explicitly chosen dark. */
+:root[data-palette='ink'] {
+  --bg: #f7f5f0;
+  --surface: #edeae3;
+  --ink: #20201e;
+  --muted: #5c5b56;
+  --rule: #d8d4ca;
+  --edge: #88857c;
+  --primary: #3a3a35;
+  --primary-hover: #2a2a26;
+  --primary-text: #3a3a35;
+  --on-primary: #ffffff;
+  --good: #42704a;
+  --bad: #a4402e;
+  --focus: #8a3324;
+  color-scheme: light;
+}
+
+:root[data-palette='matcha'] {
+  --bg: #f6f8f7;
+  --surface: #e9efec;
+  --ink: #16211e;
+  --muted: #54615c;
+  --rule: #cfdad5;
+  --edge: #78867f;
+  --primary: #2c6a5f;
+  --primary-hover: #23544c;
+  --primary-text: #2c6a5f;
+  --on-primary: #ffffff;
+  --good: #456f23;
+  --bad: #a1442c;
+  --focus: #2c6a5f;
+  color-scheme: light;
+}
+
+:root[data-palette='plum'] {
+  --bg: #faf6f7;
+  --surface: #f1e9ec;
+  --ink: #241d26;
+  --muted: #5e5362;
+  --rule: #ddd0d6;
+  --edge: #8d7f86;
+  --primary: #6b3a63;
+  --primary-hover: #572f51;
+  --primary-text: #6b3a63;
+  --on-primary: #ffffff;
+  --good: #4a6b33;
+  --bad: #ad4433;
+  --focus: #6b3a63;
+  color-scheme: light;
+}
+
+/* Dark: when the device asks for it and the user has not forced light... */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-  --teal: #2e6f68;      /* white label on it: 5.9:1 */
-  --teal-hover: #3b8a81;
-  --teal-text: #7cc4ba; /* teal as text on the dark background: 9.3:1 */
-  --ink: #f4f4f4;
-  --muted: #c2c2c2;
-  --bg: #121212;
-  --focus: #8ab4ff;
-  --rule: #333333;
-  --surface: #1e1e1e;
-  --good: #6ede9a;
-  --bad: #ff9d94;
+  :root:not([data-palette]):not([data-theme='light']),
+  :root[data-palette='indigo']:not([data-theme='light']) {
+    --bg: #141824;
+    --surface: #1e2433;
+    --ink: #eae6dd;
+    --muted: #a6adc0;
+    --rule: #333b4f;
+    --edge: #69718a;
+    --primary: #42639e;
+    --primary-hover: #4e73b5;
+    --primary-text: #93b0e0;
+    --on-primary: #ffffff;
+    --good: #8fc27f;
+    --bad: #f0997a;
+    --focus: #93b0e0;
+    color-scheme: dark;
+  }
+  :root[data-palette='ink']:not([data-theme='light']) {
+    --bg: #1a1a18;
+    --surface: #252522;
+    --ink: #efece5;
+    --muted: #a9a69d;
+    --rule: #3a3a36;
+    --edge: #787569;
+    --primary: #4d4d46;
+    --primary-hover: #606057;
+    --primary-text: #d4d0c5;
+    --on-primary: #ffffff;
+    --good: #8cc194;
+    --bad: #f0a08c;
+    --focus: #e59b86;
+    color-scheme: dark;
+  }
+  :root[data-palette='matcha']:not([data-theme='light']) {
+    --bg: #101816;
+    --surface: #1a2421;
+    --ink: #e6ece9;
+    --muted: #a0aeaa;
+    --rule: #2e3c38;
+    --edge: #5f716c;
+    --primary: #2f7568;
+    --primary-hover: #398e7f;
+    --primary-text: #79c7b6;
+    --on-primary: #ffffff;
+    --good: #a6d16a;
+    --bad: #eb9c7f;
+    --focus: #79c7b6;
+    color-scheme: dark;
+  }
+  :root[data-palette='plum']:not([data-theme='light']) {
+    --bg: #181320;
+    --surface: #221b2c;
+    --ink: #ece6ef;
+    --muted: #ab9fb4;
+    --rule: #372d44;
+    --edge: #786a85;
+    --primary: #7d4a75;
+    --primary-hover: #93578a;
+    --primary-text: #cfa3c7;
+    --on-primary: #ffffff;
+    --good: #a8cc86;
+    --bad: #efa088;
+    --focus: #cfa3c7;
+    color-scheme: dark;
   }
 }
 
-:root[data-theme='dark'] {
-  --teal: #2e6f68;      /* white label on it: 5.9:1 */
-  --teal-hover: #3b8a81;
-  --teal-text: #7cc4ba; /* teal as text on the dark background: 9.3:1 */
-  --ink: #f4f4f4;
-  --muted: #c2c2c2;
-  --bg: #121212;
-  --focus: #8ab4ff;
-  --rule: #333333;
-  --surface: #1e1e1e;
-  --good: #6ede9a;
-  --bad: #ff9d94;
+/* ...and whenever the user picks dark outright. */
+:root:not([data-palette])[data-theme='dark'],
+:root[data-palette='indigo'][data-theme='dark'] {
+  --bg: #141824;
+  --surface: #1e2433;
+  --ink: #eae6dd;
+  --muted: #a6adc0;
+  --rule: #333b4f;
+  --edge: #69718a;
+  --primary: #42639e;
+  --primary-hover: #4e73b5;
+  --primary-text: #93b0e0;
+  --on-primary: #ffffff;
+  --good: #8fc27f;
+  --bad: #f0997a;
+  --focus: #93b0e0;
+  color-scheme: dark;
+}
+:root[data-palette='ink'][data-theme='dark'] {
+  --bg: #1a1a18;
+  --surface: #252522;
+  --ink: #efece5;
+  --muted: #a9a69d;
+  --rule: #3a3a36;
+  --edge: #787569;
+  --primary: #4d4d46;
+  --primary-hover: #606057;
+  --primary-text: #d4d0c5;
+  --on-primary: #ffffff;
+  --good: #8cc194;
+  --bad: #f0a08c;
+  --focus: #e59b86;
+  color-scheme: dark;
+}
+:root[data-palette='matcha'][data-theme='dark'] {
+  --bg: #101816;
+  --surface: #1a2421;
+  --ink: #e6ece9;
+  --muted: #a0aeaa;
+  --rule: #2e3c38;
+  --edge: #5f716c;
+  --primary: #2f7568;
+  --primary-hover: #398e7f;
+  --primary-text: #79c7b6;
+  --on-primary: #ffffff;
+  --good: #a6d16a;
+  --bad: #eb9c7f;
+  --focus: #79c7b6;
+  color-scheme: dark;
+}
+:root[data-palette='plum'][data-theme='dark'] {
+  --bg: #181320;
+  --surface: #221b2c;
+  --ink: #ece6ef;
+  --muted: #ab9fb4;
+  --rule: #372d44;
+  --edge: #786a85;
+  --primary: #7d4a75;
+  --primary-hover: #93578a;
+  --primary-text: #cfa3c7;
+  --on-primary: #ffffff;
+  --good: #a8cc86;
+  --bad: #efa088;
+  --focus: #cfa3c7;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -118,8 +283,8 @@ html, body {
 }
 .mode__btn.is-active,
 .theme__btn.is-active {
-  background: var(--teal);
-  color: #ffffff;
+  background: var(--primary);
+  color: var(--on-primary);
   font-weight: 600;
 }
 .mode__btn:not(.is-active):hover,
@@ -169,7 +334,7 @@ html, body {
   z-index: 20;
   min-width: 13rem;
   padding: 0.375rem;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--edge);
   border-radius: 0.875rem;
   background: var(--bg);
   box-shadow: 0 8px 28px rgb(0 0 0 / 0.18);
@@ -206,6 +371,58 @@ html, body {
   margin: 0.375rem 0.25rem;
 }
 
+/* Palette picker. Each swatch shows that scheme's three working colours —
+   button, correct, wrong — so the choice previews what it actually changes. */
+.palette {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem;
+}
+.palette__btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1.5px solid var(--edge);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: clamp(0.75rem, 2.4vw, 0.9rem);
+  padding: 0.375rem 0.6rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.palette__btn.is-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 600;
+}
+.palette__swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgb(128 128 128 / 0.4);
+  flex: none;
+}
+
+[data-swatch='indigo'] {
+  background: linear-gradient(135deg, #2f4a7d 0 34%, #3f6b3a 34% 67%, #b4471f 67% 100%);
+}
+[data-swatch='ink'] {
+  background: linear-gradient(135deg, #3a3a35 0 34%, #42704a 34% 67%, #a4402e 67% 100%);
+}
+[data-swatch='matcha'] {
+  background: linear-gradient(135deg, #2c6a5f 0 34%, #456f23 34% 67%, #a1442c 67% 100%);
+}
+[data-swatch='plum'] {
+  background: linear-gradient(135deg, #6b3a63 0 34%, #4a6b33 34% 67%, #ad4433 67% 100%);
+}
+
+.home__palette { display: flex; flex-direction: column; align-items: center; width: 100%; }
+
 /* Home -------------------------------------------------------------------- */
 .home {
   flex: 1;
@@ -239,7 +456,7 @@ html, body {
 .card-btn {
   flex: 1 1 13rem;
   appearance: none;
-  border: 2px solid var(--rule);
+  border: 2px solid var(--edge);
   border-radius: 1.25rem;
   background: var(--surface);
   color: var(--ink);
@@ -251,7 +468,7 @@ html, body {
   align-items: center;
   gap: 0.375rem;
 }
-.card-btn:hover { border-color: var(--teal-text); }
+.card-btn:hover { border-color: var(--primary-text); }
 .card-btn__icon { font-size: clamp(1.75rem, min(8vw, 4.5vh), 2.25rem); line-height: 1; }
 .card-btn__label { font-size: 1.25rem; font-weight: 600; }
 .card-btn__hint { font-size: 0.9rem; color: var(--muted); }
@@ -307,7 +524,7 @@ html, body {
 }
 .choice {
   appearance: none;
-  border: 2px solid var(--rule);
+  border: 2px solid var(--edge);
   border-radius: 1rem;
   background: var(--surface);
   color: var(--ink);
@@ -317,7 +534,7 @@ html, body {
   min-height: clamp(56px, 9vh, 72px);
   cursor: pointer;
 }
-.choice:hover:not(:disabled) { border-color: var(--teal-text); }
+.choice:hover:not(:disabled) { border-color: var(--primary-text); }
 .choice:disabled { cursor: default; }
 /* Marked with an icon as well as colour, so the result never rests on colour alone. */
 .choice.is-correct {
@@ -353,9 +570,8 @@ html, body {
 .progress__fill {
   height: 100%;
   border-radius: inherit;
-  /* --teal-text, not --teal: the fill must clear 3:1 against the track, which
-     the dark-mode --teal does not (2.2:1). */
-  background: var(--teal-text);
+  /* --primary-text, not --primary: the fill must clear 3:1 against the track. */
+  background: var(--primary-text);
 }
 .progress__label {
   margin: 0;
@@ -486,8 +702,8 @@ html, body {
   appearance: none;
   border: 0;
   border-radius: 1rem;
-  background: var(--teal);
-  color: #ffffff;
+  background: var(--primary);
+  color: var(--on-primary);
   font: inherit;
   font-size: clamp(1.1rem, 3.5vw, 1.6rem);
   font-weight: 600;
@@ -498,13 +714,13 @@ html, body {
   min-width: min(16rem, 80vw);
   cursor: pointer;
 }
-.btn:hover:not(:disabled) { background: var(--teal-hover); }
+.btn:hover:not(:disabled) { background: var(--primary-hover); }
 .btn--secondary {
   background: transparent;
-  color: var(--teal-text);
-  border: 2px solid var(--teal-text);
+  color: var(--primary-text);
+  border: 2px solid var(--primary-text);
 }
-.btn--secondary:hover { background: color-mix(in srgb, var(--teal-text) 14%, transparent); }
+.btn--secondary:hover { background: color-mix(in srgb, var(--primary-text) 14%, transparent); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .judge { display: flex; gap: clamp(1.5rem, 8vw, 3.5rem); }

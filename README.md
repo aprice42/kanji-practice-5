@@ -25,11 +25,29 @@ that button is tapped, so there is no time pressure on reading the answer.
 The ☰ menu in the top bar switches to the other mode (restarting the round in it), sets the
 theme, starts over, or returns home.
 
-### Theme
+### Theme and colour scheme
 
-**Auto / Light / Dark**, on the home screen and in the menu. Auto follows the device
-setting; Light and Dark override it. The choice is saved to `localStorage` and also drives
-the `theme-color` meta tag, so the browser and PWA chrome match.
+**Auto / Light / Dark** on the home screen and in the menu — Auto follows the device
+setting, Light and Dark override it.
+
+**Colour scheme** on the home screen, four options, default Indigo:
+
+| Scheme | Primary | Correct | Wrong |
+| --- | --- | --- | --- |
+| Indigo (藍と柿) | indigo | moss | persimmon |
+| Ink (墨と朱) | sumi charcoal | bamboo | vermilion |
+| Matcha (抹茶) | teal | olive | terracotta |
+| Plum (梅と柚子) | plum | leaf | clay |
+
+Each is a complete token set for light and dark, validated so text pairs clear 4.5:1,
+control edges clear 3:1, and the primary / correct / wrong hues stay at least 48° apart so
+no two roles read as the same colour. None use pure white or black grounds.
+
+Both choices persist to `localStorage`. The `theme-color` meta tag is read back from the
+live `--bg` token, so browser and PWA chrome match whichever scheme is active.
+
+Palette tokens live at the top of `src/style.css` as `[data-palette]` blocks; `main.js`
+stamps `data-palette` and `data-theme` on the root element.
 
 ### Results
 
