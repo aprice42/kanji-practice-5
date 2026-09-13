@@ -12,7 +12,7 @@ export const cards = [
   { reading: "じょうず", written: "上手", meaning: "skilled / good at" },
   { reading: "さくぶん", written: "作文", meaning: "composition" },
   { reading: "まいにち", written: "毎日", meaning: "every day" },
-  { reading: "でんしゃ", written: "電車", meaning: "train" },
+  { reading: "でんしゃ", written: "でん車", meaning: "train" },
   { reading: "ごふん", written: "五分", meaning: "five minutes" },
   { reading: "ほそい", written: "細い", meaning: "thin / narrow" },
   { reading: "おおい", written: "多い", meaning: "many" },

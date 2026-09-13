@@ -16,7 +16,7 @@ Class: 組 | Name: 名前 | 51 items
 | じょうず         | 上手           | skilled / good at     |
 | さくぶん         | 作文           | composition           |
 | まいにち         | 毎日           | every day             |
-| でんしゃ         | 電車           | train                 |
+| でんしゃ         | でん車          | train                 |
 | ごふん          | 五分           | five minutes          |
 | ほそい          | 細い           | thin / narrow         |
 | おおい          | 多い           | many                  |
