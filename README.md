@@ -64,15 +64,15 @@ the same module the app uses, so the two cannot drift apart.
 ### Menu
 
 The ☰ menu in the top bar switches to the other mode (restarting the round in it), sets the
-theme and colour scheme, starts over, or returns home. Theme and scheme are also on the
+theme and color scheme, starts over, or returns home. Theme and scheme are also on the
 home screen; the two controls stay in sync.
 
-### Theme and colour scheme
+### Theme and color scheme
 
 **Auto / Light / Dark** on the home screen and in the menu — Auto follows the device
 setting, Light and Dark override it.
 
-**Colour scheme** on the home screen and in the menu, four options, default Indigo:
+**Color scheme** on the home screen and in the menu, four options, default Indigo:
 
 | Scheme | Primary | Correct | Wrong |
 | --- | --- | --- | --- |
@@ -83,7 +83,7 @@ setting, Light and Dark override it.
 
 Each is a complete token set for light and dark, validated so text pairs clear 4.5:1,
 control edges clear 3:1, and the primary / correct / wrong hues stay at least 48° apart so
-no two roles read as the same colour. None use pure white or black grounds.
+no two roles read as the same color. None use pure white or black grounds.
 
 Both choices persist to `localStorage`. The `theme-color` meta tag is read back from the
 live `--bg` token, so browser and PWA chrome match whichever scheme is active.
@@ -112,7 +112,7 @@ see `public/fonts/README.md`.
 No emoji. Every mark is inline SVG on a 48×48 grid stroked with `currentColor` (`ICONS` in
 `src/main.js`), so it takes the active palette: a tick for correct, a cross for wrong, a
 sparkle for a clean sweep, and card/list glyphs for the two modes. Correct and wrong are
-distinguished by shape as well as colour, and each carries a text label for screen readers.
+distinguished by shape as well as color, and each carries a text label for screen readers.
 
 ### Results
 
@@ -314,7 +314,7 @@ not just the resting state.
 | `src/cards.js` | generated from content.md; do not edit by hand |
 | `src/choices.js` | card sides and multiple-choice distractor scoring; shared with the audit |
 | `src/main.js` | state, screens, rendering, icons |
-| `src/style.css` | palettes and all layout; every colour is a token |
+| `src/style.css` | palettes and all layout; every color is a token |
 | `src/confetti.js` | the clean-sweep animation |
 | `src/update.js` | service-worker update check behind the home screen's update button |
 | `public/fonts/` | the Klee One subset, its licence, and regeneration notes |
@@ -332,8 +332,8 @@ Each of these was a deliberate choice with a reason; the detail is in the sectio
 | Card data in Markdown, generated into JS | Andy edits a table, not JavaScript. See **Adding cards**. |
 | Written forms copied literally from the worksheet | でん車, not 電車 — the full kanji is not what his teacher is asking for. |
 | Klee One, self-hosted and subset | Guarantees Japanese glyph shapes and works offline. See **Typeface**. |
-| Icons as inline SVG, no emoji | Emoji carry fixed colours that ignore the palette. See **Icons**. |
-| Four palettes behind CSS tokens | See **Theme and colour scheme**. |
+| Icons as inline SVG, no emoji | Emoji carry fixed colors that ignore the palette. See **Icons**. |
+| Four palettes behind CSS tokens | See **Theme and color scheme**. |
 | Distractors scored, not random | Otherwise most cards are answerable without reading. See **Choosing distractors**. |
 | Sized to fit a phone without scrolling | `min(vw, vh)` clamps rather than breakpoints. |
 | Updates offered on a button, not applied automatically | `autoUpdate` could reload the page mid-round. See **Getting an update onto his phone**. |
@@ -354,19 +354,19 @@ Things deliberately not built. Worth asking before adding any of them:
 
 - **Every Japanese string carries `lang="ja"`.** That is what applies the Japanese face, via
   `:root :lang(ja)`. A string without it falls back to a system font.
-- **Colours come from tokens only.** Never a literal hex in a component rule — there are
+- **Colors come from tokens only.** Never a literal hex in a component rule — there are
   four palettes × light and dark, and a literal breaks seven of the eight combinations.
 - **Never style bare elements inside a container.** This has caused two separate bugs:
   `.menu__panel button { … }` also hit the theme and palette pills that live in that panel,
   overriding their shape, their pill radius and their active fill — the active pill went
   white-on-white on hover. Style a class (`[role="menuitem"]`), not `button`.
 - **Watch specificity on state rules.** `.btn:hover:not(:disabled)` out-ranks a plain
-  `.btn--secondary:hover`, which once filled the outline button with the same colour as its
+  `.btn--secondary:hover`, which once filled the outline button with the same color as its
   text. A variant overriding a state needs to match that state rule's specificity.
 - **Check hover, not just the resting state.** Both of the above were invisible in a
   screenshot. `--primary-hover` must keep `--on-primary` readable: lightening the Matcha
   dark teal for hover dropped its white label to 3.93:1, so that one darkens instead.
-- **Correct and wrong are distinguished by shape, not just colour**, and every icon carries
+- **Correct and wrong are distinguished by shape, not just color**, and every icon carries
   a text label.
 - **The app is sized to fit without scrolling**, using `min(vw, vh)` clamps rather than
   breakpoints. Adding a row to a screen means re-checking the short-phone sizes.

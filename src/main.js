@@ -19,13 +19,13 @@ const CHOICE_COUNT = 3
    from the tally and the Missed table, so this line is purely encouragement. */
 function celebrationFor(correct, total) {
   const percent = total ? (correct / total) * 100 : 0
-  if (percent >= 100) return { message: 'You did it!', level: 6 }
-  if (percent >= 95) return { message: 'So close!', level: 5 }
-  if (percent > 75) return { message: 'Almost there!', level: 4 }
-  if (percent > 50) return { message: 'Almost there!', level: 3 }
-  if (percent > 25) return { message: 'Great work!', level: 2 }
-  if (percent > 0) return { message: 'Good job!', level: 1 }
-  return { message: 'Keep practicing!', level: 0 }
+  if (percent >= 100) return { message: 'やった!', level: 6 }
+  if (percent >= 95) return { message: 'やった!', level: 5 }
+  if (percent > 75) return { message: 'もう少し!', level: 4 }
+  if (percent > 50) return { message: 'もう少し!', level: 3 }
+  if (percent > 25) return { message: 'がんばって!', level: 2 }
+  if (percent > 0) return { message: 'がんばって!', level: 1 }
+  return { message: 'もっと練習しよう!', level: 0 }
 }
 
 const MODES = {
@@ -35,7 +35,7 @@ const MODES = {
 
 /* Icons -------------------------------------------------------------------
    Inline SVG on a 48x48 grid, stroked with currentColor so every mark takes
-   the active palette. Correct and wrong differ in shape as well as colour.
+   the active palette. Correct and wrong differ in shape as well as color.
    ------------------------------------------------------------------------- */
 
 const ICONS = {
@@ -149,7 +149,7 @@ function setPalette(palette) {
 
 function paletteSwitch() {
   return `
-    <div class="palette" role="group" aria-label="Colour scheme">
+    <div class="palette" role="group" aria-label="Color scheme">
       ${PALETTES.map(
         (p) => `<button class="palette__btn ${state.palette === p.id ? 'is-active' : ''}"
                     data-palette="${p.id}" aria-pressed="${state.palette === p.id}"
@@ -185,7 +185,7 @@ function setTheme(theme) {
 
 function themeSwitch() {
   return `
-    <div class="theme" role="group" aria-label="Colour theme">
+    <div class="theme" role="group" aria-label="Color theme">
       ${THEMES.map(
         (t) => `<button class="theme__btn ${state.theme === t.id ? 'is-active' : ''}"
                     data-theme="${t.id}" aria-pressed="${state.theme === t.id}"
@@ -295,7 +295,7 @@ function menu() {
         <hr />
         <p class="menu__heading">Theme</p>
         ${themeSwitch()}
-        <p class="menu__heading">Colour scheme</p>
+        <p class="menu__heading">Color scheme</p>
         ${paletteSwitch()}
         <hr />
         <button role="menuitem" data-act="restart">Start over</button>
@@ -441,7 +441,7 @@ function renderHome() {
         </div>
       </div>
       <div class="home__palette">
-        <p class="home__direction-label">Colour scheme</p>
+        <p class="home__direction-label">Color scheme</p>
         ${paletteSwitch()}
       </div>
     </div>`
@@ -664,7 +664,7 @@ function renderResults() {
     <div class="actions">
       ${
         missed.length
-          ? `<button class="btn" id="retry">Practice the ${missed.length} missed</button>`
+          ? `<button class="btn" id="retry">Practice the ${missed.length} you missed</button>`
           : ''
       }
       <button class="btn btn--secondary" id="restart">Start over</button>

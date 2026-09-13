@@ -444,7 +444,7 @@ html, body {
   margin: 0.375rem 0.25rem;
 }
 
-/* Palette picker. Each swatch shows that scheme's three working colours —
+/* Palette picker. Each swatch shows that scheme's three working colors —
    button, correct, wrong — so the choice previews what it actually changes. */
 .palette {
   display: flex;
@@ -640,7 +640,7 @@ html, body {
 }
 .choice:hover:not(:disabled) { border-color: var(--primary-text); }
 .choice:disabled { cursor: default; }
-/* Marked with an icon as well as colour, so the result never rests on colour alone. */
+/* Marked with an icon as well as color, so the result never rests on color alone. */
 .choice.is-correct {
   border-color: var(--good);
   color: var(--good);
@@ -880,8 +880,8 @@ html, body {
   padding: 0.5rem 0.875rem;
   min-height: 44px;
 }
-/* The spine repeats the caption's colour, but the caption's icon is what
-   actually carries right-versus-wrong — the colour alone never has to. */
+/* The spine repeats the caption's color, but the caption's icon is what
+   actually carries right-versus-wrong — the color alone never has to. */
 .results__list--bad .result { border-left: 4px solid var(--bad); }
 .results__list--good .result { border-left: 4px solid var(--good); }
 
@@ -919,8 +919,8 @@ html, body {
   border: 2px solid var(--primary-text);
 }
 /* Needs to out-specify `.btn:hover:not(:disabled)` above, which would otherwise
-   fill this button with the primary colour while its text stays that same
-   colour — an invisible label. */
+   fill this button with the primary color while its text stays that same
+   color — an invisible label. */
 .btn--secondary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--primary-text) 14%, transparent);
   border-color: var(--primary-text);

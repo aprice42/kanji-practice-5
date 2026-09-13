@@ -39,8 +39,8 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
 
 - `content/content.md` is the source of truth; `src/cards.js` is generated.
 - Every Japanese string needs `lang="ja"` — that is what applies the Japanese typeface.
-- Colours come from CSS tokens only. Four palettes × light and dark; a literal hex breaks
+- Colors come from CSS tokens only. Four palettes × light and dark; a literal hex breaks
   seven of the eight combinations.
 - The app is sized to fit a phone without scrolling. If you add a row to a screen, re-check
   at ~412×730 and shorter.
-- Correct/wrong must differ by shape, not only colour, and every icon needs a text label.
+- Correct/wrong must differ by shape, not only color, and every icon needs a text label.
