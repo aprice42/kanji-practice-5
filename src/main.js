@@ -415,7 +415,10 @@ function renderHome() {
       <p class="home__subtitle">${cards.length} cards · pick a mode to start</p>
       ${
         isUpdateReady()
-          ? `<button class="btn btn--update" id="update">Update the app</button>`
+          ? `<div class="home__update" role="status">
+               <p class="home__update-text">App update available</p>
+               <button class="btn btn--update" id="update">Update</button>
+             </div>`
           : ''
       }
       <div class="home__modes">

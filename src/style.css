@@ -926,18 +926,31 @@ html, body {
   border-color: var(--primary-text);
   color: var(--primary-text);
 }
-/* Only on screen when there is actually an update waiting, so it may take the
-   space it needs — but it is not what he came here to press, hence the quieter
-   fill and the smaller size. */
+/* Only on screen when there is actually an update waiting. The line says what
+   it is, the button says what it does, so neither has to carry both. Stacked
+   rather than side by side: the pair fits on one row on a wide phone and wraps
+   on a narrow one, so a row would change shape between devices for no reason. */
+.home__update {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.25rem;
+}
+.home__update-text {
+  margin: 0;
+  font-size: clamp(0.9rem, 3vw, 1.05rem);
+  color: var(--muted);
+}
+/* Quieter than `.btn` — it is not what he came here to press. */
 .btn--update {
   background: var(--surface);
   color: var(--primary-text);
   border: 2px solid var(--primary-text);
-  font-size: clamp(0.9rem, 3vw, 1.05rem);
+  font-size: clamp(0.85rem, 2.8vw, 1rem);
   min-width: 0;
-  padding: 0.5rem 1.25rem;
+  padding: 0.5rem 1.5rem;
   min-height: 44px;
-  margin-bottom: 0.25rem;
 }
 .btn--update:hover:not(:disabled) {
   background: color-mix(in srgb, var(--primary-text) 14%, var(--surface));

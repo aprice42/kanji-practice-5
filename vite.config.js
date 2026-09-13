@@ -19,8 +19,12 @@ export default defineConfig({
         name: 'Kanji Practice',
         short_name: 'Kanji',
         description: 'Flashcards for review kanji practice',
-        theme_color: '#9ed5cf',
-        background_color: '#ffffff',
+        /* The default color scheme, Indigo, in its light theme: `--bg` for the
+           browser and PWA chrome (main.js keeps this in step with the live token
+           at runtime, so this is only the value before the app boots) and the
+           same paper white behind the splash screen. */
+        theme_color: '#faf7f1',
+        background_color: '#faf7f1',
         display: 'standalone',
         orientation: 'portrait',
         start_url: './',
