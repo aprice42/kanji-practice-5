@@ -526,6 +526,16 @@ html, body {
   font-feature-settings: "palt" 1;
   letter-spacing: 0.02em;
 }
+/* The title is the one Japanese string on screen that is not a card, so its
+   characters are not in the font subset — 練 and 習 are in no card, fall back to
+   the device face, and the title renders half Klee One and half something else.
+   Skipping to the next face in the stack makes it one font again.
+
+   Specificity: `:root :lang(ja)` is (0,2,0) and would otherwise win over a bare
+   class, which is why it is written this way rather than as `.home__title`. */
+:root .home__title:lang(ja) {
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+}
 .home__subtitle {
   margin: 0 0 0.5rem;
   font-size: clamp(0.95rem, 3.5vw, 1.125rem);
