@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "cards": "node scripts/cards-from-markdown.mjs",
     "fonts": "node scripts/build-font-subset.mjs",
+    "strokes": "node scripts/build-strokes.mjs",
     "audit": "node scripts/audit-choices.mjs"
   },
   "devDependencies": {

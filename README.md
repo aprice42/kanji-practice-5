@@ -144,6 +144,7 @@ npm run dev
 | `npm run preview` | serve the built output, to check the service worker and offline behaviour |
 | `npm run cards` | `content/content.md` → `src/cards.js` |
 | `npm run fonts` | rebuild the Klee One subset for the current deck (needs network) |
+| `npm run strokes` | rebuild the KanjiVG stroke subset for the current deck (needs network) |
 | `npm run audit` | how guessable the multiple-choice questions are |
 
 ## Deployment
@@ -259,9 +260,15 @@ form — `全ぶ〔全部〕`. The generator strips these, so they never reach t
 ```
 npm run cards    # content.md  →  src/cards.js
 npm run fonts    # rebuild the Klee One subset for the new characters
+npm run strokes  # rebuild the KanjiVG stroke subset for the new characters
 npm run audit    # report how guessable the multiple-choice questions are
-npm run build    # so the service worker precaches the new font files
+npm run build    # so the service worker precaches the new font and stroke files
 ```
+
+**`npm run strokes` is not optional either**, for the same class of reason: a character
+with no stroke data cannot be traced, and Trace mode silently passes over it. The script
+warns and keeps going rather than failing the build, so nothing tells you except the mode
+skipping that character.
 
 **`npm run fonts` is not optional.** The bundled font contains only the characters the
 cards use. A new kanji that is missing from it falls back to a system font, and on some
