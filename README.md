@@ -18,6 +18,10 @@ Flash cards and multiple choice also carry a **direction switch**:
 - **かな → 漢字** — see the reading, recall the written form (default)
 - **漢字 → かな** — see the written form, recall the reading
 
+It sits inside those two rounds and **not on the home screen**, because it has no meaning
+for the third mode — Trace always shows the reading and always draws the written form, so
+a control on the start page would be inert for whichever mode you were about to pick.
+
 ### Flash cards
 
 Prompt → tap **Show answer** → the other side plus the meaning → tap ✓ or ✕, which scores
@@ -110,16 +114,62 @@ Each catches something the others cannot. Direction is what makes this stroke *o
 rather than shape matching — without it, 一 drawn right to left passes. Start point is the
 only thing separating the three horizontals of 三.
 
-The ☰ menu in the top bar switches to the other mode (restarting the round in it), sets the
-theme and color scheme, starts over, or returns home. Theme and scheme are also on the
-home screen; the two controls stay in sync.
+**Dots get their own branch and it matters.** Strokes under 16 units — the two 点 of ッ,
+the dakuten — are judged on position alone. At that scale direction is hand jitter and
+length is meaningless, because a child taps rather than drags and produces a single point.
+About 40 of the 403 strokes take this path. If Trace mode ever starts insisting he is wrong
+when he is not, look here first.
+
+Trackpad and finger are also branched on `pointerType`: on a trackpad he cannot see his
+hand against the target so he starts in the wrong place but draws smoothly; with a finger
+he lands accurately, then wobbles, and the finger covers the guide.
+
+**A known limit.** The two dakuten dots of ド sit 8 glyph units apart, and the dot
+tolerance is 16 — so tapping them in the wrong order is accepted. This cannot be fixed by
+tightening the tolerance: 8 units is about a third of a fingertip at the cell sizes used,
+so a threshold tight enough to tell them apart would reject correct taps everywhere else.
+Accepted deliberately.
+
+The thresholds are a starting hypothesis tuned by watching someone trace, not a
+derivation. `?trace=debug` logs all six metrics per stroke and is the way to retune them.
+
+### Menus
+
+Two popovers in the top bar, not one:
+
+- **☰ on the left — navigation.** The other two exercises (switching restarts the round in
+  the new one), **Start over**, **Home**.
+- **⚙ on the right — settings.** Theme and color scheme.
+
+They were a single ☰ panel until it had grown to hold three exercises, two switches, start
+over, home and a licence credit — at which point "menu" had stopped describing it and
+nothing in it was findable. Splitting on *where do I go* versus *how does it look* also
+puts something in the top bar's empty right-hand slot, which the tally was being centred
+against by a spacer.
+
+The gear is on **every** screen including the home screen, always in the same place — same
+coordinates on home, in all three exercises and on the results page, so it is somewhere to
+reach for rather than something to look for. The hamburger only appears once there is a
+round to navigate away from.
+
+Theme and color scheme used to be laid out in the home screen's own content as well, which
+meant two implementations of the same controls kept in sync, and a start page whose bottom
+half was settings rather than the thing you came to do. They now live in the gear only.
+
+Both popovers are built by the same `popover()` helper and bound by one `bindMenus()`, so
+they cannot drift apart: opening one closes the other, and each closes on Escape or an
+outside click. The settings panel opens leftwards (`.menu--end`) or it would run off the
+screen edge.
+
+The exercise list is built from `MODES`, not hardcoded — it used to offer "the other mode",
+which only worked while there were exactly two.
 
 ### Theme and color scheme
 
-**Auto / Light / Dark** on the home screen and in the menu — Auto follows the device
-setting, Light and Dark override it.
+Both live behind the ⚙ gear, on every screen. **Auto / Light / Dark** — Auto follows the
+device setting, Light and Dark override it.
 
-**Color scheme** on the home screen and in the menu, four options, default Indigo:
+**Color scheme**, four options, default Indigo:
 
 | Scheme | Primary | Correct | Wrong |
 | --- | --- | --- | --- |
@@ -158,7 +208,13 @@ see `public/fonts/README.md`.
 
 No emoji. Every mark is inline SVG on a 48×48 grid stroked with `currentColor` (`ICONS` in
 `src/main.js`), so it takes the active palette: a tick for correct, a cross for wrong, a
-sparkle for a clean sweep, and card/list glyphs for the two modes. Correct and wrong are
+sparkle for a clean sweep, a glyph for each of the three exercises, and one for every other
+item the menus offer — a gear for settings, a house for Home, a circular arrow for Start
+over. Every row in a menu carries one, so none of them reads as an afterthought.
+
+The gear and the Start over arrow are **generated**, not hand-placed: the gear so its eight
+teeth sit at even angles, the arrow so its head lands tangent to the arc end rather than
+approximately near it. The one-liners that emit them are in the git history of this change. Correct and wrong are
 distinguished by shape as well as color, and each carries a text label for screen readers.
 
 ### Results
@@ -395,6 +451,9 @@ Each of these was a deliberate choice with a reason; the detail is in the sectio
 | Four palettes behind CSS tokens | See **Theme and color scheme**. |
 | Distractors scored, not random | Otherwise most cards are answerable without reading. See **Choosing distractors**. |
 | Sized to fit a phone without scrolling | `min(vw, vh)` clamps rather than breakpoints. |
+| Direction lives in the round, not on the home screen | It is meaningless for Trace. See the mode list at the top. |
+| Settings behind a gear on every screen, not laid out on the home screen | One implementation instead of two kept in sync, and a start page that is only the thing you came to do. See **Menus**. |
+| Stroke data subset from KanjiVG at build time | Same trick as the font: 30 KB for this deck instead of megabytes. See **Trace**. |
 | Updates offered on a button, not applied automatically | `autoUpdate` could reload the page mid-round. See **Getting an update onto his phone**. |
 
 ## Non-goals
