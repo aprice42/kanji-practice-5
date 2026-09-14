@@ -10,11 +10,24 @@ PWA that precaches everything, fonts included.
 That one sentence explains most of the decisions below: **it is his homework, so the app
 must show exactly what his teacher asks for**, and it must work offline on a phone.
 
-The app opens on a home screen where you pick a mode. Both modes share the same deck,
-scoring, progress bar and results screen, and both support the direction switch:
+The app opens on a home screen: the title, its English translation, and the three modes.
+
+The translation is a `<p>` inside an `<hgroup>` with the `<h1>`, not an `<h2>`. It is a
+translation of the heading, not the title of a section — an `<h2>` would put a phantom
+"Kanji Practice" section containing the mode buttons into the document outline and every
+screen reader's heading list. The text is in the DOM either way, which is all a crawler
+sees, and the page has exactly one heading.
+
+All three modes share the same deck, scoring, progress bar and results screen.
+
+Flash cards and multiple choice also carry a **direction switch**:
 
 - **かな → 漢字** — see the reading, recall the written form (default)
 - **漢字 → かな** — see the written form, recall the reading
+
+It sits inside those two rounds and **not on the home screen**, because it has no meaning
+for the third mode — Trace always shows the reading and always draws the written form, so
+a control on the start page would be inert for whichever mode you were about to pick.
 
 ### Flash cards
 
@@ -61,18 +74,109 @@ only reading in the deck ending in ける. That is a property of the deck, not a
 card sharing the ending and it stops being guessable. The audit imports `src/choices.js`,
 the same module the app uses, so the two cannot drift apart.
 
-### Menu
+### Trace
 
-The ☰ menu in the top bar switches to the other mode (restarting the round in it), sets the
-theme and color scheme, starts over, or returns home. Theme and scheme are also on the
-home screen; the two controls stay in sync.
+The reading is the prompt, as in かな → 漢字, but recalling the written form means drawing
+it. **Nothing shows the answer until he asks for it.** The cell starts blank and the strip
+above it shows one dashed box per character — the length of the word and which character
+he is on, but not what they are. **Show me** toggles: it fades in a grey ghost of the
+character, animates the current stroke drawing itself, and uncovers that character in the
+strip; pressing it again ("Hide it") puts both back so he can have another run from
+memory. A character he has finished drawing stays visible — he has earned it — and the
+reveal resets for each new character.
+
+Asking for the answer being a deliberate, reversible act is the whole difference between
+practice and colouring in.
+
+Each stroke is checked as it is finished: right stroke, right place, right direction,
+right order. Accepted strokes ink in and the character builds up; a rejected one flashes
+and is retried. A card scores correct if it was finished with **no more than two** rejected
+strokes across the whole word — one slip should not cost the card — and after three
+failures on a single stroke the guide replays and the tolerance drops, so he is never
+stuck. **Skip this one** is always available and scores the card wrong.
+
+Multi-character words show that strip above one large cell at a time. Four characters side by side would give
+~85px cells on a phone; a fingertip covers about 40px, so his finger would hide the guide
+he is meant to be following.
+
+#### Stroke data
+
+From **KanjiVG** (`http://kanjivg.tagaini.net`), **CC BY-SA 3.0** — see
+`public/KANJIVG-LICENSE.txt` and the credit at the foot of the Trace screen, which is the
+one screen whose content is derived from that data. Note this is share-alike, unlike
+the font's OFL: `src/strokes.js` is a derived work under the same licence.
+
+`npm run strokes` fetches one SVG per character and keeps only the path data, exactly as
+`npm run fonts` subsets the typeface. The current deck is 79 characters and 403 strokes —
+30 KB, bundled into the app JS, so there is no runtime fetch and it works offline. All 79
+are present in KanjiVG, including the small kana the worksheets force (ッ ょ ゅ).
+
+#### How forgiving it is
+
+`src/trace-match.js` scores six things in **glyph units** (the 0–109 box the data is
+authored in, never pixels, so a tolerance means the same thing at every cell size): start
+point, end point, mean and worst deviation, direction, and length ratio. All six must pass.
+
+Each catches something the others cannot. Direction is what makes this stroke *order*
+rather than shape matching — without it, 一 drawn right to left passes. Start point is the
+only thing separating the three horizontals of 三.
+
+**Dots get their own branch and it matters.** Strokes under 16 units — the two 点 of ッ,
+the dakuten — are judged on position alone. At that scale direction is hand jitter and
+length is meaningless, because a child taps rather than drags and produces a single point.
+About 40 of the 403 strokes take this path. If Trace mode ever starts insisting he is wrong
+when he is not, look here first.
+
+Trackpad and finger are also branched on `pointerType`: on a trackpad he cannot see his
+hand against the target so he starts in the wrong place but draws smoothly; with a finger
+he lands accurately, then wobbles, and the finger covers the guide.
+
+**A known limit.** The two dakuten dots of ド sit 8 glyph units apart, and the dot
+tolerance is 16 — so tapping them in the wrong order is accepted. This cannot be fixed by
+tightening the tolerance: 8 units is about a third of a fingertip at the cell sizes used,
+so a threshold tight enough to tell them apart would reject correct taps everywhere else.
+Accepted deliberately.
+
+The thresholds are a starting hypothesis tuned by watching someone trace, not a
+derivation. `?trace=debug` logs all six metrics per stroke and is the way to retune them.
+
+### Menus
+
+Two popovers in the top bar, not one:
+
+- **☰ on the left — navigation.** The other two exercises (switching restarts the round in
+  the new one), **Start over**, **Home**.
+- **⚙ on the right — settings.** Theme and color scheme.
+
+They were a single ☰ panel until it had grown to hold three exercises, two switches, start
+over, home and a licence credit — at which point "menu" had stopped describing it and
+nothing in it was findable. Splitting on *where do I go* versus *how does it look* also
+puts something in the top bar's empty right-hand slot, which the tally was being centred
+against by a spacer.
+
+The gear is on **every** screen including the home screen, always in the same place — same
+coordinates on home, in all three exercises and on the results page, so it is somewhere to
+reach for rather than something to look for. The hamburger only appears once there is a
+round to navigate away from.
+
+Theme and color scheme used to be laid out in the home screen's own content as well, which
+meant two implementations of the same controls kept in sync, and a start page whose bottom
+half was settings rather than the thing you came to do. They now live in the gear only.
+
+Both popovers are built by the same `popover()` helper and bound by one `bindMenus()`, so
+they cannot drift apart: opening one closes the other, and each closes on Escape or an
+outside click. The settings panel opens leftwards (`.menu--end`) or it would run off the
+screen edge.
+
+The exercise list is built from `MODES`, not hardcoded — it used to offer "the other mode",
+which only worked while there were exactly two.
 
 ### Theme and color scheme
 
-**Auto / Light / Dark** on the home screen and in the menu — Auto follows the device
-setting, Light and Dark override it.
+Both live behind the ⚙ gear, on every screen. **Auto / Light / Dark** — Auto follows the
+device setting, Light and Dark override it.
 
-**Color scheme** on the home screen and in the menu, four options, default Indigo:
+**Color scheme**, four options, default Indigo:
 
 | Scheme | Primary | Correct | Wrong |
 | --- | --- | --- | --- |
@@ -111,7 +215,13 @@ see `public/fonts/README.md`.
 
 No emoji. Every mark is inline SVG on a 48×48 grid stroked with `currentColor` (`ICONS` in
 `src/main.js`), so it takes the active palette: a tick for correct, a cross for wrong, a
-sparkle for a clean sweep, and card/list glyphs for the two modes. Correct and wrong are
+sparkle for a clean sweep, a glyph for each of the three exercises, and one for every other
+item the menus offer — a gear for settings, a house for Home, a circular arrow for Start
+over. Every row in a menu carries one, so none of them reads as an afterthought.
+
+The gear and the Start over arrow are **generated**, not hand-placed: the gear so its eight
+teeth sit at even angles, the arrow so its head lands tangent to the arc end rather than
+approximately near it. The one-liners that emit them are in the git history of this change. Correct and wrong are
 distinguished by shape as well as color, and each carries a text label for screen readers.
 
 ### Results
@@ -144,6 +254,7 @@ npm run dev
 | `npm run preview` | serve the built output, to check the service worker and offline behaviour |
 | `npm run cards` | `content/content.md` → `src/cards.js` |
 | `npm run fonts` | rebuild the Klee One subset for the current deck (needs network) |
+| `npm run strokes` | rebuild the KanjiVG stroke subset for the current deck (needs network) |
 | `npm run audit` | how guessable the multiple-choice questions are |
 
 ## Deployment
@@ -259,9 +370,15 @@ form — `全ぶ〔全部〕`. The generator strips these, so they never reach t
 ```
 npm run cards    # content.md  →  src/cards.js
 npm run fonts    # rebuild the Klee One subset for the new characters
+npm run strokes  # rebuild the KanjiVG stroke subset for the new characters
 npm run audit    # report how guessable the multiple-choice questions are
-npm run build    # so the service worker precaches the new font files
+npm run build    # so the service worker precaches the new font and stroke files
 ```
+
+**`npm run strokes` is not optional either**, for the same class of reason: a character
+with no stroke data cannot be traced, and Trace mode silently passes over it. The script
+warns and keeps going rather than failing the build, so nothing tells you except the mode
+skipping that character.
 
 **`npm run fonts` is not optional.** The bundled font contains only the characters the
 cards use. A new kanji that is missing from it falls back to a system font, and on some
@@ -274,10 +391,11 @@ ending). That is information, not a failure — see **`npm run audit`** above.
 
 ### 4. Check it in the browser
 
-`npm run dev`, then walk the deck in both directions and both modes. Worth confirming:
+`npm run dev`, then walk the deck in both directions and all three modes. Worth confirming:
 
 - every new character renders in Klee One, not a fallback (they look noticeably different)
 - the new cards appear, with the right reading, written form and meaning
+- they are traceable — a character missing from `src/strokes.js` is silently skipped
 - nothing overflows vertically at phone size — the app is built to fit without scrolling,
   so check at roughly 412×730 and shorter
 
@@ -313,6 +431,10 @@ not just the resting state.
 | `content/*.jpg` | scans of the original worksheets |
 | `src/cards.js` | generated from content.md; do not edit by hand |
 | `src/choices.js` | card sides and multiple-choice distractor scoring; shared with the audit |
+| `src/strokes.js` | generated from KanjiVG by `npm run strokes`; do not edit by hand |
+| `src/strokes-geom.js` | sampling and `Path2D` for the stroke data |
+| `src/trace-match.js` | whether a drawn stroke traced the right one |
+| `src/trace.js` | Trace mode's canvas, pointer handling and stroke queue |
 | `src/main.js` | state, screens, rendering, icons |
 | `src/style.css` | palettes and all layout; every color is a token |
 | `src/confetti.js` | the clean-sweep animation |
@@ -336,6 +458,11 @@ Each of these was a deliberate choice with a reason; the detail is in the sectio
 | Four palettes behind CSS tokens | See **Theme and color scheme**. |
 | Distractors scored, not random | Otherwise most cards are answerable without reading. See **Choosing distractors**. |
 | Sized to fit a phone without scrolling | `min(vw, vh)` clamps rather than breakpoints. |
+| Capped at 1080px and centred on wide screens | Everything inside is clamped, so past that width the app only spreads its corners further apart. |
+| One breakpoint, for the mode cards only | 1 column to 3 at 44rem. `flex-wrap` always passes through a lopsided 2 + 1 on the way, for any card width; a column count is discrete and a clamp cannot express it. |
+| Direction lives in the round, not on the home screen | It is meaningless for Trace. See the mode list at the top. |
+| Settings behind a gear on every screen, not laid out on the home screen | One implementation instead of two kept in sync, and a start page that is only the thing you came to do. See **Menus**. |
+| Stroke data subset from KanjiVG at build time | Same trick as the font: 30 KB for this deck instead of megabytes. See **Trace**. |
 | Updates offered on a button, not applied automatically | `autoUpdate` could reload the page mid-round. See **Getting an update onto his phone**. |
 
 ## Non-goals
@@ -347,7 +474,13 @@ Things deliberately not built. Worth asking before adding any of them:
 - **No spaced repetition or long-term progress tracking.** The retry loop ("Practice the N
   missed") is the whole learning mechanic.
 - **No analytics.**
-- **No stroke-order practice or handwriting input.** He writes on paper; this is recall.
+- **No free handwriting recognition.** Trace mode checks a drawn stroke against a known
+  target, which is a much smaller problem. Reading back an arbitrary character he wrote
+  unaided is not something this app attempts, and the deck's mixed kana/kanji forms
+  (でん車) would make it unreliable anyway. *This entry used to read "no stroke-order
+  practice or handwriting input — he writes on paper; this is recall", and was overturned
+  deliberately when Trace mode was added: writing the characters is half the homework, and
+  the app already owned the deck and the scoring.*
 - **No romaji anywhere.** Readings are kana.
 
 ## Conventions worth keeping

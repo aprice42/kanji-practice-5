@@ -1,6 +1,7 @@
 import { cards as rawCards } from './cards.js'
 import { shuffle, facesOf, buildChoices } from './choices.js'
 import { confetti } from './confetti.js'
+import { mountTrace } from './trace.js'
 import { isUpdateReady, onUpdateReady, checkForUpdate, applyUpdate } from './update.js'
 import './style.css'
 
@@ -31,6 +32,7 @@ function celebrationFor(correct, total) {
 const MODES = {
   flashcards: { label: 'Flash cards', icon: 'cards', hint: 'Show the answer, then mark yourself' },
   choice: { label: 'Multiple choice', icon: 'choice', hint: 'Pick the right answer from three' },
+  trace: { label: 'Trace', icon: 'brush', hint: 'Draw the written form, stroke by stroke' },
 }
 
 /* Icons -------------------------------------------------------------------
@@ -53,8 +55,28 @@ const ICONS = {
     '<circle cx="13" cy="15" r="4.5" fill="none" stroke="currentColor" stroke-width="3"/>' +
     '<circle cx="13" cy="33" r="4.5" fill="currentColor"/>' +
     '<path d="M24 15h15M24 33h15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
+  brush:
+    '<path d="M12 36c0-4 2-6 5-6s5 2 5 5-2 5-5 5c-4 0-6-2-9-2 2-1 4-1 4-2Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>' +
+    '<path d="M21 31 38 10a3.5 3.5 0 0 1 5 5L22 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>',
   menu:
     '<path d="M9 15h30M9 24h30M9 33h30" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>',
+  home:
+    '<path d="M7 23 24 8l17 15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path d="M12 20v18a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2V20" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>' +
+    '<path d="M20 40V28h8v12" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>',
+  /* A 320-degree arc with the arrowhead on its leading end, chasing the gap at
+     the top — generated so the head sits tangent to the arc rather than
+     approximately near it. */
+  restart:
+    '<path d="M29.1,9.9A15,15 0 1 1 18.9,9.9" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>' +
+    '<path d="M15.2,17.1L20.8,9.2L11.4,6.8" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  /* An 8-tooth gear, generated rather than eyeballed so the teeth sit at even
+     angles. Paired with the hamburger in the top bar, so it has to read as a
+     different shape at 24px — a sliders glyph would have been three horizontal
+     lines sitting next to three horizontal lines. */
+  gear:
+    '<path d="M20.6,9.9L20.9,4.7L27.1,4.7L27.4,9.9L31.6,11.6L35.5,8.2L39.8,12.5L36.4,16.4L38.1,20.6L43.3,20.9L43.3,27.1L38.1,27.4L36.4,31.6L39.8,35.5L35.5,39.8L31.6,36.4L27.4,38.1L27.1,43.3L20.9,43.3L20.6,38.1L16.4,36.4L12.5,39.8L8.2,35.5L11.6,31.6L9.9,27.4L4.7,27.1L4.7,20.9L9.9,20.6L11.6,16.4L8.2,12.5L12.5,8.2L16.4,11.6Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>' +
+    '<circle cx="24" cy="24" r="6" fill="none" stroke="currentColor" stroke-width="3"/>',
 }
 
 function icon(name, cls = '') {
@@ -278,72 +300,120 @@ function tally() {
     </div>`
 }
 
-function menu() {
-  const other = state.mode === 'flashcards' ? 'choice' : 'flashcards'
+/* Two popovers, not one. The hamburger is navigation — where do I go next —
+   and the gear is settings. They were a single panel until it grew to hold
+   three modes, two switches, start over, home and a licence credit, at which
+   point "☰" stopped describing it. Both are built by the same helper so they
+   cannot drift apart in behaviour. */
+function popover({ id, label, iconName, align, body }) {
   return `
-    <div class="menu">
-      <button class="menu__trigger" id="menu-trigger" aria-haspopup="true"
-              aria-expanded="false" aria-controls="menu-panel">
-        ${icon('menu', 'icon--menu')}
-        <span class="visually-hidden">Menu</span>
+    <div class="menu${align === 'end' ? ' menu--end' : ''}">
+      <button class="menu__trigger" id="${id}-trigger" aria-haspopup="true"
+              aria-expanded="false" aria-controls="${id}-panel">
+        ${icon(iconName, 'icon--menu')}
+        <span class="visually-hidden">${label}</span>
       </button>
-      <div class="menu__panel" id="menu-panel" role="menu" hidden>
-        <p class="menu__heading" id="menu-heading">Switch mode</p>
-        <button role="menuitem" data-act="mode:${other}">
-          ${icon(MODES[other].icon, 'icon--menu-item')} ${MODES[other].label}
-        </button>
-        <hr />
-        <p class="menu__heading">Theme</p>
-        ${themeSwitch()}
-        <p class="menu__heading">Color scheme</p>
-        ${paletteSwitch()}
-        <hr />
-        <button role="menuitem" data-act="restart">Start over</button>
-        <button role="menuitem" data-act="home">Home</button>
+      <div class="menu__panel" id="${id}-panel" role="menu" hidden>
+        ${body}
       </div>
     </div>`
 }
 
-function bindMenu() {
-  const trigger = document.getElementById('menu-trigger')
-  if (!trigger) return
-  const panel = document.getElementById('menu-panel')
-
-  const close = () => {
-    panel.hidden = true
-    trigger.setAttribute('aria-expanded', 'false')
-    document.removeEventListener('click', onOutside, true)
-    document.removeEventListener('keydown', onKey)
-  }
-  const onOutside = (event) => {
-    if (!event.target.closest('.menu')) close()
-  }
-  const onKey = (event) => {
-    if (event.key === 'Escape') {
-      close()
-      trigger.focus()
-    }
-  }
-
-  trigger.addEventListener('click', () => {
-    if (panel.hidden) {
-      panel.hidden = false
-      trigger.setAttribute('aria-expanded', 'true')
-      panel.querySelector('button').focus()
-      document.addEventListener('click', onOutside, true)
-      document.addEventListener('keydown', onKey)
-    } else {
-      close()
-    }
+function navMenu() {
+  const others = Object.keys(MODES).filter((id) => id !== state.mode)
+  return popover({
+    id: 'nav',
+    label: 'Menu',
+    iconName: 'menu',
+    align: 'start',
+    body: `
+      <p class="menu__heading">Exercises</p>
+      ${others
+        .map(
+          (id) => `<button role="menuitem" data-act="mode:${id}">
+                     ${icon(MODES[id].icon, 'icon--menu-item')} ${MODES[id].label}
+                   </button>`
+        )
+        .join('')}
+      <hr />
+      <button role="menuitem" data-act="restart">
+        ${icon('restart', 'icon--menu-item')} Start over
+      </button>
+      <button role="menuitem" data-act="home">
+        ${icon('home', 'icon--menu-item')} Home
+      </button>`,
   })
+}
+
+function settingsMenu() {
+  return popover({
+    id: 'settings',
+    label: 'Settings',
+    iconName: 'gear',
+    align: 'end',
+    body: `
+      <p class="menu__heading">Theme</p>
+      ${themeSwitch()}
+      <p class="menu__heading">Color scheme</p>
+      ${paletteSwitch()}`,
+  })
+}
+
+/* Binds both popovers. Opening one closes the other, and each closes on an
+   outside click or Escape. */
+function bindMenus() {
+  const panels = []
+
+  const closeAll = (except) => {
+    for (const { trigger, panel } of panels) {
+      if (panel === except || panel.hidden) continue
+      panel.hidden = true
+      trigger.setAttribute('aria-expanded', 'false')
+    }
+    if (!panels.some(({ panel }) => !panel.hidden)) {
+      document.removeEventListener('click', onOutside, true)
+      document.removeEventListener('keydown', onKey)
+    }
+  }
+
+  function onOutside(event) {
+    if (!event.target.closest('.menu')) closeAll()
+  }
+
+  function onKey(event) {
+    if (event.key !== 'Escape') return
+    const open = panels.find(({ panel }) => !panel.hidden)
+    closeAll()
+    open?.trigger.focus()
+  }
+
+  for (const id of ['nav', 'settings']) {
+    const trigger = document.getElementById(`${id}-trigger`)
+    if (!trigger) continue
+    const panel = document.getElementById(`${id}-panel`)
+    panels.push({ trigger, panel })
+
+    trigger.addEventListener('click', () => {
+      if (panel.hidden) {
+        closeAll(panel)
+        panel.hidden = false
+        trigger.setAttribute('aria-expanded', 'true')
+        panel.querySelector('button')?.focus()
+        document.addEventListener('click', onOutside, true)
+        document.addEventListener('keydown', onKey)
+      } else {
+        closeAll()
+      }
+    })
+  }
 
   bindThemeSwitch()
   bindPaletteSwitch()
 
-  for (const item of panel.querySelectorAll('[data-act]')) {
+  for (const item of document.querySelectorAll('.menu__panel [data-act]')) {
     item.addEventListener('click', () => {
       const act = item.dataset.act
-      close()
+      closeAll()
       if (act === 'restart') restart()
       else if (act === 'home') goHome()
       else if (act.startsWith('mode:')) setMode(act.slice(5))
@@ -393,16 +463,16 @@ function progress() {
 function practiceChrome() {
   return `
     <header class="topbar">
-      ${menu()}
+      ${navMenu()}
       ${tally()}
-      <span class="topbar__spacer"></span>
+      ${settingsMenu()}
     </header>
-    ${directionSwitch()}
+    ${state.mode === 'trace' ? '' : directionSwitch()}
     ${progress()}`
 }
 
 function bindChrome() {
-  bindMenu()
+  bindMenus()
   bindDirectionSwitch()
 }
 
@@ -410,9 +480,16 @@ function bindChrome() {
 
 function renderHome() {
   app.innerHTML = `
+    <header class="topbar topbar--home">
+      <span class="topbar__spacer"></span>
+      <span class="topbar__spacer"></span>
+      ${settingsMenu()}
+    </header>
     <div class="home">
-      <h1 class="home__title" lang="ja">漢字の練習</h1>
-      <p class="home__subtitle">${cards.length} cards · pick a mode to start</p>
+      <hgroup class="home__heading">
+        <h1 class="home__title" lang="ja">漢字の練習</h1>
+        <p class="home__tagline">Kanji Practice</p>
+      </hgroup>
       ${
         isUpdateReady()
           ? `<div class="home__update" role="status">
@@ -433,28 +510,13 @@ function renderHome() {
           )
           .join('')}
       </div>
-      <div class="home__settings">
-        <div>
-          <p class="home__direction-label">Direction</p>
-          ${directionSwitch()}
-        </div>
-        <div>
-          <p class="home__direction-label">Theme</p>
-          ${themeSwitch()}
-        </div>
-      </div>
-      <div class="home__palette">
-        <p class="home__direction-label">Color scheme</p>
-        ${paletteSwitch()}
-      </div>
     </div>`
 
   for (const btn of app.querySelectorAll('[data-start]')) {
     btn.addEventListener('click', () => setMode(btn.dataset.start))
   }
-  bindDirectionSwitch()
-  bindThemeSwitch()
-  bindPaletteSwitch()
+  // Binds the gear, and the theme and palette switches inside it.
+  bindMenus()
 
   const update = document.getElementById('update')
   if (update) update.addEventListener('click', applyUpdate)
@@ -575,6 +637,49 @@ function renderChoice() {
   }
 }
 
+/* Trace mode. The reading is the prompt, as in かな → 漢字 — the difference is
+   that recalling the written form means drawing it rather than saying it. The
+   cell starts blank; "Show me" fades the ghost in and animates the current
+   stroke, so asking for help is a deliberate act rather than the default.
+
+   Everything inside the card is driven by mountTrace mutating the canvas in
+   place. This function runs once per card, not once per stroke. */
+function renderTrace() {
+  const card = state.deck[state.index]
+
+  app.innerHTML = `
+    ${practiceChrome()}
+    <div class="stage stage--trace">
+      <p class="kana kana--trace" lang="ja">${card.reading}</p>
+      <p class="trace__strip" lang="ja" aria-hidden="true">
+        ${[...card.written].map((ch) => `<span class="trace__char">${ch}</span>`).join('')}
+      </p>
+      <div class="trace__cell">
+        <canvas class="trace__canvas" role="img" aria-label="Tracing area"></canvas>
+      </div>
+      <p class="trace__status" role="status" aria-live="polite"></p>
+    </div>
+    <div class="actions">
+      <div class="trace__buttons">
+        <button class="btn btn--secondary" id="trace-show" aria-pressed="false">Show me</button>
+        <button class="btn btn--secondary" id="trace-skip">Skip this one</button>
+      </div>
+      <p class="trace__credit">
+        Stroke order from
+        <a href="http://kanjivg.tagaini.net" target="_blank" rel="noreferrer">KanjiVG</a>,
+        CC BY-SA 3.0
+      </p>
+    </div>`
+
+  bindChrome()
+
+  // Always reachable, and the only way through for anyone who cannot draw —
+  // keyboard, screen reader, or a stroke the matcher and he disagree about.
+  document.getElementById('trace-skip').addEventListener('click', () => score('incorrect'))
+
+  teardownTrace = mountTrace(app, card, { onFinish: (kind) => score(kind) })
+}
+
 /* One result row. The written form leads at reading size and the reading sits
    beside it, muted — the same pair the old table showed, minus the table. */
 function resultRow(card) {
@@ -631,9 +736,9 @@ function renderResults() {
 
   app.innerHTML = `
     <header class="topbar topbar--results">
-      ${menu()}
+      ${navMenu()}
       <span class="topbar__spacer"></span>
-      <span class="topbar__spacer"></span>
+      ${settingsMenu()}
     </header>
     <div class="results">
       <div class="score" role="status" aria-live="polite">
@@ -673,7 +778,7 @@ function renderResults() {
       <button class="btn btn--secondary" id="restart">Start over</button>
     </div>`
 
-  bindMenu()
+  bindMenus()
   if (missed.length) {
     document.getElementById('retry').addEventListener('click', practiceMissed)
   }
@@ -684,9 +789,18 @@ function renderResults() {
   if (celebration.level > 0) confetti(celebration.level)
 }
 
+/* Trace mode owns a canvas and a pointer capture that must not outlive the DOM
+   they belong to. render() destroys that DOM wholesale, so it tears the trace
+   down first — otherwise opening the menu mid-stroke strands an animation frame
+   and a captured pointer. */
+let teardownTrace = null
+
 function render() {
+  teardownTrace?.()
+  teardownTrace = null
   if (state.screen === 'home') return renderHome()
   if (state.screen === 'results') return renderResults()
+  if (state.mode === 'trace') return renderTrace()
   return state.mode === 'choice' ? renderChoice() : renderFlashcard()
 }
 

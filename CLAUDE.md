@@ -18,9 +18,10 @@ have gone wrong before:
 1. **Transcribe the scan literally.** The worksheets deliberately write part of a word in
    kana when that kanji has not been taught yet — でん車, not 電車. Read the scan at full
    resolution in crops; a downscaled view cannot be trusted for this.
-2. **Run `npm run fonts` afterwards.** The bundled font is subset to the characters the
-   cards use. New kanji missing from it fall back to a system font, which on some devices
-   renders Chinese glyph shapes.
+2. **Run `npm run fonts` and `npm run strokes` afterwards.** Both are subset to the
+   characters the cards use. A kanji missing from the font falls back to a system font,
+   which on some devices renders Chinese glyph shapes; a kanji missing from the stroke
+   data cannot be traced, and Trace mode passes over it without saying so.
 
 ## Deploying
 
@@ -32,15 +33,24 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
     npm run dev      # local dev server
     npm run cards    # content/content.md → src/cards.js
     npm run fonts    # rebuild the Klee One subset (needs network)
+    npm run strokes  # rebuild the KanjiVG stroke subset (needs network)
     npm run audit    # how guessable the multiple-choice questions are
     npm run build    # production build into dist/
 
 ## House rules
 
-- `content/content.md` is the source of truth; `src/cards.js` is generated.
+- `content/content.md` is the source of truth; `src/cards.js` is generated, and so is
+  `src/strokes.js` (from KanjiVG, CC BY-SA — attribution is required, and lives at the foot
+  of the Trace screen).
 - Every Japanese string needs `lang="ja"` — that is what applies the Japanese typeface.
 - Colors come from CSS tokens only. Four palettes × light and dark; a literal hex breaks
   seven of the eight combinations.
 - The app is sized to fit a phone without scrolling. If you add a row to a screen, re-check
-  at ~412×730 and shorter.
+  at ~412×730 and shorter. It is capped at 1080px and centred above that, so also check a
+  desktop width — and a phone held landscape, which is as wide as a tablet and half as
+  tall. That is why chrome that grows with the viewport is gated on `min(vw, vh)`, not `vw`.
+- There is exactly one layout breakpoint (the mode cards, 1 column to 3 at 44rem) and it is
+  deliberate: a column count is discrete and a clamp cannot express it. Sizes stay clamps.
 - Correct/wrong must differ by shape, not only color, and every icon needs a text label.
+- `.is-hidden` is a global `visibility: hidden`. Do not reuse that name for a local
+  modifier — Trace mode's masked characters are `.is-masked` because of exactly that.

@@ -264,6 +264,14 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100dvh;
+  /* On a phone this does nothing. On a desktop window the app would otherwise
+     stretch to whatever width the browser happens to be, stranding the top bar
+     corners a foot apart from a card that is sized in rem and cannot fill the
+     space. Everything inside is already clamped, so capping the container is
+     the whole fix. */
+  max-width: 1080px;
+  margin-inline: auto;
+  width: 100%;
   padding: max(0.625rem, env(safe-area-inset-top)) 1.25rem
            max(0.875rem, env(safe-area-inset-bottom));
   /* Vertical rhythm tracks the viewport height so short phones compress
@@ -293,7 +301,14 @@ html, body {
 .is-bad { color: var(--bad); }
 
 .icon--tally { width: 1.15em; height: 1.15em; }
-.icon--menu { width: 1.35rem; height: 1.35rem; }
+/* Grows with the viewport, not at a breakpoint — the same reason every other
+   size here is a clamp. Gated on min(vw, vh) like the rest: a phone held
+   landscape is as wide as a tablet but half as tall, and should not get
+   tablet-sized chrome eating the little height it has. */
+.icon--menu {
+  width: clamp(1.35rem, min(3.6vw, 4.5vh), 2rem);
+  height: clamp(1.35rem, min(3.6vw, 4.5vh), 2rem);
+}
 .icon--menu-item { width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
 .icon--judge { width: 1em; height: 1em; }
 .icon--verdict { width: 1.15em; height: 1.15em; }
@@ -367,7 +382,10 @@ html, body {
 /* Top bar + menu ---------------------------------------------------------- */
 .topbar {
   display: grid;
-  grid-template-columns: 3rem 1fr 3rem;
+  /* The side columns take their width from the triggers rather than a fixed
+     3rem, because the triggers grow with the viewport. Both are the same size,
+     so the tally stays centred without being told to. */
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.5rem;
 }
@@ -377,6 +395,10 @@ html, body {
    back to being chrome: the menu and nothing else. */
 
 .menu { position: relative; justify-self: start; }
+/* The settings gear sits in the top bar's right-hand slot, so its panel has to
+   open leftwards or it runs off the screen edge. */
+.menu--end { justify-self: end; }
+.menu--end .menu__panel { left: auto; right: 0; }
 .menu__trigger {
   appearance: none;
   border: 0;
@@ -387,8 +409,11 @@ html, body {
   justify-content: center;
   font-size: 1.5rem;
   line-height: 1;
-  width: 44px;
-  height: 44px;
+  /* 44px is the phone touch target and the floor. On a tablet or desktop the
+     two triggers are the only chrome on an otherwise wide top bar, and at
+     44px they read as specks. */
+  width: clamp(44px, min(6vw, 7.5vh), 56px);
+  height: clamp(44px, min(6vw, 7.5vh), 56px);
   border-radius: 0.75rem;
   cursor: pointer;
 }
@@ -501,8 +526,6 @@ html, body {
   background: linear-gradient(135deg, #6b3a63 0 34%, #4a6b33 34% 67%, #ad4433 67% 100%);
 }
 
-.home__palette { display: flex; flex-direction: column; align-items: center; width: 100%; }
-
 /* Home -------------------------------------------------------------------- */
 .home {
   flex: 1;
@@ -512,7 +535,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.75rem, 2.2vh, 1.25rem);
+  gap: clamp(0.7rem, 2vh, 1.25rem);
   text-align: center;
 }
 .home__title {
@@ -536,54 +559,85 @@ html, body {
 :root .home__title:lang(ja) {
   font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
 }
-.home__subtitle {
-  margin: 0 0 0.5rem;
-  font-size: clamp(0.95rem, 3.5vw, 1.125rem);
+/* The title and its translation are one unit, so they are grouped and spaced
+   tightly against each other rather than being two children of .home competing
+   with its much larger gap. */
+.home__heading {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.1rem, 0.5vh, 0.35rem);
+}
+
+/* A <p> in an <hgroup>, not an <h2>. It is a translation of the heading above
+   it, not the title of a section — an h2 would put a phantom "Kanji Practice"
+   section containing the mode buttons into the document outline and every
+   screen reader's heading list. The text is in the DOM either way, which is all
+   a crawler cares about. */
+.home__tagline {
+  margin: 0 0 3rem;
+  font-size: clamp(1rem, min(4.2vw, 3vh), 1.6rem);
+  letter-spacing: 0.01em;
   color: var(--muted);
 }
+/* One column on a phone, three from a tablet up.
+
+   This is the only layout breakpoint in the project and it is deliberate. Every
+   other size here is a clamp, because clamps express "how big" continuously.
+   A column count is discrete, and flex-wrap — which is what this used to do —
+   always passes through a lopsided 2 + 1 on its way from one column to three,
+   for any card width where three eventually fit. There is no basis that skips
+   it. So the count is switched outright. */
 .home__modes {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr;
   justify-content: center;
-  gap: clamp(0.625rem, 1.8vh, 1rem);
+  gap: clamp(0.75rem, 2.2vh, 1.15rem);
   width: 100%;
   max-width: 34rem;
 }
+
+/* 44rem is where three cards clear their content comfortably rather than a
+   device width — a phone held landscape is past it, and gets three across,
+   which is the right answer when it has 390px of height to spend. */
+@media (min-width: 44rem) {
+  .home__modes {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 60rem;
+  }
+}
+/* Icon beside the text rather than above it. Adding the third mode pushed the
+   home screen 93px past a 412x730 phone and the icon's own line was the cheapest
+   thing to reclaim; moving Direction off this screen later gave most of that
+   back, but the two-column card is the better layout regardless — it keeps the
+   cards compact and lets them sit side by side on a wide window without the hint
+   wrapping awkwardly. */
 .card-btn {
-  flex: 1 1 13rem;
   appearance: none;
   border: 2px solid var(--edge);
   border-radius: 1.25rem;
   background: var(--surface);
   color: var(--ink);
   font: inherit;
-  padding: clamp(0.875rem, 2.4vh, 1.5rem) 1rem;
+  padding: clamp(0.9rem, 2.6vh, 1.5rem) clamp(1rem, 3.5vw, 1.4rem);
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 0.375rem;
+  column-gap: clamp(0.6rem, 3vw, 1rem);
+  row-gap: 0.15rem;
+  text-align: left;
 }
 .card-btn:hover { border-color: var(--primary-text); }
-.card-btn__icon { font-size: clamp(1.75rem, min(8vw, 4.5vh), 2.25rem); line-height: 1; color: var(--primary-text); }
-.card-btn__label { font-size: 1.25rem; font-weight: 600; }
-.card-btn__hint { font-size: 0.9rem; color: var(--muted); }
-
-.home__settings {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: clamp(0.75rem, 3vw, 1.5rem);
-  margin-top: clamp(0, 1vh, 0.5rem);
+.card-btn__icon {
+  grid-row: 1 / 3;
+  font-size: clamp(1.6rem, min(7vw, 4vh), 2.25rem);
+  line-height: 1;
+  color: var(--primary-text);
 }
-.home__direction-label {
-  margin: 0 0 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
+.card-btn__label { font-size: clamp(1.1rem, 4.5vw, 1.25rem); font-weight: 600; }
+.card-btn__hint { font-size: clamp(0.8rem, 3.2vw, 0.9rem); color: var(--muted); }
 
 /* Multiple choice --------------------------------------------------------- */
 .stage--choice { gap: 1rem; }
@@ -984,3 +1038,127 @@ html, body {
 @media (prefers-reduced-motion: no-preference) {
   .btn, .judge__btn { transition: background-color 120ms ease; }
 }
+
+/* Trace mode -------------------------------------------------------------
+   The ghost and the guide are painted on canvas, so their colours are read
+   from these same tokens by trace.js rather than being set here. The ghost
+   reuses --edge: it is the token already validated to stay visible against
+   every ground at 3:1 without competing with text, which is exactly what a
+   tracing guide needs, and it avoids a ninth token in eight palette blocks.
+   ------------------------------------------------------------------------- */
+.stage--trace {
+  gap: clamp(0.5rem, 2vh, 1rem);
+}
+
+.kana--trace {
+  font-size: clamp(1.5rem, min(7vw, 5vh), 3rem);
+}
+
+/* The whole word at a glance, so he knows where he is in it. Four characters
+   side by side are too small to trace, but they are fine to read. */
+.trace__strip {
+  margin: 0;
+  display: flex;
+  gap: 0.4em;
+  font-size: clamp(1.25rem, min(6vw, 4.5vh), 2.25rem);
+  line-height: 1;
+}
+
+.trace__char {
+  color: var(--muted);
+  /* 0.45 measured under 2.1:1 against every ground; 0.7 clears 3:1. */
+  opacity: 0.7;
+  padding: 0.1em 0.15em;
+  border-radius: 0.3rem;
+  border: 2px solid transparent;
+}
+.trace__char.is-done {
+  color: var(--ink);
+  opacity: 1;
+}
+.trace__char.is-active {
+  color: var(--primary-text);
+  opacity: 1;
+  /* --primary-text, not --primary, for the same reason the canvas guide uses it:
+     --primary is a fill meant to carry white text, and as a 2px edge on the page
+     ground it measures 2.05:1 on ink/dark. */
+  border-color: var(--primary-text);
+}
+/* Not yet drawn and not yet asked for. The glyph goes transparent rather than
+   being removed so the box keeps the character's width — the strip still shows
+   how long the word is and which character he is on, without showing him what
+   they are.
+
+   Named `is-masked`, not `is-hidden`: there is already a global
+   `.is-hidden { visibility: hidden }` further up, which made the whole strip
+   disappear rather than just its glyphs. */
+.trace__char.is-masked {
+  color: transparent;
+  border-style: dashed;
+  border-color: var(--edge);
+  /* The box is the only thing left to see once the glyph is transparent, so it
+     does not inherit the 0.7 that dims an upcoming character's text — that took
+     --edge down to 2.2:1. At full strength --edge is the token already
+     validated to clear 3:1 as a control edge. */
+  opacity: 1;
+}
+.trace__char.is-masked.is-active {
+  border-color: var(--primary-text);
+}
+
+/* One large cell rather than a row of small ones: a fingertip covers about
+   40px, so anything under ~200px means the finger hides the guide it is
+   meant to be following. */
+.trace__cell {
+  width: min(78vw, 38vh, 20rem);
+  aspect-ratio: 1;
+  border: 2px solid var(--rule);
+  border-radius: 1rem;
+  background: var(--surface);
+  /* The centre lines of a written square, the way squared practice paper is
+     ruled. Decorative, and faint enough not to compete with the ghost. */
+  background-image: linear-gradient(var(--rule), var(--rule)), linear-gradient(var(--rule), var(--rule));
+  background-size: 1px 100%, 100% 1px;
+  background-position: center, center;
+  background-repeat: no-repeat;
+}
+
+.trace__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Without this the browser pans the page instead of letting him draw. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.trace__status {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: clamp(0.95rem, min(3.6vw, 2.8vh), 1.25rem);
+  color: var(--muted);
+  text-align: center;
+}
+
+.trace__buttons {
+  display: flex;
+  gap: clamp(0.5rem, 2vw, 1rem);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* KanjiVG's licence requires the attribution to be stated and linked. It sits at
+   the foot of the Trace exercise — the one screen whose content is derived from
+   that data — rather than buried in a menu. Deliberately the quietest thing on
+   the screen, but a real link. */
+.trace__credit {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--muted);
+}
+.trace__credit a { color: var(--muted); }
+.trace__credit a:hover { color: var(--primary-text); }
