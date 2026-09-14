@@ -576,18 +576,36 @@ html, body {
    screen reader's heading list. The text is in the DOM either way, which is all
    a crawler cares about. */
 .home__tagline {
-  margin: 0;
+  margin: 0 0 3rem;
   font-size: clamp(1rem, min(4.2vw, 3vh), 1.6rem);
   letter-spacing: 0.01em;
   color: var(--muted);
 }
+/* One column on a phone, three from a tablet up.
+
+   This is the only layout breakpoint in the project and it is deliberate. Every
+   other size here is a clamp, because clamps express "how big" continuously.
+   A column count is discrete, and flex-wrap — which is what this used to do —
+   always passes through a lopsided 2 + 1 on its way from one column to three,
+   for any card width where three eventually fit. There is no basis that skips
+   it. So the count is switched outright. */
 .home__modes {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr;
   justify-content: center;
   gap: clamp(0.75rem, 2.2vh, 1.15rem);
   width: 100%;
   max-width: 34rem;
+}
+
+/* 44rem is where three cards clear their content comfortably rather than a
+   device width — a phone held landscape is past it, and gets three across,
+   which is the right answer when it has 390px of height to spend. */
+@media (min-width: 44rem) {
+  .home__modes {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 60rem;
+  }
 }
 /* Icon beside the text rather than above it. Adding the third mode pushed the
    home screen 93px past a 412x730 phone and the icon's own line was the cheapest
@@ -596,7 +614,6 @@ html, body {
    cards compact and lets them sit side by side on a wide window without the hint
    wrapping awkwardly. */
 .card-btn {
-  flex: 1 1 13rem;
   appearance: none;
   border: 2px solid var(--edge);
   border-radius: 1.25rem;

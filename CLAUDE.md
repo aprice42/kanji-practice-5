@@ -49,6 +49,8 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   at ~412×730 and shorter. It is capped at 1080px and centred above that, so also check a
   desktop width — and a phone held landscape, which is as wide as a tablet and half as
   tall. That is why chrome that grows with the viewport is gated on `min(vw, vh)`, not `vw`.
+- There is exactly one layout breakpoint (the mode cards, 1 column to 3 at 44rem) and it is
+  deliberate: a column count is discrete and a clamp cannot express it. Sizes stay clamps.
 - Correct/wrong must differ by shape, not only color, and every icon needs a text label.
 - `.is-hidden` is a global `visibility: hidden`. Do not reuse that name for a local
   modifier — Trace mode's masked characters are `.is-masked` because of exactly that.
