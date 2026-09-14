@@ -46,7 +46,9 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
 - Colors come from CSS tokens only. Four palettes × light and dark; a literal hex breaks
   seven of the eight combinations.
 - The app is sized to fit a phone without scrolling. If you add a row to a screen, re-check
-  at ~412×730 and shorter.
+  at ~412×730 and shorter. It is capped at 1080px and centred above that, so also check a
+  desktop width — and a phone held landscape, which is as wide as a tablet and half as
+  tall. That is why chrome that grows with the viewport is gated on `min(vw, vh)`, not `vw`.
 - Correct/wrong must differ by shape, not only color, and every icon needs a text label.
 - `.is-hidden` is a global `visibility: hidden`. Do not reuse that name for a local
   modifier — Trace mode's masked characters are `.is-masked` because of exactly that.

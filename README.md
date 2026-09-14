@@ -451,6 +451,7 @@ Each of these was a deliberate choice with a reason; the detail is in the sectio
 | Four palettes behind CSS tokens | See **Theme and color scheme**. |
 | Distractors scored, not random | Otherwise most cards are answerable without reading. See **Choosing distractors**. |
 | Sized to fit a phone without scrolling | `min(vw, vh)` clamps rather than breakpoints. |
+| Capped at 1080px and centred on wide screens | Everything inside is clamped, so past that width the app only spreads its corners further apart. |
 | Direction lives in the round, not on the home screen | It is meaningless for Trace. See the mode list at the top. |
 | Settings behind a gear on every screen, not laid out on the home screen | One implementation instead of two kept in sync, and a start page that is only the thing you came to do. See **Menus**. |
 | Stroke data subset from KanjiVG at build time | Same trick as the font: 30 KB for this deck instead of megabytes. See **Trace**. |

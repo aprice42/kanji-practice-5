@@ -264,6 +264,14 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100dvh;
+  /* On a phone this does nothing. On a desktop window the app would otherwise
+     stretch to whatever width the browser happens to be, stranding the top bar
+     corners a foot apart from a card that is sized in rem and cannot fill the
+     space. Everything inside is already clamped, so capping the container is
+     the whole fix. */
+  max-width: 1080px;
+  margin-inline: auto;
+  width: 100%;
   padding: max(0.625rem, env(safe-area-inset-top)) 1.25rem
            max(0.875rem, env(safe-area-inset-bottom));
   /* Vertical rhythm tracks the viewport height so short phones compress
@@ -293,7 +301,14 @@ html, body {
 .is-bad { color: var(--bad); }
 
 .icon--tally { width: 1.15em; height: 1.15em; }
-.icon--menu { width: 1.35rem; height: 1.35rem; }
+/* Grows with the viewport, not at a breakpoint — the same reason every other
+   size here is a clamp. Gated on min(vw, vh) like the rest: a phone held
+   landscape is as wide as a tablet but half as tall, and should not get
+   tablet-sized chrome eating the little height it has. */
+.icon--menu {
+  width: clamp(1.35rem, min(3.6vw, 4.5vh), 2rem);
+  height: clamp(1.35rem, min(3.6vw, 4.5vh), 2rem);
+}
 .icon--menu-item { width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
 .icon--judge { width: 1em; height: 1em; }
 .icon--verdict { width: 1.15em; height: 1.15em; }
@@ -367,7 +382,10 @@ html, body {
 /* Top bar + menu ---------------------------------------------------------- */
 .topbar {
   display: grid;
-  grid-template-columns: 3rem 1fr 3rem;
+  /* The side columns take their width from the triggers rather than a fixed
+     3rem, because the triggers grow with the viewport. Both are the same size,
+     so the tally stays centred without being told to. */
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.5rem;
 }
@@ -391,8 +409,11 @@ html, body {
   justify-content: center;
   font-size: 1.5rem;
   line-height: 1;
-  width: 44px;
-  height: 44px;
+  /* 44px is the phone touch target and the floor. On a tablet or desktop the
+     two triggers are the only chrome on an otherwise wide top bar, and at
+     44px they read as specks. */
+  width: clamp(44px, min(6vw, 7.5vh), 56px);
+  height: clamp(44px, min(6vw, 7.5vh), 56px);
   border-radius: 0.75rem;
   cursor: pointer;
 }
