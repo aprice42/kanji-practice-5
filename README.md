@@ -10,8 +10,10 @@ PWA that precaches everything, fonts included.
 That one sentence explains most of the decisions below: **it is his homework, so the app
 must show exactly what his teacher asks for**, and it must work offline on a phone.
 
-The app opens on a home screen where you pick a mode. Both modes share the same deck,
-scoring, progress bar and results screen, and both support the direction switch:
+The app opens on a home screen where you pick a mode. All three share the same deck,
+scoring, progress bar and results screen.
+
+Flash cards and multiple choice also carry a **direction switch**:
 
 - **かな → 漢字** — see the reading, recall the written form (default)
 - **漢字 → かな** — see the written form, recall the reading
@@ -61,7 +63,52 @@ only reading in the deck ending in ける. That is a property of the deck, not a
 card sharing the ending and it stops being guessable. The audit imports `src/choices.js`,
 the same module the app uses, so the two cannot drift apart.
 
-### Menu
+### Trace
+
+The reading is the prompt, as in かな → 漢字, but recalling the written form means drawing
+it. **Nothing shows the answer until he asks for it.** The cell starts blank and the strip
+above it shows one dashed box per character — the length of the word and which character
+he is on, but not what they are. **Show me** toggles: it fades in a grey ghost of the
+character, animates the current stroke drawing itself, and uncovers that character in the
+strip; pressing it again ("Hide it") puts both back so he can have another run from
+memory. A character he has finished drawing stays visible — he has earned it — and the
+reveal resets for each new character.
+
+Asking for the answer being a deliberate, reversible act is the whole difference between
+practice and colouring in.
+
+Each stroke is checked as it is finished: right stroke, right place, right direction,
+right order. Accepted strokes ink in and the character builds up; a rejected one flashes
+and is retried. A card scores correct if it was finished with **no more than two** rejected
+strokes across the whole word — one slip should not cost the card — and after three
+failures on a single stroke the guide replays and the tolerance drops, so he is never
+stuck. **Skip this one** is always available and scores the card wrong.
+
+Multi-character words show that strip above one large cell at a time. Four characters side by side would give
+~85px cells on a phone; a fingertip covers about 40px, so his finger would hide the guide
+he is meant to be following.
+
+#### Stroke data
+
+From **KanjiVG** (`http://kanjivg.tagaini.net`), **CC BY-SA 3.0** — see
+`public/KANJIVG-LICENSE.txt` and the credit at the foot of the Trace screen, which is the
+one screen whose content is derived from that data. Note this is share-alike, unlike
+the font's OFL: `src/strokes.js` is a derived work under the same licence.
+
+`npm run strokes` fetches one SVG per character and keeps only the path data, exactly as
+`npm run fonts` subsets the typeface. The current deck is 79 characters and 403 strokes —
+30 KB, bundled into the app JS, so there is no runtime fetch and it works offline. All 79
+are present in KanjiVG, including the small kana the worksheets force (ッ ょ ゅ).
+
+#### How forgiving it is
+
+`src/trace-match.js` scores six things in **glyph units** (the 0–109 box the data is
+authored in, never pixels, so a tolerance means the same thing at every cell size): start
+point, end point, mean and worst deviation, direction, and length ratio. All six must pass.
+
+Each catches something the others cannot. Direction is what makes this stroke *order*
+rather than shape matching — without it, 一 drawn right to left passes. Start point is the
+only thing separating the three horizontals of 三.
 
 The ☰ menu in the top bar switches to the other mode (restarting the round in it), sets the
 theme and color scheme, starts over, or returns home. Theme and scheme are also on the
@@ -281,10 +328,11 @@ ending). That is information, not a failure — see **`npm run audit`** above.
 
 ### 4. Check it in the browser
 
-`npm run dev`, then walk the deck in both directions and both modes. Worth confirming:
+`npm run dev`, then walk the deck in both directions and all three modes. Worth confirming:
 
 - every new character renders in Klee One, not a fallback (they look noticeably different)
 - the new cards appear, with the right reading, written form and meaning
+- they are traceable — a character missing from `src/strokes.js` is silently skipped
 - nothing overflows vertically at phone size — the app is built to fit without scrolling,
   so check at roughly 412×730 and shorter
 
@@ -320,6 +368,10 @@ not just the resting state.
 | `content/*.jpg` | scans of the original worksheets |
 | `src/cards.js` | generated from content.md; do not edit by hand |
 | `src/choices.js` | card sides and multiple-choice distractor scoring; shared with the audit |
+| `src/strokes.js` | generated from KanjiVG by `npm run strokes`; do not edit by hand |
+| `src/strokes-geom.js` | sampling and `Path2D` for the stroke data |
+| `src/trace-match.js` | whether a drawn stroke traced the right one |
+| `src/trace.js` | Trace mode's canvas, pointer handling and stroke queue |
 | `src/main.js` | state, screens, rendering, icons |
 | `src/style.css` | palettes and all layout; every color is a token |
 | `src/confetti.js` | the clean-sweep animation |
@@ -354,7 +406,13 @@ Things deliberately not built. Worth asking before adding any of them:
 - **No spaced repetition or long-term progress tracking.** The retry loop ("Practice the N
   missed") is the whole learning mechanic.
 - **No analytics.**
-- **No stroke-order practice or handwriting input.** He writes on paper; this is recall.
+- **No free handwriting recognition.** Trace mode checks a drawn stroke against a known
+  target, which is a much smaller problem. Reading back an arbitrary character he wrote
+  unaided is not something this app attempts, and the deck's mixed kana/kanji forms
+  (でん車) would make it unreliable anyway. *This entry used to read "no stroke-order
+  practice or handwriting input — he writes on paper; this is recall", and was overturned
+  deliberately when Trace mode was added: writing the characters is half the homework, and
+  the app already owned the deck and the scoring.*
 - **No romaji anywhere.** Readings are kana.
 
 ## Conventions worth keeping

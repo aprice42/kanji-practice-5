@@ -48,3 +48,5 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
 - The app is sized to fit a phone without scrolling. If you add a row to a screen, re-check
   at ~412×730 and shorter.
 - Correct/wrong must differ by shape, not only color, and every icon needs a text label.
+- `.is-hidden` is a global `visibility: hidden`. Do not reuse that name for a local
+  modifier — Trace mode's masked characters are `.is-masked` because of exactly that.

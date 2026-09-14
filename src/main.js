@@ -1,6 +1,7 @@
 import { cards as rawCards } from './cards.js'
 import { shuffle, facesOf, buildChoices } from './choices.js'
 import { confetti } from './confetti.js'
+import { mountTrace } from './trace.js'
 import { isUpdateReady, onUpdateReady, checkForUpdate, applyUpdate } from './update.js'
 import './style.css'
 
@@ -31,6 +32,7 @@ function celebrationFor(correct, total) {
 const MODES = {
   flashcards: { label: 'Flash cards', icon: 'cards', hint: 'Show the answer, then mark yourself' },
   choice: { label: 'Multiple choice', icon: 'choice', hint: 'Pick the right answer from three' },
+  trace: { label: 'Trace', icon: 'brush', hint: 'Draw the written form, stroke by stroke' },
 }
 
 /* Icons -------------------------------------------------------------------
@@ -53,6 +55,9 @@ const ICONS = {
     '<circle cx="13" cy="15" r="4.5" fill="none" stroke="currentColor" stroke-width="3"/>' +
     '<circle cx="13" cy="33" r="4.5" fill="currentColor"/>' +
     '<path d="M24 15h15M24 33h15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
+  brush:
+    '<path d="M12 36c0-4 2-6 5-6s5 2 5 5-2 5-5 5c-4 0-6-2-9-2 2-1 4-1 4-2Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>' +
+    '<path d="M21 31 38 10a3.5 3.5 0 0 1 5 5L22 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>',
   menu:
     '<path d="M9 15h30M9 24h30M9 33h30" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>',
 }
@@ -397,7 +402,7 @@ function practiceChrome() {
       ${tally()}
       <span class="topbar__spacer"></span>
     </header>
-    ${directionSwitch()}
+    ${state.mode === 'trace' ? '' : directionSwitch()}
     ${progress()}`
 }
 
@@ -575,6 +580,49 @@ function renderChoice() {
   }
 }
 
+/* Trace mode. The reading is the prompt, as in かな → 漢字 — the difference is
+   that recalling the written form means drawing it rather than saying it. The
+   cell starts blank; "Show me" fades the ghost in and animates the current
+   stroke, so asking for help is a deliberate act rather than the default.
+
+   Everything inside the card is driven by mountTrace mutating the canvas in
+   place. This function runs once per card, not once per stroke. */
+function renderTrace() {
+  const card = state.deck[state.index]
+
+  app.innerHTML = `
+    ${practiceChrome()}
+    <div class="stage stage--trace">
+      <p class="kana kana--trace" lang="ja">${card.reading}</p>
+      <p class="trace__strip" lang="ja" aria-hidden="true">
+        ${[...card.written].map((ch) => `<span class="trace__char">${ch}</span>`).join('')}
+      </p>
+      <div class="trace__cell">
+        <canvas class="trace__canvas" role="img" aria-label="Tracing area"></canvas>
+      </div>
+      <p class="trace__status" role="status" aria-live="polite"></p>
+    </div>
+    <div class="actions">
+      <div class="trace__buttons">
+        <button class="btn btn--secondary" id="trace-show" aria-pressed="false">Show me</button>
+        <button class="btn btn--secondary" id="trace-skip">Skip this one</button>
+      </div>
+      <p class="trace__credit">
+        Stroke order from
+        <a href="http://kanjivg.tagaini.net" target="_blank" rel="noreferrer">KanjiVG</a>,
+        CC BY-SA 3.0
+      </p>
+    </div>`
+
+  bindChrome()
+
+  // Always reachable, and the only way through for anyone who cannot draw —
+  // keyboard, screen reader, or a stroke the matcher and he disagree about.
+  document.getElementById('trace-skip').addEventListener('click', () => score('incorrect'))
+
+  teardownTrace = mountTrace(app, card, { onFinish: (kind) => score(kind) })
+}
+
 /* One result row. The written form leads at reading size and the reading sits
    beside it, muted — the same pair the old table showed, minus the table. */
 function resultRow(card) {
@@ -684,9 +732,18 @@ function renderResults() {
   if (celebration.level > 0) confetti(celebration.level)
 }
 
+/* Trace mode owns a canvas and a pointer capture that must not outlive the DOM
+   they belong to. render() destroys that DOM wholesale, so it tears the trace
+   down first — otherwise opening the menu mid-stroke strands an animation frame
+   and a captured pointer. */
+let teardownTrace = null
+
 function render() {
+  teardownTrace?.()
+  teardownTrace = null
   if (state.screen === 'home') return renderHome()
   if (state.screen === 'results') return renderResults()
+  if (state.mode === 'trace') return renderTrace()
   return state.mode === 'choice' ? renderChoice() : renderFlashcard()
 }
 

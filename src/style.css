@@ -984,3 +984,127 @@ html, body {
 @media (prefers-reduced-motion: no-preference) {
   .btn, .judge__btn { transition: background-color 120ms ease; }
 }
+
+/* Trace mode -------------------------------------------------------------
+   The ghost and the guide are painted on canvas, so their colours are read
+   from these same tokens by trace.js rather than being set here. The ghost
+   reuses --edge: it is the token already validated to stay visible against
+   every ground at 3:1 without competing with text, which is exactly what a
+   tracing guide needs, and it avoids a ninth token in eight palette blocks.
+   ------------------------------------------------------------------------- */
+.stage--trace {
+  gap: clamp(0.5rem, 2vh, 1rem);
+}
+
+.kana--trace {
+  font-size: clamp(1.5rem, min(7vw, 5vh), 3rem);
+}
+
+/* The whole word at a glance, so he knows where he is in it. Four characters
+   side by side are too small to trace, but they are fine to read. */
+.trace__strip {
+  margin: 0;
+  display: flex;
+  gap: 0.4em;
+  font-size: clamp(1.25rem, min(6vw, 4.5vh), 2.25rem);
+  line-height: 1;
+}
+
+.trace__char {
+  color: var(--muted);
+  /* 0.45 measured under 2.1:1 against every ground; 0.7 clears 3:1. */
+  opacity: 0.7;
+  padding: 0.1em 0.15em;
+  border-radius: 0.3rem;
+  border: 2px solid transparent;
+}
+.trace__char.is-done {
+  color: var(--ink);
+  opacity: 1;
+}
+.trace__char.is-active {
+  color: var(--primary-text);
+  opacity: 1;
+  /* --primary-text, not --primary, for the same reason the canvas guide uses it:
+     --primary is a fill meant to carry white text, and as a 2px edge on the page
+     ground it measures 2.05:1 on ink/dark. */
+  border-color: var(--primary-text);
+}
+/* Not yet drawn and not yet asked for. The glyph goes transparent rather than
+   being removed so the box keeps the character's width — the strip still shows
+   how long the word is and which character he is on, without showing him what
+   they are.
+
+   Named `is-masked`, not `is-hidden`: there is already a global
+   `.is-hidden { visibility: hidden }` further up, which made the whole strip
+   disappear rather than just its glyphs. */
+.trace__char.is-masked {
+  color: transparent;
+  border-style: dashed;
+  border-color: var(--edge);
+  /* The box is the only thing left to see once the glyph is transparent, so it
+     does not inherit the 0.7 that dims an upcoming character's text — that took
+     --edge down to 2.2:1. At full strength --edge is the token already
+     validated to clear 3:1 as a control edge. */
+  opacity: 1;
+}
+.trace__char.is-masked.is-active {
+  border-color: var(--primary-text);
+}
+
+/* One large cell rather than a row of small ones: a fingertip covers about
+   40px, so anything under ~200px means the finger hides the guide it is
+   meant to be following. */
+.trace__cell {
+  width: min(78vw, 38vh, 20rem);
+  aspect-ratio: 1;
+  border: 2px solid var(--rule);
+  border-radius: 1rem;
+  background: var(--surface);
+  /* The centre lines of a written square, the way squared practice paper is
+     ruled. Decorative, and faint enough not to compete with the ghost. */
+  background-image: linear-gradient(var(--rule), var(--rule)), linear-gradient(var(--rule), var(--rule));
+  background-size: 1px 100%, 100% 1px;
+  background-position: center, center;
+  background-repeat: no-repeat;
+}
+
+.trace__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Without this the browser pans the page instead of letting him draw. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.trace__status {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: clamp(0.95rem, min(3.6vw, 2.8vh), 1.25rem);
+  color: var(--muted);
+  text-align: center;
+}
+
+.trace__buttons {
+  display: flex;
+  gap: clamp(0.5rem, 2vw, 1rem);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* KanjiVG's licence requires the attribution to be stated and linked. It sits at
+   the foot of the Trace exercise — the one screen whose content is derived from
+   that data — rather than buried in a menu. Deliberately the quietest thing on
+   the screen, but a real link. */
+.trace__credit {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--muted);
+}
+.trace__credit a { color: var(--muted); }
+.trace__credit a:hover { color: var(--primary-text); }
