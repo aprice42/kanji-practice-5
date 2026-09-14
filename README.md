@@ -10,8 +10,15 @@ PWA that precaches everything, fonts included.
 That one sentence explains most of the decisions below: **it is his homework, so the app
 must show exactly what his teacher asks for**, and it must work offline on a phone.
 
-The app opens on a home screen where you pick a mode. All three share the same deck,
-scoring, progress bar and results screen.
+The app opens on a home screen: the title, its English translation, and the three modes.
+
+The translation is a `<p>` inside an `<hgroup>` with the `<h1>`, not an `<h2>`. It is a
+translation of the heading, not the title of a section — an `<h2>` would put a phantom
+"Kanji Practice" section containing the mode buttons into the document outline and every
+screen reader's heading list. The text is in the DOM either way, which is all a crawler
+sees, and the page has exactly one heading.
+
+All three modes share the same deck, scoring, progress bar and results screen.
 
 Flash cards and multiple choice also carry a **direction switch**:
 

@@ -486,8 +486,10 @@ function renderHome() {
       ${settingsMenu()}
     </header>
     <div class="home">
-      <h1 class="home__title" lang="ja">漢字の練習</h1>
-      <p class="home__subtitle">${cards.length} cards · pick a mode to start</p>
+      <hgroup class="home__heading">
+        <h1 class="home__title" lang="ja">漢字の練習</h1>
+        <p class="home__tagline">Kanji Practice</p>
+      </hgroup>
       ${
         isUpdateReady()
           ? `<div class="home__update" role="status">
