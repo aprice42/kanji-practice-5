@@ -18,10 +18,12 @@ have gone wrong before:
 1. **Transcribe the scan literally.** The worksheets deliberately write part of a word in
    kana when that kanji has not been taught yet — でん車, not 電車. Read the scan at full
    resolution in crops; a downscaled view cannot be trusted for this.
-2. **Run `npm run fonts` and `npm run strokes` afterwards.** Both are subset to the
-   characters the cards use. A kanji missing from the font falls back to a system font,
-   which on some devices renders Chinese glyph shapes; a kanji missing from the stroke
-   data cannot be traced, and Trace mode passes over it without saying so.
+2. **Run `npm run fonts` and `npm run strokes` afterwards, then `npm run check`.** Both
+   subsets cover only the characters the cards use. A kanji missing from the font falls
+   back to a system font, which on some devices renders Chinese glyph shapes; a kanji
+   missing from the stroke data cannot be traced, and Trace mode passes over it without
+   saying so. Neither failure shows up in a build — `npm run check` is what catches them,
+   and it names the command that fixes each one. Run it before you call the job done.
 
 ## Deploying
 
@@ -34,11 +36,15 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
     npm run cards    # content/content.md → src/cards.js
     npm run fonts    # rebuild the Klee One subset (needs network)
     npm run strokes  # rebuild the KanjiVG stroke subset (needs network)
+    npm run check    # generated files still match the deck — run after adding cards
     npm run audit    # how guessable the multiple-choice questions are
     npm run build    # production build into dist/
 
 ## House rules
 
+- `content/content.md` is the source of truth. `src/cards.js`, `src/strokes.js` and
+  `public/fonts/` are all generated from it, and `npm run check` is what proves they still
+  agree — the generators only validate their own output, not each other's.
 - `content/content.md` is the source of truth; `src/cards.js` is generated, and so is
   `src/strokes.js` (from KanjiVG, CC BY-SA — attribution is required, and lives at the foot
   of the Trace screen).

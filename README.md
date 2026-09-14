@@ -265,6 +265,7 @@ npm run dev
 | `npm run cards` | `content/content.md` → `src/cards.js` |
 | `npm run fonts` | rebuild the Klee One subset for the current deck (needs network) |
 | `npm run strokes` | rebuild the KanjiVG stroke subset for the current deck (needs network) |
+| `npm run check` | confirm the generated files still match the deck |
 | `npm run audit` | how guessable the multiple-choice questions are |
 
 ## Deployment
@@ -381,20 +382,34 @@ form — `全ぶ〔全部〕`. The generator strips these, so they never reach t
 npm run cards    # content.md  →  src/cards.js
 npm run fonts    # rebuild the Klee One subset for the new characters
 npm run strokes  # rebuild the KanjiVG stroke subset for the new characters
+npm run check    # confirm the three above actually agree with each other
 npm run audit    # report how guessable the multiple-choice questions are
 npm run build    # so the service worker precaches the new font and stroke files
 ```
 
-**`npm run strokes` is not optional either**, for the same class of reason: a character
-with no stroke data cannot be traced, and Trace mode silently passes over it. The script
-warns and keeps going rather than failing the build, so nothing tells you except the mode
-skipping that character.
+**`npm run check` is the one that catches you.** `fonts` and `strokes` both fail silently
+if you skip them — a new kanji missing from the font subset falls back to a system face,
+which on some devices draws Chinese shapes, and a character missing from the stroke data
+simply cannot be traced, so Trace mode passes over it without a word. Neither shows up in
+a build, and both are the kind of mistake that looks like nothing is wrong.
 
-**`npm run fonts` is not optional.** The bundled font contains only the characters the
-cards use. A new kanji that is missing from it falls back to a system font, and on some
-devices that fallback is a Chinese face that draws characters like 言 with the wrong
-shape — the bug this project already fixed once, reappearing for the new cards only.
-It needs network access.
+Being written down here was not enough: the font one shipped anyway. So `npm run check`
+re-reads `content.md`, compares it to `src/cards.js`, and confirms every character in the
+deck has both a glyph in the font subset and well-formed stroke data. It writes nothing
+and names the command that fixes whatever it finds:
+
+```
+2 problems:
+
+  No stroke data for 郵 便 — Trace mode skips them silently.
+    fix: npm run strokes
+
+  Not in the font subset: 郵 便 — they fall back to a system face, which on some
+  devices draws Chinese shapes.
+    fix: npm run fonts
+```
+
+`fonts` and `strokes` both need network access.
 
 `npm run audit` may list new cards the deck cannot disguise (no other card shares their
 ending). That is information, not a failure — see **`npm run audit`** above.
@@ -414,8 +429,10 @@ ending). That is information, not a failure — see **`npm run audit`** above.
 **There is no test suite.** Nothing here is covered by a test framework, and for an app
 this size with no backend that has been a reasonable trade. Verification happens two ways:
 
-- **`npm run audit`** — the only scripted check. Reports how guessable the
-  multiple-choice questions are.
+- **`npm run check`** — confirms the generated files still match the deck: `src/cards.js`
+  against `content.md`, and every character against the font subset and the stroke data.
+  This is the one that catches a regeneration step you forgot.
+- **`npm run audit`** — reports how guessable the multiple-choice questions are.
 - **Driving the real app in a browser** — open `npm run dev`, walk the deck, and measure
   the DOM directly (computed styles, contrast ratios, element geometry).
 
@@ -428,6 +445,7 @@ and several were invisible in a screenshot:
 | The results page scrolling 184px | Looking at a tall desktop window |
 | Multiple choice answerable without reading kanji | Playing a few rounds by hand |
 | A kanji rendering in a Chinese font | Reading the source, where it looks correct |
+| Stroke data corrupted by rounding — 日 drawn as ヒ | Reading the generator, where the rounding looks fine |
 
 So when changing anything visual, check the actual numbers: contrast in all eight
 palette × theme combinations, page overflow at ~412×730 and shorter, and hover states —
@@ -450,7 +468,8 @@ not just the resting state.
 | `src/confetti.js` | the clean-sweep animation |
 | `src/update.js` | service-worker update check behind the home screen's update button |
 | `public/fonts/` | the Klee One subset, its licence, and regeneration notes |
-| `scripts/` | the three `npm run` helpers above |
+| `scripts/deck.mjs` | parses `content.md`; shared by `npm run cards` and `npm run check` so they cannot disagree |
+| `scripts/` | the `npm run` helpers above |
 | `wrangler.jsonc` | Cloudflare deploy config — points at `dist/` |
 | `CLAUDE.md` | short orientation for an agent picking this up |
 

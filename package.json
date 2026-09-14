@@ -10,6 +10,7 @@
     "cards": "node scripts/cards-from-markdown.mjs",
     "fonts": "node scripts/build-font-subset.mjs",
     "strokes": "node scripts/build-strokes.mjs",
+    "check": "node scripts/check-deck.mjs",
     "audit": "node scripts/audit-choices.mjs"
   },
   "devDependencies": {
