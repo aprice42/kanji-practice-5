@@ -107,7 +107,17 @@ one screen whose content is derived from that data. Note this is share-alike, un
 the font's OFL: `src/strokes.js` is a derived work under the same licence.
 
 `npm run strokes` fetches one SVG per character and keeps only the path data, exactly as
-`npm run fonts` subsets the typeface. The current deck is 79 characters and 403 strokes —
+`npm run fonts` subsets the typeface.
+
+**Rounding a path is not a search and replace.** In SVG path data a minus sign is also a
+separator — `0.8-0.05` is two numbers, not one — so a negative that rounds to zero loses
+the sign holding it apart from its neighbour and the two silently merge into `0.80`. That
+shipped once and corrupted 48 strokes across 25 of the 79 characters. The browser refused
+the malformed paths, so 日 drew as ヒ, 本 as 六, 生 as 土 and 会 as 今, and because a
+rejected path measures zero length the matcher turned down every attempt at those strokes
+forever. The generator now tokenises the numbers and re-emits them with an explicit comma
+wherever the next one does not begin with a minus, and then checks every command has a
+whole number of arguments and throws if not, so this cannot ship quietly again. The current deck is 79 characters and 403 strokes —
 30 KB, bundled into the app JS, so there is no runtime fetch and it works offline. All 79
 are present in KanjiVG, including the small kana the worksheets force (ッ ょ ゅ).
 
