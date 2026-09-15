@@ -24,6 +24,14 @@ const RETRY_BUDGET = 2
 const RESCUE_AFTER = 3
 const RESCUE_STRICTNESS = 0.6
 
+/* The last line of defence. Rescue is meant to guarantee he can always move on,
+   but that guarantee only holds if every tolerance really does loosen — and one
+   of them once did the opposite, which trapped him on a stroke he was drawing
+   correctly, replaying the guide forever. A ten-year-old cannot debug a
+   tolerance. After this many tries the stroke is accepted whatever the matcher
+   thinks; the attempts are still counted, so the card still scores as missed. */
+const GIVE_UP_AFTER = 6
+
 /* Pointer samples closer together than this are noise, not signal. */
 const MIN_STEP_PX = 1.5
 
@@ -355,7 +363,7 @@ export function mountTrace(root, card, { onFinish }) {
 
     const strictness = attempts >= RESCUE_AFTER ? RESCUE_STRICTNESS : 1
     const result = matchStroke(points, list[strokeIndex], { pointerType, strictness })
-    if (result.ok) accept(points)
+    if (result.ok || attempts >= GIVE_UP_AFTER) accept(points)
     else reject(points, result.reason)
   }
 
