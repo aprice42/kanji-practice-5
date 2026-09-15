@@ -238,6 +238,26 @@ export function mountTrace(root, card, { onFinish }) {
     wake()
   }
 
+  /* The rescue for the FIRST stroke of a character is deliberately weaker than
+     the one for the rest. Missing stroke one is usually not a mistake — he has
+     the reading and no idea yet which character it is, so there is nothing to
+     get right. Showing the whole ghost there answers the question instead of
+     hinting at it, and the card is over before it started. So stroke one gets
+     the one stroke animated and nothing else: enough to orient him, not enough
+     to read the answer off. Later strokes still get the full reveal, because by
+     then he does know the character and being stuck is a real gap. */
+  function showStrokeHint() {
+    const list = refs()
+    if (!list) return
+    const current = list[strokeIndex]
+    guide = {
+      started: performance.now(),
+      duration: Math.min(1100, Math.max(400, 260 + current.length * 2.2)),
+    }
+    say('Here is where it starts — trace along it')
+    wake()
+  }
+
   function hideGuide() {
     revealed = false
     guide = null
@@ -290,8 +310,12 @@ export function mountTrace(root, card, { onFinish }) {
   }
 
   function reject(points, reason) {
+    /* A miss on the first stroke costs nothing. He is guessing at a character he
+       has not been shown; that is the exercise working, not him failing. Only
+       strokes drawn once he knows what he is writing count toward the card. */
+    const firstStroke = strokeIndex === 0
     attempts++
-    retries++
+    if (!firstStroke) retries++
     flash = { color: colors.bad, until: performance.now() + 420, fade: 420, points }
     const nudge =
       reason === 'direction'
@@ -300,7 +324,9 @@ export function mountTrace(root, card, { onFinish }) {
           ? 'Start it from the other end'
           : 'Not quite — try again'
     say(`${nudge}. ${strokeLabel()}`)
-    if (attempts >= RESCUE_AFTER) setTimeout(() => !finished && showGuide(), 200)
+    if (attempts >= RESCUE_AFTER) {
+      setTimeout(() => !finished && (firstStroke ? showStrokeHint() : showGuide()), 200)
+    }
     wake()
   }
 
