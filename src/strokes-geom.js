@@ -35,10 +35,20 @@ function measure(d) {
   return measurer
 }
 
-/* One stroke, sampled at equal arc-length intervals. */
+/* One stroke, sampled at equal arc-length intervals. Returns null if the path
+   has no geometry.
+
+   That is not hypothetical. A build bug once shipped stroke data where rounding
+   had merged two numbers into one, and the browser rejected those paths as
+   malformed. getTotalLength() then returns 0, every sample lands on the same
+   point, and the matcher rejects every attempt — so the app told a ten-year-old
+   he was wrong about a stroke he had drawn correctly, forever. Refusing to
+   sample a degenerate path turns that into a skipped character, which is a bad
+   outcome instead of an unusable one. */
 function sampleStroke(d) {
   const path = measure(d)
   const length = path.getTotalLength()
+  if (!Number.isFinite(length) || length <= 0) return null
   const points = []
   for (let i = 0; i < SAMPLES; i++) {
     const p = path.getPointAtLength((length * i) / (SAMPLES - 1))
@@ -67,13 +77,23 @@ export function strokesFor(char) {
   // A character added to the deck without rerunning `npm run strokes` has no
   // data. Trace mode shows it as plain text and passes over it rather than
   // breaking the round.
-  const sampled = paths ? paths.map(sampleStroke) : null
+  let sampled = paths ? paths.map(sampleStroke) : null
+  if (sampled && sampled.some((stroke) => stroke === null)) {
+    // One unusable stroke makes the whole character untraceable: the queue
+    // cannot skip a stroke without teaching the wrong order.
+    console.warn(`[trace] ${char} has malformed stroke data — skipping it. Rerun \`npm run strokes\`.`)
+    sampled = null
+  }
   cache.set(char, sampled)
   return sampled
 }
 
+/* Asks the sampler, not the raw table: a character can have path data that the
+   browser refuses to parse, and the two answers must not disagree or Trace mode
+   will queue a character it cannot then draw. Results are cached, so this is
+   the same lookup strokesFor() does. */
 export function hasStrokes(char) {
-  return Boolean(strokes[char])
+  return strokesFor(char) !== null
 }
 
 /* Resample an arbitrary polyline — what the pointer produced — to SAMPLES points

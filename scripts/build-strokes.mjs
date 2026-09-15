@@ -32,8 +32,55 @@ const fileFor = (ch) => ch.codePointAt(0).toString(16).padStart(5, '0')
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 /* Coordinates carry two decimals; one is well inside the precision anyone can
-   trace at, and it takes about a fifth off the file. */
-const trim = (d) => d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(Number(n) * 10) / 10))
+   trace at, and it takes about a fifth off the file.
+
+   Rounding a path is not a search and replace. In SVG path data a minus sign is
+   also a separator — `0.8-0.05` is two numbers, not one — so any negative that
+   rounds to zero loses the sign that was holding it apart from its neighbour,
+   and `0.8-0.05` silently becomes the single number `0.80`. That shipped: it
+   corrupted 48 strokes across 25 characters, and a corrupted stroke cannot be
+   traced correctly, so the app rejected every attempt at it forever.
+
+   So the numbers are tokenised and re-emitted with an explicit comma wherever
+   the next one does not begin with a minus and delimit itself. KanjiVG uses
+   only M/C/c/S/s/L/l and z — no arcs — so there are no flag arguments whose
+   meaning depends on position. */
+const NUM = /-?(?:\d+\.\d+|\.\d+|\d+)/g
+
+function trim(d) {
+  return (d.match(/[A-Za-z][^A-Za-z]*/g) || [])
+    .map((segment) => {
+      const command = segment[0]
+      const numbers = (segment.slice(1).match(NUM) || []).map((n) => {
+        const rounded = Math.round(Number(n) * 10) / 10
+        // Object.is catches -0, whose String() is "0" and drops the sign.
+        return String(Object.is(rounded, -0) ? 0 : rounded)
+      })
+      let out = command
+      numbers.forEach((n, i) => {
+        if (i > 0 && !n.startsWith('-')) out += ','
+        out += n
+      })
+      return out
+    })
+    .join('')
+}
+
+/* How many numbers each command takes. Checked after rounding, because the
+   whole point is that rounding can change how many numbers a path parses as. */
+const ARITY = { M: 2, m: 2, L: 2, l: 2, C: 6, c: 6, S: 4, s: 4, Q: 4, q: 4, T: 2, t: 2, H: 1, h: 1, V: 1, v: 1, Z: 0, z: 0 }
+
+function validate(ch, index, d) {
+  for (const segment of d.match(/[A-Za-z][^A-Za-z]*/g) || []) {
+    const command = segment[0]
+    const arity = ARITY[command]
+    if (arity === undefined) throw new Error(`${ch} stroke ${index + 1}: unknown command ${command}`)
+    const count = (segment.slice(1).match(NUM) || []).length
+    if (arity === 0 ? count > 0 : count % arity !== 0) {
+      throw new Error(`${ch} stroke ${index + 1}: ${command} takes ${arity} numbers, got ${count} — ${d}`)
+    }
+  }
+}
 
 const out = {}
 const missing = []
@@ -57,6 +104,8 @@ for (const ch of written) {
      on <path> alone already excludes it. */
   const paths = [...svg.matchAll(/<path[^>]*\sd="([^"]+)"/g)].map((m) => trim(m[1]))
   if (!paths.length) throw new Error(`${ch} (${name}) parsed to zero strokes`)
+
+  paths.forEach((d, i) => validate(ch, i, d))
 
   out[ch] = paths
   strokeCount += paths.length

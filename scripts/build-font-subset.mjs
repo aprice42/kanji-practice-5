@@ -54,4 +54,10 @@ for (const [i, weight] of WEIGHTS.entries()) {
   console.log(`  klee-one-${weight}.woff2  ${(buf.length / 1024).toFixed(1)} KB`)
 }
 
+/* What the subset was built for, so `npm run check` can tell whether it is
+   stale. The woff2 itself cannot answer that without decompressing and parsing
+   its tables, and a forgotten `npm run fonts` is exactly the silent failure
+   this project has already shipped once. */
+writeFileSync(join(root, 'public/fonts/subset.txt'), text, 'utf8')
+
 console.log('Done. Rebuild (`npm run build`) so the service worker precaches the new files.')
