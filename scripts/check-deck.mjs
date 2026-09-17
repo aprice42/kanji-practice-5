@@ -2,7 +2,7 @@
    after adding cards, before `npm run build`.
 
    Every generator here validates its own output, but nothing used to check that
-   the outputs were built from the CURRENT content.md. Adding cards and
+   the outputs were built from the CURRENT source. Adding cards and
    forgetting a step leaves a tree where everything "succeeds" and the app is
    quietly wrong — a new kanji renders in a Chinese fallback face, or cannot be
    traced at all. Both failure modes are documented in README.md, and being
@@ -11,10 +11,10 @@
    So this is the check that makes those steps hard to skip rather than merely
    written down. It regenerates nothing and writes nothing. */
 
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { parseCards, duplicateReading, deckCharacters, isJapanese } from './deck.mjs'
+import { parseCards, isFilled, duplicateReadings, isAllowedCollision, deckCharacters, isJapanese, isTraceable } from './deck.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const read = (p) => readFileSync(join(root, p), 'utf8')
@@ -22,30 +22,112 @@ const read = (p) => readFileSync(join(root, p), 'utf8')
 const problems = []
 const fail = (headline, fix) => problems.push({ headline, fix })
 
-/* 1. src/cards.js was built from the current content.md ------------------- */
+/* 1. src/cards.js was built from the current sources ---------------------- */
 
-const { rows } = parseCards(read('content/content.md'))
-const { cards } = await import(new URL('../src/cards.js', import.meta.url))
+/* Re-derive what `npm run cards` would emit, by reading the same directories in
+   the same order. Deck ids and labels are duplicated here rather than imported
+   from the generator, deliberately: a check that shares the generator's idea of
+   what a deck is cannot catch the generator being wrong about it. */
+const GRADES = [
+  { file: 'grade-1.md', prefix: 'g1', label: 'Grade 1' },
+  { file: 'grade-2.md', prefix: 'g2', label: 'Grade 2' },
+  { file: 'grade-3.md', prefix: 'g3', label: 'Grade 3' },
+  { file: 'grade-4.md', prefix: 'g4', label: 'Grade 4' },
+  { file: 'grade-5.md', prefix: 'g5', label: 'Grade 5' },
+  { file: 'challenge.md', prefix: 'ch', label: 'Challenge' },
+]
 
-const duplicate = duplicateReading(rows)
-if (duplicate) fail(`content.md has two cards reading "${duplicate}".`, 'Give one of them a different reading.')
+const sources = []
 
-const expected = rows.map(([reading, written, meaning]) => ({ reading, written, meaning }))
+const worksheetDir = join(root, 'content/worksheets')
+for (const file of existsSync(worksheetDir) ? readdirSync(worksheetDir).sort() : []) {
+  if (!file.endsWith('.md') || file === 'README.md') continue
+  const name = file.replace(/\.md$/, '')
+  const parsed = parseCards(read(`content/worksheets/${file}`))
+  const rows = parsed.groups.flatMap((g) => g.rows)
+  sources.push({
+    id: `w:${name}`,
+    label: parsed.title || name,
+    rows: rows.filter(isFilled),
+    words: rows.length,
+    notes: parsed.groups.reduce((n, g) => n + g.notes.length, 0),
+  })
+}
+
+for (const { file, prefix, label } of GRADES) {
+  if (!existsSync(join(root, 'content/words', file))) continue
+  const parsed = parseCards(read(`content/words/${file}`))
+  parsed.groups.forEach((group, i) => {
+    sources.push({
+      id: `${prefix}:${i + 1}`,
+      label: `${label} · Group ${i + 1}`,
+      rows: group.rows.filter(isFilled),
+      words: group.rows.length,
+      notes: group.notes.length,
+    })
+  })
+}
+
+const { cards, DECKS } = await import(new URL('../src/cards.js', import.meta.url))
+
+/* A duplicate reading inside one deck would let a single round ask a question
+   with two correct answers. Across decks it is the syllabus re-teaching a word
+   as more of its kanji arrive, and is reported at the foot of this run. */
+for (const source of sources) {
+  for (const collision of duplicateReadings(source.rows)) {
+    if (isAllowedCollision(collision)) continue
+    fail(
+      `${source.id} has two cards reading "${collision.reading}" — ${collision.forms.join(' and ')}.`,
+      'Give one of them a different reading, or name it in ALLOWED_COLLISIONS in scripts/deck.mjs if the source really prints both.'
+    )
+  }
+}
+
+const expected = sources.flatMap((s) =>
+  s.rows.map(([reading, written, meaning]) => ({ reading, written, meaning, deck: s.id }))
+)
 const same =
   expected.length === cards.length &&
-  expected.every((e, i) => e.reading === cards[i].reading && e.written === cards[i].written && e.meaning === cards[i].meaning)
+  expected.every(
+    (e, i) =>
+      e.reading === cards[i].reading &&
+      e.written === cards[i].written &&
+      e.meaning === cards[i].meaning &&
+      /* `deck` is compared too. Without it a cards.js generated before decks
+         existed passes every other check and the app silently plays one flat
+         deck of everything. */
+      e.deck === cards[i].deck
+  )
 if (!same) {
   fail(
-    `src/cards.js does not match content/content.md (${cards.length} cards vs ${expected.length} rows).`,
+    `src/cards.js does not match content/ (${cards.length} cards vs ${expected.length} rows).`,
     'npm run cards'
   )
+}
+
+/* Every card belongs to a deck the manifest knows about, and the manifest's
+   counts are the ones the sheet will show. */
+const manifest = new Map((DECKS ?? []).map((d) => [d.id, d]))
+if (!DECKS) {
+  fail('src/cards.js exports no DECKS manifest.', 'npm run cards')
+} else {
+  const unknown = [...new Set(cards.map((c) => c.deck))].filter((id) => !manifest.has(id))
+  if (unknown.length) {
+    fail(`Cards name ${unknown.length} deck(s) the manifest does not list: ${unknown.join(', ')}.`, 'npm run cards')
+  }
+  const miscounted = sources.filter(
+    (s) => manifest.has(s.id) && (manifest.get(s.id).cards !== s.rows.length || manifest.get(s.id).words !== s.words)
+  )
+  if (miscounted.length) {
+    fail(`The DECKS manifest miscounts ${miscounted.map((s) => s.id).join(', ')}.`, 'npm run cards')
+  }
 }
 
 /* 2. Every character has stroke data --------------------------------------- */
 
 const { strokes } = await import(new URL('../src/strokes.js', import.meta.url))
 const written = [...new Set(cards.flatMap((c) => [...c.written]))]
-const noStrokes = written.filter((ch) => !strokes[ch])
+const noStrokes = written.filter((ch) => isTraceable(ch) && !strokes[ch])
 if (noStrokes.length) {
   fail(
     `No stroke data for ${noStrokes.join(' ')} — Trace mode skips ${noStrokes.length === 1 ? 'it' : 'them'} silently.`,
@@ -94,9 +176,30 @@ if (!existsSync(join(root, 'public/fonts/subset.txt'))) {
 
 /* ------------------------------------------------------------------------- */
 
+const blank = sources.reduce((n, s) => n + (s.words - s.rows.length), 0)
+const flagged = sources.reduce((n, s) => n + s.notes, 0)
+
 if (!problems.length) {
-  console.log(`${cards.length} cards, ${written.length} characters.`)
-  console.log('cards.js matches content.md; every character has stroke data and a glyph in the font subset.')
+  console.log(`${cards.length} cards across ${sources.length} decks, ${written.length} characters.`)
+  console.log('cards.js matches content/; every character has stroke data and a glyph in the font subset.\n')
+
+  /* Progress, not a verdict. A blank row is simply not a card yet, and a flag
+     routes a reviewer's attention — neither is a failure, and making either one
+     fail would leave the app unbuildable for as long as the content job runs. */
+  for (const s of sources) {
+    const b = s.words - s.rows.length
+    if (!b && !s.notes) continue
+    console.log(
+      `  ${s.id.padEnd(16)} ${String(s.rows.length).padStart(3)} of ${String(s.words).padStart(3)} filled` +
+        `${b ? `   ${b} blank` : ''}${s.notes ? `   ${s.notes} flagged` : ''}`
+    )
+  }
+  if (blank || flagged) console.log(`\n  ${blank} row(s) still blank, ${flagged} flagged for review. Neither is a failure.`)
+
+  const crossDeck = duplicateReadings(cards.map((c) => [c.reading, c.written]))
+  if (crossDeck.length) {
+    console.log(`  ${crossDeck.length} reading(s) span more than one deck — the syllabus re-teaching a word.`)
+  }
   process.exit(0)
 }
 

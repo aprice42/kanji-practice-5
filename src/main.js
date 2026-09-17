@@ -1,4 +1,4 @@
-import { cards as rawCards } from './cards.js'
+import { cards as rawCards, DECKS } from './cards.js'
 import { shuffle, facesOf, buildChoices } from './choices.js'
 import { confetti } from './confetti.js'
 import { mountTrace } from './trace.js'
@@ -11,6 +11,53 @@ const cards = rawCards.map((card, id) => ({ ...card, id }))
 const app = document.getElementById('app')
 
 const CHOICE_COUNT = 3
+
+/* Below this many cards a multiple-choice question cannot be disguised — there
+   are not enough same-shaped words to hide the answer among — so distractors
+   are drawn from the card's whole grade instead of the selection. */
+const MIN_POOL = 8
+
+const DEFAULT_SELECTION = ['w:2025-09-review']
+
+/* Decks -------------------------------------------------------------------
+   DECKS is generated alongside the cards, so labels and counts are never
+   derived here by string-splitting an id.
+   ------------------------------------------------------------------------- */
+
+const deckById = new Map(DECKS.map((d) => [d.id, d]))
+
+/* A deck with nothing filled in yet is listed but cannot be chosen. Showing it
+   as `0` would look like a bug, and leaving it out would hide the fact that the
+   grade exists at all. */
+const isPlayable = (deck) => deck.cards > 0
+const playableDecks = DECKS.filter(isPlayable)
+
+const cardsByDeck = new Map()
+for (const card of cards) {
+  if (!cardsByDeck.has(card.deck)) cardsByDeck.set(card.deck, [])
+  cardsByDeck.get(card.deck).push(card)
+}
+
+/* Grade order as the sheet prints it. `ch` is the sixth tier listed past grade
+   5 — not "grade 6", which would claim something the sheet does not say. */
+const GRADE_ORDER = [1, 2, 3, 4, 5, 'ch']
+const gradeDecks = (grade) => DECKS.filter((d) => d.grade === grade)
+const worksheetDecks = DECKS.filter((d) => d.grade === null)
+
+/* "Grade 4 · Group 2" → "Grade 4". Taken from the manifest rather than written
+   out again here, so the two can never disagree. */
+const gradeLabel = (grade) => gradeDecks(grade)[0]?.label.split(' · ')[0] ?? String(grade)
+
+/* The first character of the first and last written form in a group — 曜–黄 —
+   which is how the school's own sheet says where a stretch of the list starts
+   and stops. */
+function rangeOf(deckId) {
+  const list = cardsByDeck.get(deckId) ?? []
+  if (!list.length) return ''
+  const first = [...list[0].written][0]
+  const last = [...list[list.length - 1].written][0]
+  return first === last ? first : `${first}–${last}`
+}
 
 /* What the results screen says, and how much confetti it throws.
    Thresholds: 0 / 25 / 50 / 75 / 95 / 100 percent. 76–94 keeps the same words
@@ -58,6 +105,19 @@ const ICONS = {
   brush:
     '<path d="M12 36c0-4 2-6 5-6s5 2 5 5-2 5-5 5c-4 0-6-2-9-2 2-1 4-1 4-2Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>' +
     '<path d="M21 31 38 10a3.5 3.5 0 0 1 5 5L22 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>',
+  /* The three selection states differ in SHAPE, not only in colour: empty,
+     ticked, and a bar for "some of this grade". A partial state carried by a
+     tint alone is invisible to anyone who cannot separate the two colours. */
+  box:
+    '<rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>',
+  boxCheck:
+    '<rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>' +
+    '<path d="M17 24l5 5 9-11" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  boxDash:
+    '<rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>' +
+    '<path d="M17 24h14" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>',
+  chevron:
+    '<path d="M18 14l10 10-10 10" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
   menu:
     '<path d="M9 15h30M9 24h30M9 33h30" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>',
   home:
@@ -115,12 +175,21 @@ const state = {
   picked: null, // the option the user tapped, until they continue
   theme: 'system', // 'system' | 'light' | 'dark'
   palette: 'indigo',
+  /* Deck ids, persisted. Ids are content-derived (`g4:2`, `w:2025-09-review`)
+     and survive a row being inserted; a card's `id` is its array index and
+     would rot the moment the list is edited, which is why nothing persisted
+     here is ever keyed on one. */
+  selection: new Set(DEFAULT_SELECTION),
+  /* Ephemeral, never persisted: null when the sheet is closed, otherwise the
+     set of grades expanded inside it. */
+  sheet: null,
 }
 
 /* Theme ------------------------------------------------------------------ */
 
 const THEME_KEY = 'kanji-practice:theme'
 const PALETTE_KEY = 'kanji-practice:palette'
+const SELECTION_KEY = 'kanji-practice:selection'
 
 function applyTheme() {
   const root = document.documentElement
@@ -148,10 +217,125 @@ function loadPrefs() {
     if (THEMES.some((t) => t.id === savedTheme)) state.theme = savedTheme
     const savedPalette = localStorage.getItem(PALETTE_KEY)
     if (PALETTES.some((p) => p.id === savedPalette)) state.palette = savedPalette
+
+    /* Validated against the manifest, not trusted. A deck can disappear when
+       the master list is re-ingested or a worksheet is renamed, and a stored id
+       that no longer resolves would leave a round with no cards in it. Unknown
+       ids are dropped; if nothing survives, the default comes back. */
+    const saved = JSON.parse(localStorage.getItem(SELECTION_KEY) ?? 'null')
+    if (Array.isArray(saved)) {
+      const known = saved.filter((id) => playableDecks.some((d) => d.id === id))
+      if (known.length) state.selection = new Set(known)
+    }
   } catch {
     // Private browsing or blocked storage — stay on the defaults.
   }
   applyTheme()
+}
+
+function saveSelection() {
+  try {
+    localStorage.setItem(SELECTION_KEY, JSON.stringify([...state.selection]))
+  } catch {
+    // Not persisting is survivable; the choice still applies for this session.
+  }
+}
+
+/* Selection --------------------------------------------------------------- */
+
+const activeCards = () => cards.filter((card) => state.selection.has(card.deck))
+
+const selectedDecks = () => playableDecks.filter((d) => state.selection.has(d.id))
+
+const gradeIsWhole = (grade) =>
+  gradeDecks(grade).filter(isPlayable).every((d) => state.selection.has(d.id))
+
+const gradeState = (grade) => {
+  const decks = gradeDecks(grade).filter(isPlayable)
+  const on = decks.filter((d) => state.selection.has(d.id)).length
+  return on === 0 ? 'false' : on === decks.length ? 'true' : 'mixed'
+}
+
+/* The last selected deck cannot be turned off. An empty selection would mean a
+   round with no cards, so rather than disabling every mode and explaining why,
+   the state is simply made unreachable. Returns false when it refused, which is
+   what the sheet announces. */
+function setDeck(id, on) {
+  if (on) {
+    state.selection.add(id)
+  } else {
+    if (state.selection.size <= 1) return false
+    state.selection.delete(id)
+  }
+  saveSelection()
+  return true
+}
+
+function setGrade(grade, on) {
+  const ids = gradeDecks(grade).filter(isPlayable).map((d) => d.id)
+  if (on) {
+    for (const id of ids) state.selection.add(id)
+  } else {
+    const remaining = [...state.selection].filter((id) => !ids.includes(id))
+    if (!remaining.length) return false
+    state.selection = new Set(remaining)
+  }
+  saveSelection()
+  return true
+}
+
+/* "1, 2, 3" → "1–3"; "1, 3" stays "1, 3". A run of two is written out rather
+   than dashed, because "Groups 1–2" and "Groups 1, 2" are the same length and
+   the second is unambiguous. */
+function rangeList(numbers) {
+  const parts = []
+  for (let i = 0; i < numbers.length; ) {
+    let j = i
+    while (j + 1 < numbers.length && numbers[j + 1] === numbers[j] + 1) j++
+    parts.push(j - i >= 2 ? `${numbers[i]}–${numbers[j]}` : numbers.slice(i, j + 1).join(', '))
+    i = j + 1
+  }
+  return parts.join(', ')
+}
+
+const listJoin = (items) =>
+  items.length <= 1
+    ? (items[0] ?? '')
+    : `${items.slice(0, -1).join(', ')} & ${items[items.length - 1]}`
+
+/* What the home screen's summary row says. Names what was chosen whenever it
+   can be named, and falls back to counting only when the selection is too
+   scattered for a phrase to be shorter than the list. */
+function describeSelection() {
+  const selected = selectedDecks()
+  if (!selected.length) return 'Nothing selected'
+
+  const sheets = selected.filter((d) => d.grade === null).map((d) => d.label)
+  const grades = GRADE_ORDER.filter((g) => selected.some((d) => d.grade === g))
+
+  // "Grades 3 & 4" — only when whole grades, and only numbered ones, since
+  // "Grades 3 & Challenge" is not a sentence.
+  if (
+    !sheets.length &&
+    grades.length > 1 &&
+    grades.every((g) => typeof g === 'number' && gradeIsWhole(g))
+  ) {
+    return `Grades ${listJoin(grades.map(String))}`
+  }
+
+  const parts = [...sheets]
+  for (const g of grades) {
+    if (gradeIsWhole(g)) {
+      parts.push(gradeLabel(g))
+      continue
+    }
+    const groups = selected
+      .filter((d) => d.grade === g)
+      .map((d) => d.group)
+      .sort((a, b) => a - b)
+    parts.push(`${gradeLabel(g)} · Group${groups.length > 1 ? 's' : ''} ${rangeList(groups)}`)
+  }
+  return parts.length <= 2 ? listJoin(parts) : `${selected.length} groups`
 }
 
 function setPalette(palette) {
@@ -227,19 +411,47 @@ function bindThemeSwitch() {
 const faces = (card) => facesOf(card, state.direction)
 const answerFace = (card) => faces(card).answer
 
+/* Scoped to the round, not to every card that exists. A round is the whole
+   selection, but "Practice the N you missed" plays a subset — and scanning all
+   743 would have that round report "7 of 743". */
 function byStatus(kind) {
-  return cards.filter((card) => state.status.get(card.id) === kind)
+  return state.deck.filter((card) => state.status.get(card.id) === kind)
+}
+
+/* Where a multiple-choice question's wrong answers come from.
+
+   Normally the selection, because a distractor is only convincing if it is
+   something the child is actually studying. But a question needs same-shaped
+   words to hide the answer among, and a single group can be as small as seven —
+   at that size the correct option is often the only one whose okurigana fits
+   the prompt, which is answerable without reading any kanji at all. So a small
+   selection widens to the card's whole grade. `npm run audit` measures exactly
+   this, per deck. */
+function distractorPool(card) {
+  const active = activeCards()
+  if (active.length >= MIN_POOL) return active
+  const grade = deckById.get(card.deck)?.grade
+  if (grade == null) return active
+  const wider = cards.filter((c) => deckById.get(c.deck)?.grade === grade)
+  return wider.length > active.length ? wider : active
 }
 
 function prepareCard() {
   state.revealed = false
   state.picked = null
+  const card = state.deck[state.index]
   state.choices =
     state.mode === 'choice'
-      ? buildChoices(cards, state.deck[state.index], state.direction, CHOICE_COUNT)
+      ? buildChoices(distractorPool(card), card, state.direction, CHOICE_COUNT)
       : []
 }
 
+/* A round is the whole selection. A cap was tried and removed: it drew a fresh
+   random sample every round, so nothing guaranteed he ever saw every card, and
+   the September review — 51 cards, his actual homework — could no longer be
+   worked start to finish. Length is controlled by what is selected instead,
+   which is what Groups are for. Making a 232-card grade digestible is a real
+   problem and still an open one; a random sample was not the answer to it. */
 function startRound(deck) {
   state.deck = shuffle(deck)
   state.index = 0
@@ -250,7 +462,7 @@ function startRound(deck) {
 
 function restart() {
   state.status.clear()
-  startRound(cards)
+  startRound(activeCards())
 }
 
 function practiceMissed() {
@@ -421,6 +633,222 @@ function bindMenus() {
   }
 }
 
+/* The selection sheet -----------------------------------------------------
+   A dialog rather than a screen: choosing what to practice is a detour from
+   starting a round, not a step in it, and a panel keeps the home screen visible
+   behind it.
+   ------------------------------------------------------------------------- */
+
+const BOX = { true: 'boxCheck', false: 'box', mixed: 'boxDash' }
+
+function sheetCheck({ checked, label, count, ready = true, range = '', data, cls = '' }) {
+  const countText = ready ? String(count) : 'not ready'
+  return `
+    <button class="sheet__check ${cls}" role="checkbox" aria-checked="${checked}"
+            ${ready ? '' : 'disabled'} ${data}>
+      <span class="sheet__box">${icon(BOX[checked], 'icon--box')}</span>
+      <span class="sheet__label">${label}</span>
+      ${range ? `<span class="sheet__range" lang="ja">${range}</span>` : ''}
+      <span class="sheet__count ${ready ? '' : 'is-muted'}">${countText}</span>
+      <span class="visually-hidden">${ready ? `${count} cards` : 'no cards yet'}</span>
+    </button>`
+}
+
+function sheetGradeRow(grade) {
+  const decks = gradeDecks(grade)
+  const playable = decks.filter(isPlayable)
+  const total = playable.reduce((n, d) => n + d.cards, 0)
+  const expanded = state.sheet.has(String(grade))
+  const id = `sheet-groups-${grade}`
+  const label = gradeLabel(grade)
+
+  return `
+    <div class="sheet__row">
+      ${sheetCheck({
+        checked: gradeState(grade),
+        label,
+        count: total,
+        ready: playable.length > 0,
+        data: `data-grade="${grade}"`,
+      })}
+      <button class="sheet__expand" aria-expanded="${expanded}" aria-controls="${id}"
+              data-expand="${grade}">
+        ${icon('chevron', 'icon--chevron')}
+        <span class="visually-hidden">${expanded ? 'Hide' : 'Show'} ${label} groups</span>
+      </button>
+    </div>
+    <div class="sheet__groups" id="${id}" ${expanded ? '' : 'hidden'}>
+      ${decks
+        .map((d) =>
+          sheetCheck({
+            checked: String(state.selection.has(d.id)),
+            label: `Group ${d.group}`,
+            count: d.cards,
+            ready: isPlayable(d),
+            range: rangeOf(d.id),
+            data: `data-deck="${d.id}"`,
+            cls: 'sheet__check--group',
+          })
+        )
+        .join('')}
+    </div>`
+}
+
+function renderSheet() {
+  if (!state.sheet) return ''
+  return `
+    <div class="sheet-scrim" data-close></div>
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <h2 class="sheet__title" id="sheet-title">What to practice</h2>
+      <div class="sheet__list">
+        <p class="menu__heading">Grades</p>
+        ${GRADE_ORDER.map(sheetGradeRow).join('')}
+        <p class="menu__heading">Worksheets</p>
+        ${worksheetDecks
+          .map((d) =>
+            sheetCheck({
+              checked: String(state.selection.has(d.id)),
+              label: d.label,
+              count: d.cards,
+              ready: isPlayable(d),
+              data: `data-deck="${d.id}"`,
+            })
+          )
+          .join('')}
+      </div>
+      <p class="sheet__note" role="status" aria-live="polite"></p>
+      <div class="sheet__foot">
+        <button class="btn" data-close>Done · ${activeCards().length} cards</button>
+      </div>
+    </section>`
+}
+
+/* Ticking a box updates the controls in place rather than re-rendering.
+
+   Re-rendering was the obvious thing and it was wrong: render() replaces the
+   home screen wholesale, so every tick built a new .sheet, which restarted its
+   entry animation and repainted the screen behind it. It read as a flash on
+   every click. The theme and palette switches already avoid this for the same
+   reason — see setTheme — so this follows them.
+
+   Everything that can disagree is updated here: each box, the grade boxes that
+   summarise their groups, the Done count, and the summary row behind the
+   scrim. */
+function syncSheet() {
+  const setBox = (btn, checked) => {
+    btn.setAttribute('aria-checked', checked)
+    btn.querySelector('.sheet__box').innerHTML = icon(BOX[checked], 'icon--box')
+  }
+
+  for (const btn of app.querySelectorAll('.sheet [data-deck]')) {
+    setBox(btn, String(state.selection.has(btn.dataset.deck)))
+  }
+  for (const btn of app.querySelectorAll('.sheet [data-grade]')) {
+    const g = btn.dataset.grade === 'ch' ? 'ch' : Number(btn.dataset.grade)
+    setBox(btn, gradeState(g))
+  }
+
+  const count = activeCards().length
+  const done = app.querySelector('.sheet__foot .btn')
+  if (done) done.textContent = `Done · ${count} cards`
+
+  // The summary row is visible through the scrim, so it must not lag behind.
+  const name = app.querySelector('.selection__name')
+  if (name) name.textContent = describeSelection()
+  const shown = app.querySelector('.selection__count')
+  if (shown) shown.textContent = `${count} cards`
+}
+
+/* Opening and closing are the only re-renders, so the entry animation runs
+   once. Focus goes into the sheet on open and back to the row that opened it on
+   close — a dialog that drops focus to the top of the document is unusable by
+   keyboard. */
+function openSheet() {
+  state.sheet = new Set()
+  render()
+  document.querySelector('.sheet__list .sheet__check')?.focus()
+}
+
+function closeSheet() {
+  state.sheet = null
+  render()
+  document.getElementById('selection')?.focus()
+}
+
+function bindSheet() {
+  const sheet = app.querySelector('.sheet')
+  if (!sheet) return
+
+  for (const el of app.querySelectorAll('[data-close]')) {
+    el.addEventListener('click', closeSheet)
+  }
+
+  const note = sheet.querySelector('.sheet__note')
+  const refused = () => {
+    note.textContent = 'Keep at least one selected — a round needs cards.'
+  }
+
+  const change = (ok) => {
+    if (ok) {
+      note.textContent = ''
+      syncSheet()
+    } else {
+      refused()
+    }
+  }
+
+  for (const btn of sheet.querySelectorAll('[data-deck]')) {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.deck
+      change(setDeck(id, !state.selection.has(id)))
+    })
+  }
+
+  for (const btn of sheet.querySelectorAll('[data-grade]')) {
+    btn.addEventListener('click', () => {
+      const g = btn.dataset.grade === 'ch' ? 'ch' : Number(btn.dataset.grade)
+      change(setGrade(g, gradeState(g) !== 'true'))
+    })
+  }
+
+  /* Expanding is also in place — hiding a group list is not worth rebuilding
+     the screen for. state.sheet still records which grades are open, so a real
+     re-render (a theme change with the sheet up) restores them. */
+  for (const btn of sheet.querySelectorAll('[data-expand]')) {
+    btn.addEventListener('click', () => {
+      const grade = btn.dataset.expand
+      const open = !state.sheet.has(grade)
+      if (open) state.sheet.add(grade)
+      else state.sheet.delete(grade)
+      const groups = sheet.querySelector(`#sheet-groups-${grade}`)
+      if (groups) groups.hidden = !open
+      btn.setAttribute('aria-expanded', String(open))
+      const label = btn.querySelector('.visually-hidden')
+      if (label) label.textContent = `${open ? 'Hide' : 'Show'} ${gradeLabel(
+        grade === 'ch' ? 'ch' : Number(grade)
+      )} groups`
+    })
+  }
+
+  /* Escape closes, and Tab is kept inside — an aria-modal dialog that lets
+     focus wander behind the scrim is lying about being modal. */
+  sheet.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation()
+      closeSheet()
+      return
+    }
+    if (event.key !== 'Tab') return
+    const stops = [...sheet.querySelectorAll('button:not([disabled])')]
+    if (!stops.length) return
+    const edge = event.shiftKey ? stops[0] : stops[stops.length - 1]
+    if (document.activeElement === edge) {
+      event.preventDefault()
+      ;(event.shiftKey ? stops[stops.length - 1] : stops[0]).focus()
+    }
+  })
+}
+
 function directionSwitch() {
   return `
     <div class="mode" role="group" aria-label="Practice direction">
@@ -439,7 +867,8 @@ function bindDirectionSwitch() {
       state.direction = btn.dataset.direction
       // Options are built from the answer face, so they must be rebuilt.
       if (state.screen === 'practice' && state.mode === 'choice' && !state.picked) {
-        state.choices = buildChoices(cards, state.deck[state.index], state.direction, CHOICE_COUNT)
+        const card = state.deck[state.index]
+        state.choices = buildChoices(distractorPool(card), card, state.direction, CHOICE_COUNT)
       }
       render()
     })
@@ -498,6 +927,14 @@ function renderHome() {
              </div>`
           : ''
       }
+      <button class="selection" id="selection" aria-haspopup="dialog"
+              aria-expanded="${state.sheet ? 'true' : 'false'}">
+        <span class="selection__text">
+          <span class="selection__name">${describeSelection()}</span>
+          <span class="selection__count">${activeCards().length} cards</span>
+        </span>
+        ${icon('chevron', 'icon--chevron')}
+      </button>
       <div class="home__modes">
         ${Object.entries(MODES)
           .map(
@@ -510,20 +947,27 @@ function renderHome() {
           )
           .join('')}
       </div>
-    </div>`
+    </div>
+    ${renderSheet()}`
 
   for (const btn of app.querySelectorAll('[data-start]')) {
     btn.addEventListener('click', () => setMode(btn.dataset.start))
   }
+  document.getElementById('selection').addEventListener('click', openSheet)
+  bindSheet()
+
   // Binds the gear, and the theme and palette switches inside it.
   bindMenus()
 
   const update = document.getElementById('update')
   if (update) update.addEventListener('click', applyUpdate)
 
-  // Every visit to the home screen is a chance to notice a new version. The
-  // answer arrives asynchronously, hence onUpdateReady below.
-  checkForUpdate()
+  /* Every visit to the home screen is a chance to notice a new version. The
+     answer arrives asynchronously, hence onUpdateReady below.
+
+     Not while the sheet is open: every tick of a checkbox re-renders this
+     screen, and each one would otherwise fire a service-worker update check. */
+  if (!state.sheet) checkForUpdate()
 }
 
 function renderFlashcard() {
@@ -711,7 +1155,9 @@ function scoreRing(correct, total) {
 function renderResults() {
   const correct = byStatus('correct')
   const missed = byStatus('incorrect')
-  const total = cards.length
+  // The round, not every card that exists — a retry of seven missed cards must
+  // report seven, not 743.
+  const total = state.deck.length
   const celebration = celebrationFor(correct.length, total)
 
   /* With nothing missed the correct list is the only list, so it is shown

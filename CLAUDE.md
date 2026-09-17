@@ -33,7 +33,8 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
 ## Commands
 
     npm run dev      # local dev server
-    npm run cards    # content/content.md → src/cards.js
+    npm run cards    # content/worksheets/ + content/words/ → src/cards.js
+    npm run scaffold # master kanji list → content/words/*.md
     npm run fonts    # rebuild the Klee One subset (needs network)
     npm run strokes  # rebuild the KanjiVG stroke subset (needs network)
     npm run check    # generated files still match the deck — run after adding cards
@@ -42,12 +43,14 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
 
 ## House rules
 
-- `content/content.md` is the source of truth. `src/cards.js`, `src/strokes.js` and
-  `public/fonts/` are all generated from it, and `npm run check` is what proves they still
-  agree — the generators only validate their own output, not each other's.
-- `content/content.md` is the source of truth; `src/cards.js` is generated, and so is
-  `src/strokes.js` (from KanjiVG, CC BY-SA — attribution is required, and lives at the foot
-  of the Trace screen).
+- `content/worksheets/*.md` and `content/words/*.md` are the source of truth. `src/cards.js`
+  (both `cards` and the `DECKS` manifest), `src/strokes.js` and `public/fonts/` are all
+  generated from them, and `npm run check` is what proves they still agree — the generators
+  only validate their own output, not each other's. `src/strokes.js` comes from KanjiVG,
+  CC BY-SA — attribution is required, and lives at the foot of the Trace screen.
+- A reading must be unique within a deck, not across them: a word is re-taught as more of
+  its kanji arrive. Deck ids (`g4:2`, `w:2025-09-review`) are content-derived and safe to
+  persist; a card's `id` is its array index and is not.
 - Every Japanese string needs `lang="ja"` — that is what applies the Japanese typeface.
 - Colors come from CSS tokens only. Four palettes × light and dark; a literal hex breaks
   seven of the eight combinations.
@@ -58,5 +61,12 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
 - There is exactly one layout breakpoint (the mode cards, 1 column to 3 at 44rem) and it is
   deliberate: a column count is discrete and a clamp cannot express it. Sizes stay clamps.
 - Correct/wrong must differ by shape, not only color, and every icon needs a text label.
+- A round is the whole selection — no cap. One was tried and removed: it sampled randomly,
+  so no deck was ever guaranteed to be seen in full. Length is controlled by the selection.
+  Every count — tally, progress, score ring — follows `state.deck`, since "practice the N
+  you missed" plays a subset.
+- An element toggled by the `hidden` attribute must not be given a `display` rule without
+  a matching `[hidden] { display: none }`; `display: flex` beats the user-agent rule. Same
+  trap as `.is-hidden` below.
 - `.is-hidden` is a global `visibility: hidden`. Do not reuse that name for a local
   modifier — Trace mode's masked characters are `.is-masked` because of exactly that.
