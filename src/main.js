@@ -12,12 +12,6 @@ const app = document.getElementById('app')
 
 const CHOICE_COUNT = 3
 
-/* A round is capped. The whole curriculum is 743 cards and even one group of
-   grade 5 is 58 — a round of everything is not practice, it is an evening.
-   Twenty is a sitting. The cap applies after the shuffle, so a different
-   twenty come up each time and the whole selection is still reachable. */
-const ROUND_SIZE = 20
-
 /* Below this many cards a multiple-choice question cannot be disguised — there
    are not enough same-shaped words to hide the answer among — so distractors
    are drawn from the card's whole grade instead of the selection. */
@@ -417,9 +411,9 @@ function bindThemeSwitch() {
 const faces = (card) => facesOf(card, state.direction)
 const answerFace = (card) => faces(card).answer
 
-/* Scoped to the round, not to the whole deck. With a cap in place and 743
-   cards behind it, scanning every card would make the tally and the results
-   screen report "7 of 743" for a round of twenty. */
+/* Scoped to the round, not to every card that exists. A round is the whole
+   selection, but "Practice the N you missed" plays a subset — and scanning all
+   743 would have that round report "7 of 743". */
 function byStatus(kind) {
   return state.deck.filter((card) => state.status.get(card.id) === kind)
 }
@@ -452,10 +446,14 @@ function prepareCard() {
       : []
 }
 
+/* A round is the whole selection. A cap was tried and removed: it drew a fresh
+   random sample every round, so nothing guaranteed he ever saw every card, and
+   the September review — 51 cards, his actual homework — could no longer be
+   worked start to finish. Length is controlled by what is selected instead,
+   which is what Groups are for. Making a 232-card grade digestible is a real
+   problem and still an open one; a random sample was not the answer to it. */
 function startRound(deck) {
-  // Capped AFTER the shuffle, so a different twenty come up each time and the
-  // whole selection stays reachable across rounds.
-  state.deck = shuffle(deck).slice(0, ROUND_SIZE)
+  state.deck = shuffle(deck)
   state.index = 0
   state.screen = 'practice'
   prepareCard()
@@ -1157,8 +1155,8 @@ function scoreRing(correct, total) {
 function renderResults() {
   const correct = byStatus('correct')
   const missed = byStatus('incorrect')
-  // The round, not the deck: a capped round of twenty out of 743 must not
-  // report "17 of 743".
+  // The round, not every card that exists — a retry of seven missed cards must
+  // report seven, not 743.
   const total = state.deck.length
   const celebration = celebrationFor(correct.length, total)
 

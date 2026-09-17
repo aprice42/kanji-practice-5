@@ -55,16 +55,22 @@ It is stored under `kanji-practice:selection` as deck ids, and **validated again
 back. Deck ids are content-derived and stable; a card's `id` is its array index and would
 rot the moment a row were inserted above it, which is why nothing persisted is keyed on one.
 
-### A round is twenty cards
+### A round is the whole selection
 
-`ROUND_SIZE` in `src/main.js`. The whole curriculum is 743 cards and a single group of
-grade 5 is 58 — a round of everything is not practice, it is an evening. The cap is applied
-*after* the shuffle, so a different twenty come up each time and the whole selection stays
-reachable across rounds.
+There is no cap, and one was tried and removed. A cap of twenty drew a fresh random sample
+every round, so nothing guaranteed he ever saw every card in a deck — and the September
+review, 51 cards and his actual homework, could no longer be worked start to finish.
 
-Everything that counts follows the round rather than the deck: the tally, the progress bar,
-the score ring, and **Practice the N you missed**. Scoring against the whole selection would
-report "13 of 743" for a round of twenty.
+**Length is controlled by what is selected.** That is what Groups are for: a 232-card grade
+is four groups of about 58 rather than one sitting.
+
+Making a big selection digestible is still an open question. The shape of an answer is
+probably rounds that draw the cards *not yet seen*, so a few short rounds cover a deck
+exactly once — coverage and length at the same time. A random sample gave neither.
+
+Counts still follow the round rather than every card that exists — the tally, the progress
+bar, the score ring — because **Practice the N you missed** plays a subset, and scoring
+that against everything would report "7 of 743".
 
 ### Flash cards
 
