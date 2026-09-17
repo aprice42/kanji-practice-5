@@ -12,55 +12,55 @@
 
 ## Group 1
 
-| Reading (かな) | Written form | Meaning | Check? |
-| ------------ | ------------ | ------- | ------ |
-|              | 一            |         |        |
-|              | 一つ           |         |        |
-|              | 一日           |         |        |
-|              | 二            |         |        |
-|              | 二つ           |         |        |
-|              | 二日           |         |        |
-|              | 三            |         |        |
-|              | 三つ           |         |        |
-|              | 三日           |         |        |
+| Reading (かな) | Written form | Meaning      | Check?                                                                                     |
+| ------------ | ------------ | ------------ | ------------------------------------------------------------------------------------------ |
+| いち           | 一            | one          |                                                                                            |
+| ひとつ          | 一つ           | one thing    |                                                                                            |
+|              | 一日           |              | ? Multiple readings: source has いちにち (one day) and ついたち (first day); scaffold merged both. |
+| に            | 二            | two          |                                                                                            |
+| ふたつ          | 二つ           | two things   |                                                                                            |
+| ふつか          | 二日           | second (day) |                                                                                            |
+| さん           | 三            | three        |                                                                                            |
+| みっつ          | 三つ           | three things |                                                                                            |
+| みっか          | 三日           | third (day)  |                                                                                            |
 
 ## Group 2
 
-| Reading (かな) | Written form | Meaning | Check? |
-| ------------ | ------------ | ------- | ------ |
-|              | 四            |         |        |
-|              | 四つ           |         |        |
-|              | 四日           |         |        |
-|              | 四月           |         |        |
-|              | 五            |         |        |
-|              | 五つ           |         |        |
-|              | 五日           |         |        |
-|              | 六            |         |        |
-|              | 六つ           |         |        |
+| Reading (かな) | Written form | Meaning      | Check?                                          |
+| ------------ | ------------ | ------------ | ----------------------------------------------- |
+|              | 四            |              | ? Multiple readings: よん / し; source lists both. |
+| よっつ          | 四つ           | four things  |                                                 |
+| よっか          | 四日           | fourth (day) |                                                 |
+| しがつ          | 四月           | April        |                                                 |
+| ご            | 五            | five         |                                                 |
+| いつつ          | 五つ           | five things  |                                                 |
+| いつか          | 五日           | fifth (day)  |                                                 |
+| ろく           | 六            | six          |                                                 |
+| むっつ          | 六つ           | six things   |                                                 |
 
 ## Group 3
 
-| Reading (かな) | Written form | Meaning     | Check? |
-| ------------ | ------------ | ----------- | ------ |
-| むいか          | 六日           | sixth (day) |        |
-|              | 七            |             |        |
-|              | 七つ           |             |        |
-|              | 七日           |             |        |
-|              | 七月           |             |        |
-|              | 八            |             |        |
-|              | 八つ           |             |        |
-|              | 八日           |             |        |
-|              | 九            |             |        |
+| Reading (かな) | Written form | Meaning       | Check?                                           |
+| ------------ | ------------ | ------------- | ------------------------------------------------ |
+| むいか          | 六日           | sixth (day)   |                                                  |
+|              | 七            |               | ? Multiple readings: なな / しち; source lists both. |
+| ななつ          | 七つ           | seven things  |                                                  |
+| なのか          | 七日           | seventh (day) |                                                  |
+| しちがつ         | 七月           | July          |                                                  |
+| はち           | 八            | eight         |                                                  |
+| やっつ          | 八つ           | eight things  |                                                  |
+| ようか          | 八日           | eighth (day)  |                                                  |
+|              | 九            |               | ? Multiple readings: きゅう / く; source lists both. |
 
 ## Group 4
 
-| Reading (かな) | Written form | Meaning | Check? |
-| ------------ | ------------ | ------- | ------ |
-|              | 九つ           |         |        |
-|              | 九日           |         |        |
-|              | 九月           |         |        |
-|              | 十            |         |        |
-|              | 十日           |         |        |
-|              | 日よう日         |         |        |
-|              | 日ほん          |         |        |
-|              | あたたかい日       |         |        |
+| Reading (かな) | Written form | Meaning     | Check?                                            |
+| ------------ | ------------ | ----------- | ------------------------------------------------- |
+| ここのつ         | 九つ           | nine things |                                                   |
+| ここのか         | 九日           | ninth (day) |                                                   |
+| くがつ          | 九月           | September   |                                                   |
+|              | 十            |             | ? Multiple readings: じゅう / とお; source lists both. |
+| とおか          | 十日           | tenth (day) |                                                   |
+| にちようび        | 日よう日         | Sunday      | ? Kana substitution: reconstructed whole word.    |
+| にほん          | 日ほん          | Japan       | ? Kana substitution: reconstructed whole word.    |
+| あたたかいひ       | あたたかい日       | warm day    | ? Kana substitution: reconstructed whole word.    |

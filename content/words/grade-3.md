@@ -12,132 +12,132 @@
 
 ## Group 1
 
-| Reading (かな) | Written form | Meaning           | Check? |
-| ------------ | ------------ | ----------------- | ------ |
-|              | ウィラメット川      |                   |        |
-|              | 水えい          |                   |        |
-| じょうず         | 上手           | skilled / good at |        |
-|              | 上げる          |                   |        |
-|              | 下げる          |                   |        |
-| ふっどさん        | フッド山         | Mt. Hood          |        |
-|              | 火山           |                   |        |
-|              | 力            |                   |        |
-|              | 力もち          |                   |        |
-|              | 大すき          |                   |        |
-|              | 小がっこう        |                   |        |
-|              | 小いし          |                   |        |
-|              | 男子           |                   |        |
-|              | 女子           |                   |        |
-|              | はこの中         |                   |        |
-|              | お母さん         |                   |        |
-|              | 母            |                   |        |
-|              | 何人           |                   |        |
-| にほんじん        | 日本人          | Japanese person   |        |
-|              | 一人           |                   |        |
-|              | 音がく          |                   |        |
-|              | じてん車         |                   |        |
-|              | じどう車         |                   |        |
-|              | てん車          |                   |        |
-|              | 林            |                   |        |
-|              | 十円           |                   |        |
-|              | 千円           |                   |        |
-|              | 町            |                   |        |
+| Reading (かな) | Written form | Meaning               | Check?                                                                 |
+| ------------ | ------------ | --------------------- | ---------------------------------------------------------------------- |
+| ウィラメットがわ     | ウィラメット川      | Willamette River      | ? Place-specific; rendaku chosen: かわ → がわ.                             |
+| すいえい         | 水えい          | swimming              | ? Kana substitution: reconstructed whole word.                         |
+| じょうず         | 上手           | skilled / good at     |                                                                        |
+| あげる          | 上げる          | to raise              |                                                                        |
+| さげる          | 下げる          | to lower              |                                                                        |
+| ふっどさん        | フッド山         | Mt. Hood              | ? Place-specific: Mt. Hood; existing worksheet reading preserved.      |
+| かざん          | 火山           | volcano               |                                                                        |
+| ちから          | 力            | strength              |                                                                        |
+| ちからもち        | 力もち          | strong person         | ? Kana substitution: reconstructed whole word.                         |
+| だいすき         | 大すき          | to love / really like | ? Kana substitution: reconstructed whole word.                         |
+| しょうがっこう      | 小がっこう        | elementary school     | ? Kana substitution: reconstructed whole word.                         |
+| こいし          | 小いし          | pebble                | ? Kana substitution: reconstructed whole word.                         |
+| だんし          | 男子           | boy                   |                                                                        |
+| じょし          | 女子           | girl                  |                                                                        |
+| はこのなか        | はこの中         | inside the box        | ? Kana substitution: reconstructed whole word.                         |
+| おかあさん        | お母さん         | mother (polite)       |                                                                        |
+| はは           | 母            | mother                |                                                                        |
+|              | 何人           |                       | ? Multiple readings: なんにん (how many people) / なにじん (what nationality). |
+| にほんじん        | 日本人          | Japanese person       |                                                                        |
+| ひとり          | 一人           | one person            |                                                                        |
+| おんがく         | 音がく          | music                 | ? Kana substitution: reconstructed whole word.                         |
+| じてんしゃ        | じてん車         | bicycle               | ? Kana substitution: reconstructed whole word.                         |
+| じどうしゃ        | じどう車         | car                   | ? Kana substitution: reconstructed whole word.                         |
+| でんしゃ         | てん車          | train                 | ? Source defect: missing dakuten; 電車 reads でんしゃ.                       |
+| はやし          | 林            | woods                 |                                                                        |
+| じゅうえん        | 十円           | ten yen               |                                                                        |
+| せんえん         | 千円           | one thousand yen      |                                                                        |
+| まち           | 町            | town                  |                                                                        |
 
 ## Group 2
 
-| Reading (かな) | Written form | Meaning | Check? |
-| ------------ | ------------ | ------- | ------ |
-|              | 村            |         |        |
-|              | 白い           |         |        |
-|              | 二千年          |         |        |
-|              | 三千           |         |        |
-|              | ず工           |         |        |
-|              | 丸            |         |        |
-|              | 丸い           |         |        |
-|              | 青い           |         |        |
-|              | 青            |         |        |
-|              | 赤い           |         |        |
-|              | 赤            |         |        |
-|              | 秋            |         |        |
-|              | 左足           |         |        |
-|              | 二足           |         |        |
-|              | えん足          |         |        |
-|              | 石            |         |        |
-|              | 小石           |         |        |
-|              | 黒            |         |        |
-|              | 黒い           |         |        |
-|              | 黒ばん          |         |        |
-|              | 草            |         |        |
-|              | オレゴン州        |         |        |
-|              | 外            |         |        |
-|              | お父さん         |         |        |
-|              | 父            |         |        |
-|              | 三年生          |         |        |
-|              | へび年          |         |        |
-|              | 年            |         |        |
+| Reading (かな) | Written form | Meaning                        | Check?                                                           |
+| ------------ | ------------ | ------------------------------ | ---------------------------------------------------------------- |
+| むら           | 村            | village                        |                                                                  |
+| しろい          | 白い           | white                          |                                                                  |
+| にせんねん        | 二千年          | two thousand years / year 2000 | ? English judgement: duration or calendar year; context missing. |
+| さんぜん         | 三千           | three thousand                 |                                                                  |
+| ずこう          | ず工           | arts and crafts                | ? Kana substitution: reconstructed whole word.                   |
+| まる           | 丸            | circle                         |                                                                  |
+| まるい          | 丸い           | round                          |                                                                  |
+| あおい          | 青い           | blue                           |                                                                  |
+| あお           | 青            | blue                           |                                                                  |
+| あかい          | 赤い           | red                            |                                                                  |
+| あか           | 赤            | red                            |                                                                  |
+| あき           | 秋            | autumn                         |                                                                  |
+| ひだりあし        | 左足           | left foot                      |                                                                  |
+| にそく          | 二足           | two pairs of shoes             | ? English judgement: pairs of shoes; counter also covers socks.  |
+| えんそく         | えん足          | school outing                  | ? Kana substitution: reconstructed whole word.                   |
+| いし           | 石            | stone                          |                                                                  |
+| こいし          | 小石           | pebble                         |                                                                  |
+| くろ           | 黒            | black                          |                                                                  |
+| くろい          | 黒い           | black                          |                                                                  |
+| こくばん         | 黒ばん          | blackboard                     | ? Kana substitution: reconstructed whole word.                   |
+| くさ           | 草            | grass                          |                                                                  |
+| オレゴンしゅう      | オレゴン州        | Oregon State                   | ? Place-specific: Oregon State.                                  |
+| そと           | 外            | outside                        |                                                                  |
+| おとうさん        | お父さん         | father (polite)                |                                                                  |
+| ちち           | 父            | father                         |                                                                  |
+| さんねんせい       | 三年生          | third grader                   |                                                                  |
+| へびどし         | へび年          | Year of the Snake              | ? Kana substitution; どし confirmed by user.                       |
+| とし           | 年            | year                           |                                                                  |
 
 ## Group 3
 
-| Reading (かな) | Written form | Meaning               | Check? |
-| ------------ | ------------ | --------------------- | ------ |
-|              | 夏            |                       |        |
-|              | 春            |                       |        |
-|              | 冬            |                       |        |
-|              | 雪            |                       |        |
-|              | 水色           |                       |        |
-|              | 色々           |                       |        |
-|              | 星            |                       |        |
-|              | 空気           |                       |        |
-|              | 生まれる         |                       |        |
-|              | 生と           |                       |        |
-|              | たん生日         |                       |        |
-|              | 体            |                       |        |
-|              | 体いく          |                       |        |
-| せんせい         | 先生           | teacher               |        |
-|              | 先しゅう         |                       |        |
-|              | 心            |                       |        |
-|              | ポートランド市      |                       |        |
-|              | 雲            |                       |        |
-|              | 好き           |                       |        |
-| だいすき         | 大好き          | to love / really like |        |
-|              | 名まえ          |                       |        |
-| みょうじ         | 名字           | surname               |        |
-|              | ゆう名          |                       |        |
-|              | 生と会          |                       |        |
-|              | おやの会         |                       |        |
-|              | 会う           |                       |        |
-|              | しゃ会          |                       |        |
-|              | 会わ           |                       |        |
+| Reading (かな) | Written form | Meaning               | Check?                                                      |
+| ------------ | ------------ | --------------------- | ----------------------------------------------------------- |
+| なつ           | 夏            | summer                |                                                             |
+| はる           | 春            | spring                |                                                             |
+| ふゆ           | 冬            | winter                |                                                             |
+| ゆき           | 雪            | snow                  |                                                             |
+| みずいろ         | 水色           | light blue            |                                                             |
+| いろいろ         | 色々           | various               |                                                             |
+| ほし           | 星            | star                  |                                                             |
+| くうき          | 空気           | air                   |                                                             |
+| うまれる         | 生まれる         | to be born            |                                                             |
+| せいと          | 生と           | student               | ? Kana substitution: reconstructed whole word.              |
+| たんじょうび       | たん生日         | birthday              | ? Kana substitution: reconstructed whole word.              |
+| からだ          | 体            | body                  |                                                             |
+| たいいく         | 体いく          | physical education    | ? Kana substitution: reconstructed whole word.              |
+| せんせい         | 先生           | teacher               |                                                             |
+| せんしゅう        | 先しゅう         | last week             | ? Kana substitution: reconstructed whole word.              |
+| こころ          | 心            | heart / mind          |                                                             |
+| ポートランドし      | ポートランド市      | City of Portland      | ? Place-specific: City of Portland.                         |
+| くも           | 雲            | cloud                 |                                                             |
+| すき           | 好き           | to like               |                                                             |
+| だいすき         | 大好き          | to love / really like |                                                             |
+| なまえ          | 名まえ          | name                  | ? Kana substitution: reconstructed whole word.              |
+| みょうじ         | 名字           | surname               |                                                             |
+| ゆうめい         | ゆう名          | famous                | ? Kana substitution: reconstructed whole word.              |
+| せいとかい        | 生と会          | student council       | ? Kana substitution: reconstructed whole word.              |
+| おやのかい        | おやの会         | parents' association  | ? Kana substitution; school-specific: parents' association. |
+| あう           | 会う           | to meet               |                                                             |
+| しゃかい         | しゃ会          | society               | ? Kana substitution: reconstructed whole word.              |
+| かいわ          | 会わ           | conversation          | ? Kana substitution: interpreted as 会話, conversation.       |
 
 ## Group 4
 
-| Reading (かな) | Written form | Meaning              | Check? |
-| ------------ | ------------ | -------------------- | ------ |
-|              | 今            |                      |        |
-|              | 今年           |                      |        |
-|              | 牛            |                      |        |
-|              | 牛にゅう         |                      |        |
-|              | 牛にく          |                      |        |
-|              | 風            |                      |        |
-|              | 友だち          |                      |        |
-|              | 何日           |                      |        |
-|              | 何色           |                      |        |
-|              | 何てすか         |                      |        |
-|              | 虫めがね         |                      |        |
-|              | 虫            |                      |        |
-|              | 元気           |                      |        |
-|              | 休む           |                      |        |
-|              | 春（夏、冬）休み     |                      |        |
-|              | ひる休み         |                      |        |
-|              | 出る           |                      |        |
-| だす           | 出す           | to take out / submit |        |
-|              | 出口           |                      |        |
-|              | 三才           |                      |        |
-| おおい          | 多い           | many                 |        |
-|              | 少ない          |                      |        |
-|              | 少し           |                      |        |
-|              | 一万           |                      |        |
-|              | 百万           |                      |        |
-|              | 百万円          |                      |        |
-| いく           | 行く           | to go                |        |
-|              | 早い           |                      |        |
+| Reading (かな)       | Written form | Meaning                       | Check?                                                             |
+| ------------------ | ------------ | ----------------------------- | ------------------------------------------------------------------ |
+| いま                 | 今            | now                           |                                                                    |
+| ことし                | 今年           | this year                     |                                                                    |
+| うし                 | 牛            | cow                           |                                                                    |
+| ぎゅうにゅう             | 牛にゅう         | milk                          | ? Kana substitution: reconstructed whole word.                     |
+| ぎゅうにく              | 牛にく          | beef                          | ? Kana substitution: reconstructed whole word.                     |
+| かぜ                 | 風            | wind                          |                                                                    |
+| ともだち               | 友だち          | friend                        | ? Kana substitution: reconstructed whole word.                     |
+| なんにち               | 何日           | what day / how many days      | ? English judgement: date or number of days; context missing.      |
+|                    | 何色           |                               | ? Multiple readings: なにいろ (what color) / なんしょく (how many colors).  |
+| なんですか              | 何てすか         | what is it?                   | ? Source defect: missing dakuten in て; intended 何ですか.              |
+| むしめがね              | 虫めがね         | magnifying glass              | ? Kana substitution: reconstructed whole word.                     |
+| むし                 | 虫            | insect                        |                                                                    |
+| げんき                | 元気           | healthy / full of energy      |                                                                    |
+| やすむ                | 休む           | to rest                       |                                                                    |
+| はるやすみ（なつやすみ、ふゆやすみ） | 春（夏、冬）休み     | spring (summer, winter) break | ? School-specific; source combines three school breaks in one row. |
+| ひるやすみ              | ひる休み         | lunch break                   | ? Kana substitution: reconstructed whole word.                     |
+| でる                 | 出る           | to go out                     | ? Source defect: host reading says て（る）; correct reading is でる.    |
+| だす                 | 出す           | to take out / submit          |                                                                    |
+| でぐち                | 出口           | exit                          |                                                                    |
+| さんさい               | 三才           | three years old               |                                                                    |
+| おおい                | 多い           | many                          |                                                                    |
+| すくない               | 少ない          | few                           |                                                                    |
+| すこし                | 少し           | a little                      |                                                                    |
+| いちまん               | 一万           | ten thousand                  |                                                                    |
+| ひゃくまん              | 百万           | one million                   |                                                                    |
+| ひゃくまんえん            | 百万円          | one million yen               |                                                                    |
+| いく                 | 行く           | to go                         |                                                                    |
+| はやい                | 早い           | early                         |                                                                    |
