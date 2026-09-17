@@ -96,12 +96,26 @@ flag. If you are flagging most of a grade, the rule is not being applied.
 
 Left as printed, deliberately. Do not fix them here.
 
-- **てん車** appears where 電車 (でんしゃ) is meant — the master sheet has a typo.
-  The September worksheet writes it correctly as でん車. Flag the row; do not
-  change the written form.
+The sheet drops the dakuten (゛) from a handful of words. These are **individual
+slips, not a convention** — verified against the scan at 300 dpi, where じどう車
+keeps its dakuten in the cell immediately below てん車 which has lost its. Five
+found so far:
 
-If you find another defect like this, flag it and say so in your summary rather
-than correcting it silently.
+| Printed | Almost certainly | |
+| ------- | ---------------- | --- |
+| てん車 | でん車 | 電車, でんしゃ — the September worksheet writes it correctly |
+| 音とく | 音どく | 音読, おんどく |
+| 北海とう | 北海どう | 北海道, ほっかいどう |
+| 角と | 角ど | 角度, かくど |
+| 安とう先生 | 安どう先生 | 安藤先生, あんどうせんせい |
+
+For these: **leave column 2 exactly as printed**, fill in the reading the word
+actually has (でんしゃ, おんどく, …), and flag the row as a source defect. The
+written form is what his teacher put on the page; the reading is what the word
+is.
+
+If you find another like this, flag it and name it in your summary rather than
+correcting it silently. Missing dakuten is the pattern to watch for.
 
 ## Order of work
 

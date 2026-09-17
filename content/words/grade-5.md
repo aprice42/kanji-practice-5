@@ -138,126 +138,126 @@
 
 ## Group 3
 
-| Reading (かな) | Written form | Meaning | Check? |
-| ------------ | ------------ | ------- | ------ |
-|              | 広々           |         |        |
-|              | 広島           |         |        |
-|              | 答える          |         |        |
-|              | 答え           |         |        |
-|              | 答え合わせ        |         |        |
-|              | 時計           |         |        |
-|              | 計さん用紙        |         |        |
-|              | 合計           |         |        |
-|              | 計さんき         |         |        |
-|              | 式            |         |        |
-|              | そつぎょう式       |         |        |
-|              | 先週           |         |        |
-|              | 今週           |         |        |
-|              | 一週間          |         |        |
-|              | 週まつ          |         |        |
-|              | 自分           |         |        |
-|              | 自どう車         |         |        |
-|              | 自てん車         |         |        |
-|              | 自てん          |         |        |
-|              | 自ゆう          |         |        |
-|              | 問だい          |         |        |
-|              | しつ問          |         |        |
-|              | 姉            |         |        |
-|              | お姉さん         |         |        |
-|              | 姉妹           |         |        |
-|              | 姉妹と市         |         |        |
-|              | 姉妹州          |         |        |
-|              | 妹            |         |        |
-|              | 家            |         |        |
-|              | 家ぞく          |         |        |
-|              | 作家           |         |        |
-|              | 音楽家          |         |        |
-|              | けんちく家        |         |        |
-|              | 〜家           |         |        |
-|              | 私            |         |        |
-|              | 私たち          |         |        |
-|              | 兄            |         |        |
-|              | お兄さん         |         |        |
-|              | 兄弟           |         |        |
-|              | 弟            |         |        |
-|              | 日記           |         |        |
-|              | 記おく          |         |        |
-|              | 記おく力         |         |        |
-|              | 記ろく          |         |        |
-|              | 古い           |         |        |
-|              | 不思ぎ          |         |        |
-|              | 不便           |         |        |
-|              | 不自ゆう         |         |        |
-|              | 不かのう         |         |        |
-|              | 不安           |         |        |
-|              | 不とくい         |         |        |
-|              | 不まじめ         |         |        |
-|              | 不こう平         |         |        |
-|              | 予定           |         |        |
-|              | 予やく          |         |        |
-|              | 予そう          |         |        |
-|              | 天気予ほう        |         |        |
-|              | 次に           |         |        |
+| Reading (かな) | Written form | Meaning                | Check?                                                                  |
+| ------------ | ------------ | ---------------------- | ----------------------------------------------------------------------- |
+| ひろびろ         | 広々           | spacious               |                                                                         |
+| ひろしま         | 広島           | Hiroshima              | ? Place-specific: Hiroshima.                                            |
+| こたえる         | 答える          | to answer              |                                                                         |
+| こたえ          | 答え           | answer                 |                                                                         |
+| こたえあわせ       | 答え合わせ        | checking answers       |                                                                         |
+| とけい          | 時計           | clock                  |                                                                         |
+| けいさんようし      | 計さん用紙        | paper for calculations | ? Kana substitution: reconstructed whole word.                          |
+| ごうけい         | 合計           | total                  |                                                                         |
+| けいさんき        | 計さんき         | calculator             | ? Kana substitution: reconstructed whole word.                          |
+| しき           | 式            | ceremony / formula     | ? English judgement: ceremony or formula; context missing.              |
+| そつぎょうしき      | そつぎょう式       | graduation ceremony    | ? Kana substitution: reconstructed whole word.                          |
+| せんしゅう        | 先週           | last week              |                                                                         |
+| こんしゅう        | 今週           | this week              |                                                                         |
+| いっしゅうかん      | 一週間          | one week               |                                                                         |
+| しゅうまつ        | 週まつ          | weekend                | ? Kana substitution: reconstructed whole word.                          |
+| じぶん          | 自分           | oneself                |                                                                         |
+| じどうしゃ        | 自どう車         | car                    | ? Kana substitution: reconstructed whole word.                          |
+| じてんしゃ        | 自てん車         | bicycle                | ? Kana substitution: reconstructed whole word.                          |
+| じてん          | 自てん          | rotation               | ? Kana substitution: reconstructed whole word.                          |
+| じゆう          | 自ゆう          | freedom                | ? Kana substitution: reconstructed whole word.                          |
+| もんだい         | 問だい          | question / problem     | ? Kana substitution: reconstructed whole word.                          |
+| しつもん         | しつ問          | question               | ? Kana substitution: reconstructed whole word.                          |
+| あね           | 姉            | older sister           |                                                                         |
+| おねえさん        | お姉さん         | older sister (polite)  |                                                                         |
+| しまい          | 姉妹           | sisters                |                                                                         |
+| しまいとし        | 姉妹と市         | sister city            | ? Kana substitution; place-specific: paired partner city.               |
+| しまいしゅう       | 姉妹州          | sister state           | ? Place-specific: paired partner state.                                 |
+| いもうと         | 妹            | younger sister         |                                                                         |
+|              | 家            |                        | ? Multiple readings: いえ / うち; context needed.                           |
+| かぞく          | 家ぞく          | family                 | ? Kana substitution: reconstructed whole word.                          |
+| さっか          | 作家           | writer                 |                                                                         |
+| おんがくか        | 音楽家          | musician               |                                                                         |
+| けんちくか        | けんちく家        | architect              | ? Kana substitution: reconstructed whole word.                          |
+|              | 〜家           |                        | ? Multiple readings: か (expert) / け (family); suffix context needed.    |
+| わたし          | 私            | I / me                 |                                                                         |
+| わたしたち        | 私たち          | we / us                |                                                                         |
+| あに           | 兄            | older brother          |                                                                         |
+| おにいさん        | お兄さん         | older brother (polite) |                                                                         |
+| きょうだい        | 兄弟           | brothers / siblings    |                                                                         |
+| おとうと         | 弟            | younger brother        |                                                                         |
+| にっき          | 日記           | diary                  |                                                                         |
+| きおく          | 記おく          | memory                 | ? Kana substitution: reconstructed whole word.                          |
+| きおくりょく       | 記おく力         | ability to remember    | ? Kana substitution: reconstructed whole word.                          |
+| きろく          | 記ろく          | record                 | ? Kana substitution: reconstructed whole word.                          |
+| ふるい          | 古い           | old                    |                                                                         |
+| ふしぎ          | 不思ぎ          | strange                | ? Kana substitution: reconstructed whole word.                          |
+| ふべん          | 不便           | inconvenient           |                                                                         |
+| ふじゆう         | 不自ゆう         | lack of freedom        | ? Kana substitution; English judgement: can also mean limited mobility. |
+| ふかのう         | 不かのう         | impossible             | ? Kana substitution: reconstructed whole word.                          |
+| ふあん          | 不安           | worry                  |                                                                         |
+| ふとくい         | 不とくい         | not good at            | ? Kana substitution: reconstructed whole word.                          |
+| ふまじめ         | 不まじめ         | not serious            | ? Kana substitution: reconstructed whole word.                          |
+| ふこうへい        | 不こう平         | unfair                 | ? Kana substitution: reconstructed whole word.                          |
+| よてい          | 予定           | plan                   |                                                                         |
+| よやく          | 予やく          | reservation            | ? Kana substitution: reconstructed whole word.                          |
+| よそう          | 予そう          | prediction             | ? Kana substitution: reconstructed whole word.                          |
+| てんきよほう       | 天気予ほう        | weather forecast       | ? Kana substitution: reconstructed whole word.                          |
+| つぎに          | 次に           | next                   |                                                                         |
 
 ## Group 4
 
-| Reading (かな) | Written form | Meaning | Check? |
-| ------------ | ------------ | ------- | ------ |
-|              | その次          |         |        |
-|              | 次の日          |         |        |
-|              | 〜の次          |         |        |
-|              | 使用           |         |        |
-|              | 使用中          |         |        |
-|              | が用し          |         |        |
-|              | 利用           |         |        |
-|              | 用い           |         |        |
-|              | 用紙           |         |        |
-|              | 大人用          |         |        |
-|              | 子ども用         |         |        |
-|              | 記ろく用紙        |         |        |
-|              | さい利用         |         |        |
-|              | 紙            |         |        |
-|              | が用紙          |         |        |
-|              | しんぶん紙        |         |        |
-|              | 作文用紙         |         |        |
-|              | 使う           |         |        |
-|              | 高い           |         |        |
-|              | 高校           |         |        |
-|              | さい高          |         |        |
-|              | 低い           |         |        |
-|              | 低しぼう         |         |        |
-|              | さい低          |         |        |
-|              | 止まる          |         |        |
-|              | 止める          |         |        |
-|              | きん止          |         |        |
-|              | 中止           |         |        |
-|              | てい止          |         |        |
-|              | 使用きん止        |         |        |
-|              | 便利           |         |        |
-|              | 知っている        |         |        |
-|              | 知る           |         |        |
-|              | 知しき          |         |        |
-|              | 知え           |         |        |
-|              | 安全           |         |        |
-|              | 安い           |         |        |
-|              | 安心           |         |        |
-|              | 安とう先生        |         |        |
-|              | 朝            |         |        |
-|              | 朝ごはん         |         |        |
-|              | 朝食           |         |        |
-|              | 昼            |         |        |
-|              | 昼ごはん         |         |        |
-|              | 昼ね           |         |        |
-|              | 昼食           |         |        |
-|              | 昼休み          |         |        |
-|              | 夜            |         |        |
-|              | 夜中           |         |        |
-|              | 夜明け          |         |        |
-|              | 夜食           |         |        |
-|              | 電気           |         |        |
-|              | 電話           |         |        |
-|              | 電車           |         |        |
-|              | 電子じしょ        |         |        |
-|              | 話す           |         |        |
-|              | 会話           |         |        |
-|              | むかし話         |         |        |
+| Reading (かな) | Written form | Meaning                        | Check?                                                                    |
+| ------------ | ------------ | ------------------------------ | ------------------------------------------------------------------------- |
+| そのつぎ         | その次          | the next one                   |                                                                           |
+| つぎのひ         | 次の日          | the next day                   |                                                                           |
+| のつぎ          | 〜の次          | after                          | ? English judgement: phrase fragment; after the preceding item.           |
+| しよう          | 使用           | use                            |                                                                           |
+| しようちゅう       | 使用中          | in use                         |                                                                           |
+| がようし         | が用し          | drawing paper                  | ? Kana substitution: reconstructed whole word.                            |
+| りよう          | 利用           | use                            |                                                                           |
+|              | 用い           |                                | ? Source looks wrong: possible 用意, or stem of 用いる; confirm intended word. |
+| ようし          | 用紙           | paper                          |                                                                           |
+| おとなよう        | 大人用          | for adults                     |                                                                           |
+| こどもよう        | 子ども用         | for children                   | ? Kana substitution: reconstructed whole word.                            |
+| きろくようし       | 記ろく用紙        | record sheet                   | ? Kana substitution: reconstructed whole word.                            |
+| さいりよう        | さい利用         | reuse                          | ? Kana substitution: reconstructed whole word.                            |
+| かみ           | 紙            | paper                          |                                                                           |
+| がようし         | が用紙          | drawing paper                  | ? Kana substitution: reconstructed whole word.                            |
+| しんぶんし        | しんぶん紙        | newspaper                      | ? Kana substitution: reconstructed whole word.                            |
+| さくぶんようし      | 作文用紙         | paper for writing compositions |                                                                           |
+| つかう          | 使う           | to use                         |                                                                           |
+| たかい          | 高い           | high / expensive               |                                                                           |
+| こうこう         | 高校           | high school                    |                                                                           |
+| さいこう         | さい高          | best / highest                 | ? Kana substitution: reconstructed whole word.                            |
+| ひくい          | 低い           | low                            |                                                                           |
+| ていしぼう        | 低しぼう         | low-fat                        | ? Kana substitution: reconstructed whole word.                            |
+| さいてい         | さい低          | worst / lowest                 | ? Kana substitution: reconstructed whole word.                            |
+| とまる          | 止まる          | to stop                        |                                                                           |
+| やめる          | 止める          | to quit                        |                                                                           |
+| きんし          | きん止          | not allowed                    | ? Kana substitution: reconstructed whole word.                            |
+| ちゅうし         | 中止           | cancellation                   |                                                                           |
+| ていし          | てい止          | stopping                       | ? Kana substitution: reconstructed whole word.                            |
+| しようきんし       | 使用きん止        | do not use                     | ? Kana substitution: reconstructed whole word.                            |
+| べんり          | 便利           | convenient                     |                                                                           |
+| しっている        | 知っている        | to know                        |                                                                           |
+| しる           | 知る           | to learn of                    |                                                                           |
+| ちしき          | 知しき          | knowledge                      | ? Kana substitution: reconstructed whole word.                            |
+| ちえ           | 知え           | wisdom                         | ? Kana substitution: reconstructed whole word.                            |
+| あんぜん         | 安全           | safe                           |                                                                           |
+| やすい          | 安い           | cheap                          |                                                                           |
+| あんしん         | 安心           | peace of mind                  |                                                                           |
+| あんどうせんせい     | 安とう先生        | Ando-sensei, a teacher         | ? Source defect: printed 安とう, missing dakuten; the name reads あんどう        |
+| あさ           | 朝            | morning                        |                                                                           |
+| あさごはん        | 朝ごはん         | breakfast                      | ? Kana substitution: reconstructed whole word.                            |
+| ちょうしょく       | 朝食           | breakfast                      |                                                                           |
+| ひる           | 昼            | daytime                        |                                                                           |
+| ひるごはん        | 昼ごはん         | lunch                          | ? Kana substitution: reconstructed whole word.                            |
+| ひるね          | 昼ね           | nap                            | ? Kana substitution: reconstructed whole word.                            |
+| ちゅうしょく       | 昼食           | lunch                          |                                                                           |
+| ひるやすみ        | 昼休み          | lunch break                    |                                                                           |
+| よる           | 夜            | night                          |                                                                           |
+| よなか          | 夜中           | middle of the night            |                                                                           |
+| よあけ          | 夜明け          | dawn                           |                                                                           |
+| やしょく         | 夜食           | late-night snack               |                                                                           |
+| でんき          | 電気           | electricity                    |                                                                           |
+| でんわ          | 電話           | telephone                      |                                                                           |
+| でんしゃ         | 電車           | train                          |                                                                           |
+| でんしじしょ       | 電子じしょ        | electronic dictionary          | ? Kana substitution: reconstructed whole word.                            |
+| はなす          | 話す           | to speak                       |                                                                           |
+| かいわ          | 会話           | conversation                   |                                                                           |
+| むかしばなし       | むかし話         | old tale                       | ? Kana substitution: reconstructed whole word.                            |
