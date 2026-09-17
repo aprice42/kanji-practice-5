@@ -1162,3 +1162,187 @@ html, body {
 }
 .trace__credit a { color: var(--muted); }
 .trace__credit a:hover { color: var(--primary-text); }
+
+/* Selection summary row --------------------------------------------------
+   Follows .card-btn — same ground, same 2px edge, same hover — because it sits
+   directly above the mode cards and anything else would read as a different
+   kind of control.
+   ------------------------------------------------------------------------- */
+.selection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 34rem;
+  appearance: none;
+  border: 2px solid var(--edge);
+  border-radius: 0.875rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  padding: 0.75rem 0.875rem;
+  min-height: 44px;
+  cursor: pointer;
+  text-align: left;
+}
+.selection:hover { border-color: var(--primary-text); }
+.selection__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.selection__name {
+  font-weight: 600;
+  font-size: clamp(0.95rem, 3.6vw, 1.05rem);
+  overflow-wrap: anywhere;
+}
+.selection__count {
+  font-size: clamp(0.78rem, 3vw, 0.875rem);
+  color: var(--muted);
+}
+.selection .icon--chevron { flex: none; }
+
+/* The selection sheet -----------------------------------------------------
+   Fixed, so it escapes #app's `overflow: hidden` and its 1080px cap. Above the
+   confetti canvas (10) and the menu panels (20).
+   ------------------------------------------------------------------------- */
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  /* No shadow or overlay token exists, and adding one would mean editing all
+     eight palette blocks. Mixing from --ink derives the scrim from whichever
+     palette and theme is active instead. */
+  background: color-mix(in srgb, var(--ink) 55%, transparent);
+  border: 0;
+}
+.sheet {
+  position: fixed;
+  z-index: 31;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 34rem;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 3rem);
+  background: var(--bg);
+  border-top: 1px solid var(--edge);
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -8px 28px rgb(0 0 0 / 0.18);
+  /* Mirrors #app: the home indicator must not sit on top of the Done button. */
+  padding: 0.875rem 0.875rem max(0.875rem, env(safe-area-inset-bottom));
+  gap: 0.5rem;
+}
+.sheet__title {
+  margin: 0;
+  font-size: clamp(1rem, 4vw, 1.15rem);
+  font-weight: 600;
+  text-align: center;
+}
+/* The only thing on the page allowed to scroll. */
+.sheet__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.sheet__row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+}
+.sheet__row .sheet__check { flex: 1; min-width: 0; }
+
+/* Scoped to the sheet rather than set as a blanket `button` rule: the Done
+   button lives in here too, and a blanket rule has stripped a nested control of
+   its shape twice in this project already. */
+.sheet__check {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+  padding: 0.625rem 0.5rem;
+  min-height: 44px;
+  border-radius: 0.625rem;
+  cursor: pointer;
+}
+.sheet__check:hover:not([disabled]) { background: var(--surface); }
+.sheet__check[disabled] { cursor: default; color: var(--muted); }
+.sheet__check--group { padding-left: 1.75rem; font-size: 0.95rem; }
+.sheet__box { display: flex; flex: none; }
+.icon--box { width: 1.35rem; height: 1.35rem; }
+.sheet__check[aria-checked='false'] .sheet__box { color: var(--muted); }
+.sheet__check[aria-checked='true'] .sheet__box,
+.sheet__check[aria-checked='mixed'] .sheet__box { color: var(--primary-text); }
+.sheet__label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.sheet__range {
+  flex: none;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.sheet__count {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.sheet__count.is-muted { font-style: italic; }
+.sheet__expand {
+  flex: none;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 0 0.625rem;
+  min-width: 44px;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sheet__expand:hover { background: var(--surface); }
+.icon--chevron { width: 1.1rem; height: 1.1rem; }
+.sheet__expand .icon--chevron { transform: rotate(90deg); }
+.sheet__expand[aria-expanded='true'] .icon--chevron { transform: rotate(-90deg); }
+.sheet__groups { display: flex; flex-direction: column; }
+/* `display: flex` beats the user-agent's `[hidden] { display: none }`, so a
+   collapsed grade rendered every one of its groups anyway. Same trap as
+   `.is-hidden` being a global `visibility: hidden` — a display rule on an
+   element that also gets toggled by an attribute has to say so. */
+.sheet__groups[hidden] { display: none; }
+.sheet__note {
+  margin: 0;
+  min-height: 1.25rem;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--bad);
+}
+.sheet__foot { display: flex; }
+.sheet__foot .btn { flex: 1; }
+
+/* House style adds motion on request; it never removes it in a reduce block. */
+@media (prefers-reduced-motion: no-preference) {
+  .sheet { animation: sheet-up 160ms ease; }
+  .sheet-scrim { animation: scrim-in 160ms ease; }
+  .icon--chevron { transition: transform 120ms ease; }
+}
+@keyframes sheet-up {
+  from { transform: translateY(1.5rem); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+@keyframes scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

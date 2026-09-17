@@ -104,6 +104,18 @@ export function buildChoices(cards, card, direction, count) {
   for (const other of shuffle(cards.filter((c) => c.id !== card.id))) {
     const face = answerFaceOf(other, direction)
     if (seen.has(face)) continue // never show the same text twice
+    /* And never show a card that answers the same question. Refusing a
+       duplicate ANSWER face is not enough: asked こう with 校 correct, 高 is a
+       different answer face and an equally correct one. What makes two cards
+       interchangeable is a shared PROMPT face, so that is what is excluded.
+
+       A build-time rule over content/ cannot cover this. 54 readings collide
+       across the curriculum — the syllabus re-teaching a word as more of its
+       kanji arrive — and the pool widens across decks when a selection is
+       small, so a collision the generator allowed can still meet its twin in
+       one question. Custom worksheets and a new edition of the list can each
+       introduce more. This is the guarantee that holds at runtime. */
+    if (facesOf(other, direction).prompt === promptFace) continue
     seen.add(face)
     candidates.push({ card: other, score: scoreCandidate(face, correct, promptFace, direction) })
   }

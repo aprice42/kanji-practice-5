@@ -61,5 +61,10 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
 - There is exactly one layout breakpoint (the mode cards, 1 column to 3 at 44rem) and it is
   deliberate: a column count is discrete and a clamp cannot express it. Sizes stay clamps.
 - Correct/wrong must differ by shape, not only color, and every icon needs a text label.
+- A round is capped at `ROUND_SIZE` (20) and every count — tally, progress, score ring,
+  "practice the N you missed" — follows `state.deck`, not the whole selection.
+- An element toggled by the `hidden` attribute must not be given a `display` rule without
+  a matching `[hidden] { display: none }`; `display: flex` beats the user-agent rule. Same
+  trap as `.is-hidden` below.
 - `.is-hidden` is a global `visibility: hidden`. Do not reuse that name for a local
   modifier — Trace mode's masked characters are `.is-masked` because of exactly that.

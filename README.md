@@ -30,6 +30,42 @@ It sits inside those two rounds and **not on the home screen**, because it has n
 for the third mode — Trace always shows the reading and always draws the written form, so
 a control on the start page would be inert for whichever mode you were about to pick.
 
+### What a round draws from
+
+The home screen's summary row names the current selection and its card count; tapping it
+opens a sheet of everything available. **Grades** are the school's master list, each cut
+into four **Groups** in the sheet's own numeric order — Groups, not quarters, because the
+four-way split is a sensible size and not a claim about what the school teaches when.
+**Worksheets** are the sheets the teacher actually sent home. The September review is the
+default, so the app opens on the deck it has always played.
+
+A grade's checkbox selects or clears all four of its groups, and shows a dash when only
+some are on — a distinct shape, not a tint, so the partial state survives anyone who
+cannot separate the two colours. The chevron expands the groups.
+
+Two rules about the selection:
+
+- **It can never be empty.** The handler refuses to clear the last deck rather than
+  disabling every mode and explaining why. A round with no cards is simply unreachable.
+- **A deck with nothing filled in yet reads `not ready` and cannot be picked.** Showing it
+  as `0` would look like a bug; leaving it out would hide that the grade exists.
+
+It is stored under `kanji-practice:selection` as deck ids, and **validated against the
+`DECKS` manifest on load** — ids that no longer resolve are dropped and the default comes
+back. Deck ids are content-derived and stable; a card's `id` is its array index and would
+rot the moment a row were inserted above it, which is why nothing persisted is keyed on one.
+
+### A round is twenty cards
+
+`ROUND_SIZE` in `src/main.js`. The whole curriculum is 743 cards and a single group of
+grade 5 is 58 — a round of everything is not practice, it is an evening. The cap is applied
+*after* the shuffle, so a different twenty come up each time and the whole selection stays
+reachable across rounds.
+
+Everything that counts follows the round rather than the deck: the tally, the progress bar,
+the score ring, and **Practice the N you missed**. Scoring against the whole selection would
+report "13 of 743" for a round of twenty.
+
 ### Flash cards
 
 Prompt → tap **Show answer** → the other side plus the meaning → tap ✓ or ✕, which scores
@@ -38,6 +74,18 @@ the card and advances. Self-marked.
 ### Multiple choice
 
 Prompt plus three options — the right answer and two distractors.
+
+Distractors come from the **active selection**, because a wrong answer is only convincing
+if it is something he is actually studying. Below `MIN_POOL` (8) cards the pool widens to
+the card's whole grade: a group can be as small as seven, and at that size the correct
+option is often the only one whose okurigana fits the prompt, which is answerable without
+reading any kanji at all. `npm run audit` measures exactly that, per deck.
+
+`buildChoices` also refuses any candidate whose **prompt** face matches the question's, not
+just its answer face. Asked こう with 校 correct, 高 is a different answer and an equally
+correct one. No build-time rule over `content/` can cover this: 54 readings collide across
+the curriculum, the pool widens across decks, and custom worksheets could add more. The
+runtime exclusion is the guarantee.
 Tapping an option marks it right or wrong and reveals the meaning, then a verdict appears
 ("Correct" or "Not quite — it's 魚") with a **Continue** button. Nothing advances until
 that button is tapped, so there is no time pressure on reading the answer.
