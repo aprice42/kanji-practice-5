@@ -12,131 +12,131 @@
 
 ## Group 1
 
-| Reading (かな) | Written form | Meaning | Check? |
-| ------------ | ------------ | ------- | ------ |
-|              | 滝            |         |        |
-|              | 滝組           |         |        |
-|              | ナイアガラの滝      |         |        |
-|              | 松            |         |        |
-|              | 松林           |         |        |
-|              | 松たけ          |         |        |
-|              | 松ぼっくり        |         |        |
-|              | 松組           |         |        |
-|              | 梅の花          |         |        |
-|              | 梅ぼし          |         |        |
-|              | 竹            |         |        |
-|              | 竹うま          |         |        |
-|              | 竹の子          |         |        |
-|              | 算数           |         |        |
-|              | 計算           |         |        |
-|              | かけ算          |         |        |
-|              | 計算き          |         |        |
-|              | 暗算           |         |        |
-|              | 計算用紙         |         |        |
-|              | 数            |         |        |
-|              | 数学           |         |        |
-|              | 数字           |         |        |
-|              | き数           |         |        |
-|              | ぐう数          |         |        |
-|              | 数える          |         |        |
-|              | 分数           |         |        |
-|              | 小数           |         |        |
-|              | 始める          |         |        |
+| Reading (かな) | Written form | Meaning                | Check?                                                  |
+| ------------ | ------------ | ---------------------- | ------------------------------------------------------- |
+| たき           | 滝            | waterfall              |                                                         |
+| たきぐみ         | 滝組           | Taki class             | ? School-specific: Taki class; たきぐみ confirmed by user.  |
+| ナイアガラのたき     | ナイアガラの滝      | Niagara Falls          | ? Place-specific: Niagara Falls.                        |
+| まつ           | 松            | pine tree              |                                                         |
+| まつばやし        | 松林           | pine grove             |                                                         |
+| まつたけ         | 松たけ          | matsutake mushroom     | ? Kana substitution: reconstructed whole word.          |
+| まつぼっくり       | 松ぼっくり        | pine cone              | ? Kana substitution: reconstructed whole word.          |
+| まつぐみ         | 松組           | Matsu class            | ? School-specific: Matsu class; まつぐみ confirmed by user. |
+| うめのはな        | 梅の花          | plum blossom           |                                                         |
+| うめぼし         | 梅ぼし          | pickled plum           | ? Kana substitution: reconstructed whole word.          |
+| たけ           | 竹            | bamboo                 |                                                         |
+| たけうま         | 竹うま          | stilts                 | ? Kana substitution: reconstructed whole word.          |
+| たけのこ         | 竹の子          | bamboo shoot           |                                                         |
+| さんすう         | 算数           | arithmetic             |                                                         |
+| けいさん         | 計算           | calculation            |                                                         |
+| かけざん         | かけ算          | multiplication         | ? Kana substitution: reconstructed whole word.          |
+| けいさんき        | 計算き          | calculator             | ? Kana substitution: reconstructed whole word.          |
+| あんざん         | 暗算           | mental math            |                                                         |
+| けいさんようし      | 計算用紙         | paper for calculations |                                                         |
+| かず           | 数            | number                 |                                                         |
+| すうがく         | 数学           | mathematics            |                                                         |
+| すうじ          | 数字           | numeral                |                                                         |
+| きすう          | き数           | odd number             | ? Kana substitution: reconstructed whole word.          |
+| ぐうすう         | ぐう数          | even number            | ? Kana substitution: reconstructed whole word.          |
+| かぞえる         | 数える          | to count               |                                                         |
+| ぶんすう         | 分数           | fraction               |                                                         |
+| しょうすう        | 小数           | decimal                |                                                         |
+| はじめる         | 始める          | to start something     |                                                         |
 
 ## Group 2
 
-| Reading (かな) | Written form | Meaning | Check? |
-| ------------ | ------------ | ------- | ------ |
-|              | 始まる          |         |        |
-|              | 始まりの会        |         |        |
-|              | 終わり          |         |        |
-|              | 終わる          |         |        |
-|              | 道            |         |        |
-|              | 小道           |         |        |
-|              | 赤道           |         |        |
-|              | 北海道          |         |        |
-|              | 道ろ           |         |        |
-|              | なまけ者         |         |        |
-|              | か学者          |         |        |
-|              | い者           |         |        |
-|              | 作者           |         |        |
-|              | 以上           |         |        |
-|              | 以下           |         |        |
-|              | 以外           |         |        |
-|              | 以前           |         |        |
-|              | 以後           |         |        |
-|              | おん度          |         |        |
-|              | い度           |         |        |
-|              | けい度          |         |        |
-|              | 角度           |         |        |
-|              | 動く           |         |        |
-|              | 動かす          |         |        |
-|              | 動物           |         |        |
-|              | 動作           |         |        |
-|              | うん動          |         |        |
-|              | 自動車          |         |        |
+| Reading (かな) | Written form | Meaning                  | Check?                                                               |
+| ------------ | ------------ | ------------------------ | -------------------------------------------------------------------- |
+| はじまる         | 始まる          | to begin                 |                                                                      |
+| はじまりのかい      | 始まりの会        | opening meeting          | ? School-specific: opening meeting; confirm school's English label.  |
+| おわり          | 終わり          | end                      |                                                                      |
+| おわる          | 終わる          | to end                   |                                                                      |
+| みち           | 道            | road                     |                                                                      |
+| こみち          | 小道           | path                     |                                                                      |
+| せきどう         | 赤道           | equator                  |                                                                      |
+| ほっかいどう       | 北海道          | Hokkaido                 | ? Place-specific: Hokkaido.                                          |
+| どうろ          | 道ろ           | road                     | ? Kana substitution: reconstructed whole word.                       |
+| なまけもの        | なまけ者         | lazy person              | ? Kana substitution: reconstructed whole word.                       |
+| かがくしゃ        | か学者          | scientist                | ? Kana substitution: reconstructed whole word.                       |
+| いしゃ          | い者           | doctor                   | ? Kana substitution: reconstructed whole word.                       |
+| さくしゃ         | 作者           | author                   |                                                                      |
+| いじょう         | 以上           | greater than or equal to | ? English judgement: mathematical sense; includes the stated number. |
+| いか           | 以下           | less than or equal to    | ? English judgement: mathematical sense; includes the stated number. |
+| いがい          | 以外           | other than               |                                                                      |
+| いぜん          | 以前           | before                   |                                                                      |
+| いご           | 以後           | from then on             |                                                                      |
+| おんど          | おん度          | temperature              | ? Kana substitution: reconstructed whole word.                       |
+| いど           | い度           | latitude                 | ? Kana substitution: reconstructed whole word.                       |
+| けいど          | けい度          | longitude                | ? Kana substitution: reconstructed whole word.                       |
+| かくど          | 角度           | angle                    |                                                                      |
+| うごく          | 動く           | to move                  |                                                                      |
+| うごかす         | 動かす          | to move something        |                                                                      |
+| どうぶつ         | 動物           | animal                   |                                                                      |
+| どうさ          | 動作           | movement                 |                                                                      |
+| うんどう         | うん動          | exercise                 | ? Kana substitution: reconstructed whole word.                       |
+| じどうしゃ        | 自動車          | car                      |                                                                      |
 
 ## Group 3
 
-| Reading (かな) | Written form | Meaning | Check? |
-| ------------ | ------------ | ------- | ------ |
-|              | 物            |         |        |
-|              | 食べ物          |         |        |
-|              | のみ物          |         |        |
-|              | しょく物         |         |        |
-|              | とうじょう人物      |         |        |
-|              | 生き物          |         |        |
-|              | 家族           |         |        |
-|              | 協力           |         |        |
-|              | 理科           |         |        |
-|              | 地理           |         |        |
-|              | りょう理         |         |        |
-|              | 科目           |         |        |
-|              | 科学者          |         |        |
-|              | 新しい          |         |        |
-|              | 新学き          |         |        |
-|              | 新人           |         |        |
-|              | 新年           |         |        |
-|              | 新ぶん          |         |        |
-|              | 一枚           |         |        |
-|              | 何枚           |         |        |
-|              | 住む           |         |        |
-|              | 住所           |         |        |
-|              | 所            |         |        |
-|              | ば所           |         |        |
-|              | 意見           |         |        |
-|              | 意味           |         |        |
-|              | 用意           |         |        |
-|              | 味            |         |        |
+| Reading (かな) | Written form | Meaning               | Check?                                                               |
+| ------------ | ------------ | --------------------- | -------------------------------------------------------------------- |
+| もの           | 物            | thing                 |                                                                      |
+| たべもの         | 食べ物          | food                  |                                                                      |
+| のみもの         | のみ物          | drink                 | ? Kana substitution: reconstructed whole word.                       |
+| しょくぶつ        | しょく物         | plant                 | ? Kana substitution: reconstructed whole word.                       |
+| とうじょうじんぶつ    | とうじょう人物      | characters in a story | ? Kana substitution: reconstructed whole word.                       |
+| いきもの         | 生き物          | living thing          |                                                                      |
+| かぞく          | 家族           | family                |                                                                      |
+| きょうりょく       | 協力           | cooperation           |                                                                      |
+| りか           | 理科           | science               |                                                                      |
+| ちり           | 地理           | geography             |                                                                      |
+| りょうり         | りょう理         | cooking               | ? Kana substitution: reconstructed whole word.                       |
+| かもく          | 科目           | school subject        |                                                                      |
+| かがくしゃ        | 科学者          | scientist             |                                                                      |
+| あたらしい        | 新しい          | new                   |                                                                      |
+| しんがっき        | 新学き          | new school term       | ? Kana substitution: reconstructed whole word.                       |
+| しんじん         | 新人           | newcomer              |                                                                      |
+| しんねん         | 新年           | new year              |                                                                      |
+| しんぶん         | 新ぶん          | newspaper             | ? Kana substitution: reconstructed whole word.                       |
+| いちまい         | 一枚           | one sheet             | ? English judgement: sheets; counter also covers other flat objects. |
+| なんまい         | 何枚           | how many sheets       | ? English judgement: sheets; counter also covers other flat objects. |
+| すむ           | 住む           | to live               |                                                                      |
+| じゅうしょ        | 住所           | address               |                                                                      |
+| ところ          | 所            | place                 |                                                                      |
+| ばしょ          | ば所           | place                 | ? Kana substitution: reconstructed whole word.                       |
+| いけん          | 意見           | opinion               |                                                                      |
+| いみ           | 意味           | meaning               |                                                                      |
+| ようい          | 用意           | preparation           |                                                                      |
+| あじ           | 味            | taste                 |                                                                      |
 
 ## Group 4
 
-| Reading (かな) | Written form | Meaning | Check? |
-| ------------ | ------------ | ------- | ------ |
-|              | 全部           |         |        |
-|              | 部首           |         |        |
-|              | 部分           |         |        |
-|              | 部や           |         |        |
-|              | 五部           |         |        |
-|              | 買う           |         |        |
-|              | 買い物          |         |        |
-|              | 読む           |         |        |
-|              | 読み方          |         |        |
-|              | 読書           |         |        |
-|              | 読かい          |         |        |
-|              | 音読           |         |        |
-|              | もく読          |         |        |
-|              | 書く           |         |        |
-|              | 図書かん         |         |        |
-|              | 図書しつ         |         |        |
-|              | ひ書           |         |        |
-|              | 聞く           |         |        |
-|              | 新聞           |         |        |
-|              | 新聞紙          |         |        |
-|              | 頭            |         |        |
-|              | 三頭           |         |        |
-|              | 頭部           |         |        |
-|              | 働く           |         |        |
-|              | 重い           |         |        |
-|              | 重さ           |         |        |
-|              | 重力           |         |        |
+| Reading (かな) | Written form | Meaning               | Check?                                                                  |
+| ------------ | ------------ | --------------------- | ----------------------------------------------------------------------- |
+| ぜんぶ          | 全部           | all                   |                                                                         |
+| ぶしゅ          | 部首           | kanji radical         |                                                                         |
+| ぶぶん          | 部分           | part                  |                                                                         |
+| へや           | 部や           | room                  | ? Kana substitution: reconstructed whole word.                          |
+| ごぶ           | 五部           | five copies           | ? English judgement: copies of a publication; context needed.           |
+| かう           | 買う           | to buy                |                                                                         |
+| かいもの         | 買い物          | shopping              |                                                                         |
+| よむ           | 読む           | to read               |                                                                         |
+| よみかた         | 読み方          | how to read           |                                                                         |
+| どくしょ         | 読書           | reading books         |                                                                         |
+| どっかい         | 読かい          | reading comprehension | ? Kana substitution: reconstructed whole word.                          |
+| おんどく         | 音読           | reading out loud      |                                                                         |
+| もくどく         | もく読          | silent reading        | ? Kana substitution: reconstructed whole word.                          |
+| かく           | 書く           | to write              |                                                                         |
+| としょかん        | 図書かん         | library               | ? Kana substitution: reconstructed whole word.                          |
+| としょしつ        | 図書しつ         | library room          | ? Kana substitution: reconstructed whole word.                          |
+|              | ひ書           |                       | ? Unclear source: could be 秘書 (secretary); intended word not confirmed. |
+| きく           | 聞く           | to listen             |                                                                         |
+| しんぶん         | 新聞           | newspaper             |                                                                         |
+| しんぶんし        | 新聞紙          | newspaper             |                                                                         |
+| あたま          | 頭            | head                  |                                                                         |
+| さんとう         | 三頭           | three large animals   |                                                                         |
+| とうぶ          | 頭部           | head                  |                                                                         |
+| はたらく         | 働く           | to work               |                                                                         |
+| おもい          | 重い           | heavy                 |                                                                         |
+| おもさ          | 重さ           | weight                |                                                                         |
+| じゅうりょく       | 重力           | gravity               |                                                                         |
