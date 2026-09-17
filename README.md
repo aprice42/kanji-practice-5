@@ -4,7 +4,7 @@ Flashcard PWA for a 5th-grader's kanji homework.
 
 His teacher sends home worksheets of kanji to review; they get transcribed into
 `content/worksheets/` and become a deck. The school's whole Grade 1–5 kanji list lives
-alongside them in `content/words/`, one file per grade, each cut into four groups. He practises on a phone (a Pixel) and an iPad,
+alongside them in `content/words/`, one file per grade, each cut into four groups. He practices on a phone (a Pixel) and an iPad,
 usually installed to the home screen, sometimes without a network — which is why this is a
 PWA that precaches everything, fonts included.
 

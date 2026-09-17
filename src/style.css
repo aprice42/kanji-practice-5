@@ -1207,6 +1207,11 @@ html, body {
 /* The selection sheet -----------------------------------------------------
    Fixed, so it escapes #app's `overflow: hidden` and its 1080px cap. Above the
    confetti canvas (10) and the menu panels (20).
+
+   Centred rather than anchored to the bottom edge. It holds seven rows when
+   collapsed, so a bottom sheet left a tall band of dead space above it and put
+   the panel off-centre on every screen; centring also stops the Done button
+   sitting on the home indicator.
    ------------------------------------------------------------------------- */
 .sheet-scrim {
   position: fixed;
@@ -1221,21 +1226,24 @@ html, body {
 .sheet {
   position: fixed;
   z-index: 31;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin-inline: auto;
-  width: 100%;
+  /* inset + auto margins + a content height is what actually centres a fixed
+     element on both axes. `height: max-content` is load-bearing: without it the
+     element stretches to the inset box and the vertical centring does nothing. */
+  inset: 0;
+  margin: auto;
+  height: max-content;
+  width: calc(100% - 1.75rem);
   max-width: 34rem;
   display: flex;
   flex-direction: column;
+  /* Leaves a gutter top and bottom at every height, so the panel never runs
+     under the status bar or the home indicator. */
   max-height: calc(100dvh - 3rem);
   background: var(--bg);
-  border-top: 1px solid var(--edge);
-  border-radius: 1rem 1rem 0 0;
-  box-shadow: 0 -8px 28px rgb(0 0 0 / 0.18);
-  /* Mirrors #app: the home indicator must not sit on top of the Done button. */
-  padding: 0.875rem 0.875rem max(0.875rem, env(safe-area-inset-bottom));
+  border: 1px solid var(--edge);
+  border-radius: 1rem;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.18);
+  padding: 0.875rem;
   gap: 0.5rem;
 }
 .sheet__title {
@@ -1332,14 +1340,18 @@ html, body {
 .sheet__foot { display: flex; }
 .sheet__foot .btn { flex: 1; }
 
-/* House style adds motion on request; it never removes it in a reduce block. */
+/* House style adds motion on request; it never removes it in a reduce block.
+
+   The panel runs this once, when it opens. Ticking a box updates the controls
+   in place rather than re-rendering — see syncSheet — because rebuilding the
+   screen restarted this animation on every click and read as a flash. */
 @media (prefers-reduced-motion: no-preference) {
-  .sheet { animation: sheet-up 160ms ease; }
+  .sheet { animation: sheet-in 160ms ease; }
   .sheet-scrim { animation: scrim-in 160ms ease; }
   .icon--chevron { transition: transform 120ms ease; }
 }
-@keyframes sheet-up {
-  from { transform: translateY(1.5rem); opacity: 0; }
+@keyframes sheet-in {
+  from { transform: scale(0.98); opacity: 0; }
   to   { transform: none; opacity: 1; }
 }
 @keyframes scrim-in {

@@ -636,9 +636,9 @@ function bindMenus() {
 }
 
 /* The selection sheet -----------------------------------------------------
-   A bottom sheet rather than a screen: choosing what to practise is a detour
-   from starting a round, not a step in it, and a sheet keeps the home screen
-   and its counts visible behind.
+   A dialog rather than a screen: choosing what to practice is a detour from
+   starting a round, not a step in it, and a panel keeps the home screen visible
+   behind it.
    ------------------------------------------------------------------------- */
 
 const BOX = { true: 'boxCheck', false: 'box', mixed: 'boxDash' }
@@ -701,7 +701,7 @@ function renderSheet() {
   return `
     <div class="sheet-scrim" data-close></div>
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-      <h2 class="sheet__title" id="sheet-title">What to practise</h2>
+      <h2 class="sheet__title" id="sheet-title">What to practice</h2>
       <div class="sheet__list">
         <p class="menu__heading">Grades</p>
         ${GRADE_ORDER.map(sheetGradeRow).join('')}
@@ -725,10 +725,46 @@ function renderSheet() {
     </section>`
 }
 
-/* Opening and closing are re-renders, because the summary row, the sheet and
-   the Done button's count all have to agree. Focus goes into the sheet on open
-   and back to the row that opened it on close — a dialog that drops focus to
-   the top of the document is unusable by keyboard. */
+/* Ticking a box updates the controls in place rather than re-rendering.
+
+   Re-rendering was the obvious thing and it was wrong: render() replaces the
+   home screen wholesale, so every tick built a new .sheet, which restarted its
+   entry animation and repainted the screen behind it. It read as a flash on
+   every click. The theme and palette switches already avoid this for the same
+   reason — see setTheme — so this follows them.
+
+   Everything that can disagree is updated here: each box, the grade boxes that
+   summarise their groups, the Done count, and the summary row behind the
+   scrim. */
+function syncSheet() {
+  const setBox = (btn, checked) => {
+    btn.setAttribute('aria-checked', checked)
+    btn.querySelector('.sheet__box').innerHTML = icon(BOX[checked], 'icon--box')
+  }
+
+  for (const btn of app.querySelectorAll('.sheet [data-deck]')) {
+    setBox(btn, String(state.selection.has(btn.dataset.deck)))
+  }
+  for (const btn of app.querySelectorAll('.sheet [data-grade]')) {
+    const g = btn.dataset.grade === 'ch' ? 'ch' : Number(btn.dataset.grade)
+    setBox(btn, gradeState(g))
+  }
+
+  const count = activeCards().length
+  const done = app.querySelector('.sheet__foot .btn')
+  if (done) done.textContent = `Done · ${count} cards`
+
+  // The summary row is visible through the scrim, so it must not lag behind.
+  const name = app.querySelector('.selection__name')
+  if (name) name.textContent = describeSelection()
+  const shown = app.querySelector('.selection__count')
+  if (shown) shown.textContent = `${count} cards`
+}
+
+/* Opening and closing are the only re-renders, so the entry animation runs
+   once. Focus goes into the sheet on open and back to the row that opened it on
+   close — a dialog that drops focus to the top of the document is unusable by
+   keyboard. */
 function openSheet() {
   state.sheet = new Set()
   render()
@@ -754,40 +790,45 @@ function bindSheet() {
     note.textContent = 'Keep at least one selected — a round needs cards.'
   }
 
-  /* Re-rendered on every change: a grade's checkbox has to pick up "mixed" the
-     moment one of its groups is turned off, and the Done count has to follow.
-     Focus is put back on the control that was used, by its data attribute. */
-  const after = (key) => {
-    render()
-    app.querySelector(`.sheet [${key}]`)?.focus()
+  const change = (ok) => {
+    if (ok) {
+      note.textContent = ''
+      syncSheet()
+    } else {
+      refused()
+    }
   }
 
   for (const btn of sheet.querySelectorAll('[data-deck]')) {
     btn.addEventListener('click', () => {
       const id = btn.dataset.deck
-      const on = !state.selection.has(id)
-      if (setDeck(id, on)) after(`data-deck="${id}"`)
-      else refused()
+      change(setDeck(id, !state.selection.has(id)))
     })
   }
 
   for (const btn of sheet.querySelectorAll('[data-grade]')) {
     btn.addEventListener('click', () => {
-      const grade = btn.dataset.grade
-      const g = grade === 'ch' ? 'ch' : Number(grade)
-      const on = gradeState(g) !== 'true'
-      if (setGrade(g, on)) after(`data-grade="${grade}"`)
-      else refused()
+      const g = btn.dataset.grade === 'ch' ? 'ch' : Number(btn.dataset.grade)
+      change(setGrade(g, gradeState(g) !== 'true'))
     })
   }
 
+  /* Expanding is also in place — hiding a group list is not worth rebuilding
+     the screen for. state.sheet still records which grades are open, so a real
+     re-render (a theme change with the sheet up) restores them. */
   for (const btn of sheet.querySelectorAll('[data-expand]')) {
     btn.addEventListener('click', () => {
       const grade = btn.dataset.expand
-      if (state.sheet.has(grade)) state.sheet.delete(grade)
-      else state.sheet.add(grade)
-      render()
-      app.querySelector(`.sheet [data-expand="${grade}"]`)?.focus()
+      const open = !state.sheet.has(grade)
+      if (open) state.sheet.add(grade)
+      else state.sheet.delete(grade)
+      const groups = sheet.querySelector(`#sheet-groups-${grade}`)
+      if (groups) groups.hidden = !open
+      btn.setAttribute('aria-expanded', String(open))
+      const label = btn.querySelector('.visually-hidden')
+      if (label) label.textContent = `${open ? 'Hide' : 'Show'} ${gradeLabel(
+        grade === 'ch' ? 'ch' : Number(grade)
+      )} groups`
     })
   }
 
