@@ -3,7 +3,8 @@
 Flashcard PWA for a 5th-grader's kanji homework.
 
 His teacher sends home worksheets of kanji to review; they get transcribed into
-`content/content.md` and become the deck. He practises on a phone (a Pixel) and an iPad,
+`content/worksheets/` and become a deck. The school's whole Grade 1–5 kanji list lives
+alongside them in `content/words/`, one file per grade, each cut into four groups. He practises on a phone (a Pixel) and an iPad,
 usually installed to the home screen, sometimes without a network — which is why this is a
 PWA that precaches everything, fonts included.
 
@@ -262,11 +263,12 @@ npm run dev
 | `npm run dev` | dev server |
 | `npm run build` | production build into `dist/` |
 | `npm run preview` | serve the built output, to check the service worker and offline behaviour |
-| `npm run cards` | `content/content.md` → `src/cards.js` |
+| `npm run cards` | `content/worksheets/` + `content/words/` → `src/cards.js` |
 | `npm run fonts` | rebuild the Klee One subset for the current deck (needs network) |
 | `npm run strokes` | rebuild the KanjiVG stroke subset for the current deck (needs network) |
 | `npm run check` | confirm the generated files still match the deck |
-| `npm run audit` | how guessable the multiple-choice questions are |
+| `npm run audit` | how guessable the multiple-choice questions are, per deck (`npm run audit -- g4:2` for one) |
+| `npm run scaffold` | regenerate `content/words/*.md` from the master kanji list |
 
 ## Deployment
 
@@ -364,14 +366,24 @@ part of a word in kana when that kanji has not been taught yet —
 he would be marked wrong for writing it. When in doubt, copy the scan, not your knowledge
 of Japanese.
 
-### 2. Add the rows to `content/content.md`
+### 2. Add the rows to the worksheet file in `content/worksheets/`
 
 One row per card: `| reading (kana) | written form | meaning |`. The meanings are not on the
 worksheet — they are written by hand here, in plain English a ten-year-old would use.
 
-Every reading must be unique across the deck. Two cards sharing a reading would make a
+Every reading must be unique **within a deck**. Two cards sharing a reading would make a
 multiple-choice question have two correct answers; `npm run cards` refuses to write if it
-finds a duplicate.
+finds a duplicate inside one deck.
+
+Across decks a shared reading is fine, and is in fact the syllabus: the same word is
+re-taught as more of its kanji become available, so じどうしゃ is legitimately じどう車,
+自どう車 and 自動車. 93 readings span more than one deck. A round draws from one selection,
+and `src/choices.js` refuses a distractor whose prompt face matches the question's, which
+is the guarantee that actually holds at runtime.
+
+One collision is real and lives inside a single deck: 画用紙 is printed twice in the master
+list, as が用紙 under 紙 and が用し under 用. Both were verified against the scan. It is named
+in `ALLOWED_COLLISIONS` in `scripts/deck.mjs` rather than "fixed" in the content.
 
 If you want to record the full kanji form for reference, put it in 〔…〕 after the written
 form — `全ぶ〔全部〕`. The generator strips these, so they never reach the app.
@@ -379,7 +391,7 @@ form — `全ぶ〔全部〕`. The generator strips these, so they never reach t
 ### 3. Regenerate everything
 
 ```
-npm run cards    # content.md  →  src/cards.js
+npm run cards    # content/worksheets/ + content/words/  →  src/cards.js
 npm run fonts    # rebuild the Klee One subset for the new characters
 npm run strokes  # rebuild the KanjiVG stroke subset for the new characters
 npm run check    # confirm the three above actually agree with each other
@@ -394,7 +406,7 @@ simply cannot be traced, so Trace mode passes over it without a word. Neither sh
 a build, and both are the kind of mistake that looks like nothing is wrong.
 
 Being written down here was not enough: the font one shipped anyway. So `npm run check`
-re-reads `content.md`, compares it to `src/cards.js`, and confirms every character in the
+re-reads every deck under `content/`, compares them to `src/cards.js`, and confirms every character in the
 deck has both a glyph in the font subset and well-formed stroke data. It writes nothing
 and names the command that fixes whatever it finds:
 
@@ -455,9 +467,11 @@ not just the resting state.
 
 | Path | |
 | --- | --- |
-| `content/content.md` | the card data, hand-maintained — the source of truth |
+| `content/worksheets/*.md` | a worksheet as the teacher sent it home — one deck each |
+| `content/words/*.md` | the school's master list by grade, four groups each; readings and meanings hand-written |
+| `content/kanji-list/` | the transcribed master list, one directory per edition; `current` names the active one |
 | `content/*.jpg` | scans of the original worksheets |
-| `src/cards.js` | generated from content.md; do not edit by hand |
+| `src/cards.js` | generated from `content/`; exports `cards` and the `DECKS` manifest. Do not edit by hand |
 | `src/choices.js` | card sides and multiple-choice distractor scoring; shared with the audit |
 | `src/strokes.js` | generated from KanjiVG by `npm run strokes`; do not edit by hand |
 | `src/strokes-geom.js` | sampling and `Path2D` for the stroke data |
@@ -468,7 +482,7 @@ not just the resting state.
 | `src/confetti.js` | the clean-sweep animation |
 | `src/update.js` | service-worker update check behind the home screen's update button |
 | `public/fonts/` | the Klee One subset, its licence, and regeneration notes |
-| `scripts/deck.mjs` | parses `content.md`; shared by `npm run cards` and `npm run check` so they cannot disagree |
+| `scripts/deck.mjs` | parses a deck's Markdown; shared by `npm run cards` and `npm run check` so they cannot disagree |
 | `scripts/` | the `npm run` helpers above |
 | `wrangler.jsonc` | Cloudflare deploy config — points at `dist/` |
 | `CLAUDE.md` | short orientation for an agent picking this up |

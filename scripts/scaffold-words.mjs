@@ -135,7 +135,7 @@ function existingRows() {
    meanings — plain English a ten-year-old would use. */
 function seedRows() {
   const rows = new Map()
-  const path = join(root, 'content/content.md')
+  const path = join(root, 'content/worksheets/2025-09-review.md')
   if (!existsSync(path)) return rows
   for (const [written, row] of parseTable(readFileSync(path, 'utf8'))) {
     // 〔…〕 carries the full-kanji reference form and never reaches the app.
@@ -263,7 +263,7 @@ console.log(`\nEdition ${edition} — ${list.kanji.length} kanji, ${total} disti
 for (const { grade, total: n, sizes } of perGrade) {
   console.log(`  ${grade.title.padEnd(14)} ${String(n).padStart(3)} words   groups ${sizes.join(' / ')}`)
 }
-console.log(`\n  ${filled} of ${total} rows filled${fromSeed ? ` (${fromSeed} seeded from content/content.md)` : ''}`)
+console.log(`\n  ${filled} of ${total} rows filled${fromSeed ? ` (${fromSeed} seeded from the September worksheet)` : ''}`)
 console.log(`  ${total - filled} still blank, ${flagged} flagged for review`)
 if (orphans.length) console.log(`  ${orphans.length} row(s) no longer in the list — parked in content/words/retired.md`)
 console.log(`\nWrote ${GRADES.length} files to content/words/.`)

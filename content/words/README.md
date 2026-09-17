@@ -4,7 +4,7 @@ These six files hold every word the school's kanji list teaches — 762 of them.
 The **Written form** column comes from the master list. The **Reading** and
 **Meaning** columns are blank and have to be written by hand. That is the job.
 
-47 rows are already filled in, seeded from `content/content.md` (the September
+47 rows are already filled in, seeded from `content/worksheets/2025-09-review.md` (the September
 worksheet the app ships with today). **Read a few of those before starting** —
 they set the voice.
 
@@ -138,7 +138,7 @@ Grade 5 is the biggest at 232 words. Splitting it across two sessions by Group
 | `content/words/*.md` | the rows to fill in — this is what you edit |
 | `content/kanji-list/current` | names the active edition of the master list |
 | `content/kanji-list/2022-08/list.json` | the master list: every word, its grade, the kanji hosting it, and that kanji's readings |
-| `content/content.md` | the September worksheet — 47 worked examples |
+| `content/worksheets/2025-09-review.md` | the September worksheet — 47 worked examples |
 | `README.md` § Adding cards | the kana-substitution rule in the project's own words |
 
 `list.json` is worth opening. Each word sits under the kanji that hosts it,
@@ -155,14 +155,14 @@ Re-running is safe at any time: it merges on the written form and **never
 overwrites a cell you have filled in**. It prints how many rows are filled, how
 many are blank, and how many are flagged.
 
-Do not run `npm run cards`, `fonts`, `strokes` or `check` — those are wired to
-the old single-file deck until a later stage of this project, and are not part
-of this job.
+`npm run check` also reports filled, blank and flagged counts per group, and is
+safe to run. Do not run `npm run cards`, `fonts` or `strokes` — those regenerate
+files outside this directory and are not part of this job.
 
 ## What not to touch
 
 Nothing outside `content/words/`. Not `src/`, not `scripts/`, not
-`content/content.md`, not the master list. If something outside this directory
+`content/worksheets/`, not the master list. If something outside this directory
 looks wrong, say so in your summary instead of changing it.
 
 When you finish a grade, report: how many rows you filled, how many you flagged
