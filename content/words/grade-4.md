@@ -48,7 +48,7 @@
 | しょうがっこう      | 小学校          | elementary school           |                                                                    |
 | まなぶ          | 学ぶ           | to learn                    |                                                                    |
 | うみ           | 海            | sea                         |                                                                    |
-| ほっかいどう       | 北海どう         | Hokkaido                    |                                                                    |
+| ほっかいどう       | 北海とう         | Hokkaido                    | ? Source defect: printed 北海とう, missing dakuten; the word is 北海道    |
 | かいがん         | 海がん          | coast                       |                                                                    |
 | ちいさいしま       | 小さい島         | small island                | ? kana substitution                                                |
 | しまぐに         | 島国           | island country              | ? rendaku くに→ぐに                                                    |
@@ -63,60 +63,59 @@
 
 ## Group 2
 
-| Reading (かな) | Written form | Meaning                     | Check?                                                          |
-| ------------ | ------------ | --------------------------- | --------------------------------------------------------------- |
-| さかな          | 魚            | fish                        |                                                                 |
-| きんぎょ         | 金魚           | goldfish                    |                                                                 |
-| え            | 絵            | picture                     |                                                                 |
-| えほん          | 絵本           | picture book                |                                                                 |
-| えのぐ          | 絵のぐ          | paint                       |                                                                 |
-| ぬりえ          | ぬり絵          | coloring                    | ? kana substitution                                             |
-| かい           | 貝            | shellfish                   |                                                                 |
-| かいがら         | 貝がら          | seashell                    |                                                                 |
-| かたち          | 形            | shape                       |                                                                 |
-| ひしがた         | ひし形          | diamond shape               | ? kana substitution                                             |
-| さんかくけい       | 三角形          | triangle                    |                                                                 |
-| にんぎょう        | 人形           | doll                        |                                                                 |
-| たかくけい        | た角形          | polygon                     | ? kana substitution                                             |
-| だいけい         | 台形           | trapezoid                   | ? rendaku たい→だい                                                 |
-| きいろ          | 黄色           | yellow                      |                                                                 |
-| きみどり         | 黄緑           | yellow-green                |                                                                 |
-| きる           | 切る           | to cut                      |                                                                 |
-| きって          | 切手           | postage stamp               |                                                                 |
-| たいせつ         | 大切           | important                   |                                                                 |
-| きた           | 北            | north                       |                                                                 |
-| ほっきょく        | 北きょく         | North Pole                  |                                                                 |
-| ほっきょくかい      | 北きょく海        | Arctic Ocean                | ? kana substitution                                             |
-| ほっかいどう       | 北海とう         | Hokkaido                    | ? Source defect: printed 北海とう, missing dakuten; the word is 北海道 |
-| ほくとう         | 北東           | northeast                   |                                                                 |
-| くに           | 国            | country                     |                                                                 |
-| しこく          | 四国           | Shikoku                     |                                                                 |
-| ちゅうごく        | 中国           | China                       | ? rendaku こく→ごく                                                 |
-| かんこく         | かん国          | South Korea                 | ? kana substitution                                             |
-| こめ           | 米            | rice                        |                                                                 |
-| もちごめ         | もち米          | sticky rice                 | ? kana substitution                                             |
-| はくまい         | 白米           | white rice                  |                                                                 |
-| げんまい         | げん米          | brown rice                  | ? kana substitution                                             |
-| ちず           | 地図           | map                         |                                                                 |
-| ちけい          | 地形           | shape of the land           |                                                                 |
-| ちきゅう         | 地きゅう         | Earth                       |                                                                 |
-| じしん          | 地しん          | earthquake                  |                                                                 |
-| たべる          | 食べる          | to eat                      |                                                                 |
-| きゅうしょく       | きゅう食         | school lunch                | ? kana substitution                                             |
-| しょくどう        | 食どう          | dining hall                 |                                                                 |
-| にくしょく        | 肉食           | eating meat                 |                                                                 |
-| ざっしょく        | ざっ食          | eating both plants and meat | ? kana substitution                                             |
-| ほね           | 骨            | bone                        |                                                                 |
-| ろっこつ         | ろっ骨          | rib                         | ? kana substitution                                             |
-| こっかく         | 骨かく          | skeleton                    |                                                                 |
-| せぼね          | せ骨           | backbone                    | ? kana substitution                                             |
-| つくる          | 作る           | to make                     |                                                                 |
+| Reading (かな) | Written form | Meaning                     | Check?              |
+| ------------ | ------------ | --------------------------- | ------------------- |
+| さかな          | 魚            | fish                        |                     |
+| きんぎょ         | 金魚           | goldfish                    |                     |
+| え            | 絵            | picture                     |                     |
+| えほん          | 絵本           | picture book                |                     |
+| えのぐ          | 絵のぐ          | paint                       |                     |
+| ぬりえ          | ぬり絵          | coloring                    | ? kana substitution |
+| かい           | 貝            | shellfish                   |                     |
+| かいがら         | 貝がら          | seashell                    |                     |
+| かたち          | 形            | shape                       |                     |
+| ひしがた         | ひし形          | diamond shape               | ? kana substitution |
+| さんかくけい       | 三角形          | triangle                    |                     |
+| にんぎょう        | 人形           | doll                        |                     |
+| たかくけい        | た角形          | polygon                     | ? kana substitution |
+| だいけい         | 台形           | trapezoid                   | ? rendaku たい→だい     |
+| きいろ          | 黄色           | yellow                      |                     |
+| きみどり         | 黄緑           | yellow-green                |                     |
+| きる           | 切る           | to cut                      |                     |
+| きって          | 切手           | postage stamp               |                     |
+| たいせつ         | 大切           | important                   |                     |
+| きた           | 北            | north                       |                     |
+| ほっきょく        | 北きょく         | North Pole                  |                     |
+| ほっきょくかい      | 北きょく海        | Arctic Ocean                | ? kana substitution |
+| ほくとう         | 北東           | northeast                   |                     |
+| くに           | 国            | country                     |                     |
+| しこく          | 四国           | Shikoku                     |                     |
+| ちゅうごく        | 中国           | China                       | ? rendaku こく→ごく     |
+| かんこく         | かん国          | South Korea                 | ? kana substitution |
+| こめ           | 米            | rice                        |                     |
+| もちごめ         | もち米          | sticky rice                 | ? kana substitution |
+| はくまい         | 白米           | white rice                  |                     |
+| げんまい         | げん米          | brown rice                  | ? kana substitution |
+| ちず           | 地図           | map                         |                     |
+| ちけい          | 地形           | shape of the land           |                     |
+| ちきゅう         | 地きゅう         | Earth                       |                     |
+| じしん          | 地しん          | earthquake                  |                     |
+| たべる          | 食べる          | to eat                      |                     |
+| きゅうしょく       | きゅう食         | school lunch                | ? kana substitution |
+| しょくどう        | 食どう          | dining hall                 |                     |
+| にくしょく        | 肉食           | eating meat                 |                     |
+| ざっしょく        | ざっ食          | eating both plants and meat | ? kana substitution |
+| ほね           | 骨            | bone                        |                     |
+| ろっこつ         | ろっ骨          | rib                         | ? kana substitution |
+| こっかく         | 骨かく          | skeleton                    |                     |
+| せぼね          | せ骨           | backbone                    | ? kana substitution |
+| つくる          | 作る           | to make                     |                     |
+| さくぶん         | 作文           | composition                 |                     |
 
 ## Group 3
 
 | Reading (かな) | Written form | Meaning                   | Check?                                                              |
 | ------------ | ------------ | ------------------------- | ------------------------------------------------------------------- |
-| さくぶん         | 作文           | composition               |                                                                     |
 | つくりかた        | 作り方          | how to make something     | ? kana substitution                                                 |
 |              | 〜作           |                           | ? Suffix lacks context; confirm intended reading and meaning.       |
 | さくしゃ         | 作しゃ          | author                    |                                                                     |
@@ -162,12 +161,12 @@
 | らいねん         | 来年           | next year                 |                                                                     |
 | らいげつ         | 来月           | next month                |                                                                     |
 | こおり          | 氷            | ice                       |                                                                     |
+| ひょうざん        | 氷山           | iceberg                   | ? rendaku さん→ざん                                                     |
 
 ## Group 4
 
 | Reading (かな) | Written form | Meaning               | Check?                                                            |
 | ------------ | ------------ | --------------------- | ----------------------------------------------------------------- |
-| ひょうざん        | 氷山           | iceberg               | ? rendaku さん→ざん                                                   |
 | ゆうしょく        | 夕食           | dinner                |                                                                   |
 | おもう          | 思う           | to think              |                                                                   |
 | ふとい          | 太い           | thick / fat           |                                                                   |
