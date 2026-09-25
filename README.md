@@ -317,6 +317,12 @@ npm run dev
 | `npm run audit` | how guessable the multiple-choice questions are, per set (`npm run audit -- g4` for one) |
 | `npm run scaffold` | regenerate `content/words/*.md` from the master kanji list |
 
+The dev server also serves the **set builder** at `/build-set.html`: every card as a
+checkable tile, with search and a per-grade filter, writing `content/sets/<name>.md`. It
+exists only in development — `build-set.html` is not a build entry point, and the endpoint
+it posts to is a Vite plugin marked `apply: 'serve'`, so neither is in `dist/`. The page
+cannot write a file itself, which is the only reason that endpoint exists.
+
 ## Deployment
 
 Deployed as a **Cloudflare Worker serving static assets** — not Cloudflare Pages, despite
@@ -511,6 +517,7 @@ not just the resting state.
 | `content/worksheets/*.md` | a worksheet as the teacher sent it home — one deck each |
 | `content/words/*.md` | the school's master list, one file per grade; readings and meanings hand-written |
 | `content/sets/*.md` | hand-picked practice sets — written forms only, defining no cards |
+| `build-set.html`, `src/build-set.js` | the set builder; dev only, never built |
 | `content/kanji-list/` | the transcribed master list, one directory per edition; `current` names the active one |
 | `content/*.jpg` | scans of the original worksheets |
 | `src/cards.js` | generated from `content/`; exports `cards` and the `SETS` manifest. Do not edit by hand |

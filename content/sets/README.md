@@ -1,5 +1,16 @@
 # Practice sets
 
+**The easiest way to make one is the builder**: run `npm run dev` and open
+<http://localhost:5173/build-set.html> (the port is whatever the dev server printed). It
+shows every card as a checkable tile with search and a per-grade filter, and writes the
+file for you. Everything below is what it writes, and how to do it by hand.
+
+One thing to know: the builder reads `src/cards.js`, which is generated. A set you save
+does not appear in its own "open an existing set" list until `npm run cards` runs again —
+and running that while the builder is open reloads the page, so save before you rebuild.
+
+---
+
 A practice set is a hand-picked list of words to study together — a test's word list, a set of kanji he keeps missing, whatever is useful. One file per set, and they appear in the app's picker under **Practice sets**.
 
 A set file **defines nothing**. It lists written forms that `content/words/` and `content/worksheets/` already define, and the build fails if one of them does not resolve. That is the whole safety net: a mistyped word is caught at build time rather than quietly practising 29 words when you meant 30.

@@ -1,0 +1,171 @@
+/* The set builder. Dev only — see vite.config.js.
+
+   Deliberately not styled like the app: this is a tool for one person on a
+   laptop, not the thing a ten-year-old uses on a phone. It borrows the app's
+   tokens so the kanji render in Klee One and the colours stay legible in both
+   themes, and nothing else. */
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+.b-wrap {
+  max-width: 68rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  padding-block: 1.5rem 7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.b-head { display: flex; flex-direction: column; gap: 0.35rem; }
+.b-head h1 { margin: 0; font-size: 1.4rem; }
+.b-head p { margin: 0; color: var(--muted); font-size: 0.9rem; max-width: 46rem; }
+.b-head code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  background: var(--surface);
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+}
+
+.b-bar {
+  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+  padding: 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+.b-bar label { font-size: 0.8rem; color: var(--muted); }
+.b-field { display: flex; flex-direction: column; gap: 0.2rem; }
+
+input[type="text"], input[type="search"] {
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--edge);
+  background: var(--bg);
+  color: var(--ink);
+  min-width: 12rem;
+}
+
+.b-filters { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.b-pill {
+  border: 1px solid var(--edge);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 32px;
+}
+.b-pill:hover { background: var(--bg); }
+.b-pill[aria-pressed="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.b-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0.4rem;
+}
+.b-tile {
+  border: 2px solid var(--edge);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 0.6rem;
+  padding: 0.45rem 0.4rem;
+  cursor: pointer;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  text-align: center;
+  min-height: 56px;
+  overflow-wrap: anywhere;
+}
+.b-tile:hover { border-color: var(--primary-text); }
+.b-tile[aria-pressed="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+.b-tile__w { font-size: 1.05rem; line-height: 1.25; }
+.b-tile__r { font-size: 0.72rem; color: var(--muted); }
+.b-tile[aria-pressed="true"] .b-tile__r { color: var(--on-primary); opacity: 0.85; }
+.b-empty { color: var(--muted); padding: 1rem 0; }
+
+.b-foot {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 5;
+  display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center;
+  padding: 0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1px solid var(--edge);
+  box-shadow: 0 -6px 20px rgb(0 0 0 / 0.12);
+}
+.b-foot__inner {
+  max-width: 68rem; margin-inline: auto; width: 100%;
+  display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center;
+}
+.b-count { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.9rem; }
+.b-spacer { flex: 1; }
+
+.b-btn {
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--primary);
+  color: var(--on-primary);
+  font: inherit;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  min-height: 40px;
+}
+.b-btn:hover { background: var(--primary-hover); }
+.b-btn[disabled] { opacity: 0.5; cursor: default; }
+.b-btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 2px solid var(--edge);
+}
+.b-btn--ghost:hover { border-color: var(--primary-text); background: var(--surface); }
+.b-btn--danger { background: transparent; color: var(--bad); border: 2px solid var(--bad); }
+.b-btn--danger:hover { background: var(--surface); }
+
+.b-status { font-size: 0.88rem; min-height: 1.3rem; }
+.b-status.is-good { color: var(--good); }
+.b-status.is-bad { color: var(--bad); }
+
+.b-existing { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+.b-existing span { font-size: 0.8rem; color: var(--muted); }
+
+pre.b-out {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+:where(button, input):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}

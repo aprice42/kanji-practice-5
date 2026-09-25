@@ -41,6 +41,10 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
     npm run audit    # how guessable the multiple-choice questions are, per set
     npm run build    # production build into dist/
 
+The set builder is at /build-set.html on the dev server — pick cards, name a set, and it
+writes content/sets/<name>.md. Dev only: build-set.html is not a build entry point and its
+write endpoint is a Vite plugin marked `apply: 'serve'`, so neither reaches the phone.
+
 ## House rules
 
 - `content/worksheets/*.md` and `content/words/*.md` are the source of truth. `src/cards.js`
