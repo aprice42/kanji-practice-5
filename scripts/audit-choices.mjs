@@ -16,7 +16,8 @@ const CHOICE_COUNT = 3
    a deck is audited against its own cards, which is the pool a round actually
    draws from. */
 const TRIALS = 200
-const allCards = rawCards.map((card, id) => ({ ...card, id }))
+// Identity is the written form — the same key the app uses. See src/main.js.
+const allCards = rawCards.map((card) => ({ ...card, id: card.written }))
 const DIRECTIONS = ['reading-first', 'written-first']
 
 const pct = (n, d) => (d ? `${((100 * n) / d).toFixed(1)}%` : '—')

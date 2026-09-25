@@ -101,6 +101,9 @@ export function buildChoices(cards, card, direction, count) {
   const seen = new Set([correct])
 
   const candidates = []
+  /* `id` is the written form, so this also excludes a twin — the same word
+     present twice because it appears in two sets. An array index would not
+     have: the twins have different indices and are the same card. */
   for (const other of shuffle(cards.filter((c) => c.id !== card.id))) {
     const face = answerFaceOf(other, direction)
     if (seen.has(face)) continue // never show the same text twice

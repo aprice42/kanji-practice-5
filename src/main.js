@@ -5,8 +5,19 @@ import { mountTrace } from './trace.js'
 import { isUpdateReady, onUpdateReady, checkForUpdate, applyUpdate } from './update.js'
 import './style.css'
 
-// Stable id per card so a card's status survives across practice rounds.
-const cards = rawCards.map((card, id) => ({ ...card, id }))
+/* A card's id is its written form, not its position in the array.
+
+   The written form is this project's identity key everywhere else — it is what
+   `npm run scaffold` merges on, and what survives a new edition of the school's
+   list renumbering every row. An array index survives none of that: insert one
+   row and every id below it means a different word.
+
+   It also fixes two things the index was quietly getting wrong today. The same
+   word can exist as two card objects — 47 do, once under a grade and once under
+   the September worksheet — and with index ids those two held separate scores
+   for one word, and neither excluded the other from being its own distractor.
+   Both of those now resolve to the same card because they are the same word. */
+const cards = rawCards.map((card) => ({ ...card, id: card.written }))
 
 const app = document.getElementById('app')
 
