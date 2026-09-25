@@ -34,7 +34,10 @@ const CHOICE_COUNT = 3
    are drawn from the card's whole grade instead of the selection. */
 const MIN_POOL = 8
 
-const DEFAULT_SELECTION = ['w:2025-09-review']
+/* There is no default selection. The app used to open on the September
+   worksheet, which is the right answer for exactly one child and the wrong one
+   for everyone else in the program. A student who has never chosen is asked
+   before anything else; after that the app remembers. */
 
 /* Sets ---------------------------------------------------------------------
    A set is a named selection of cards — a whole grade, a worksheet, or later
@@ -198,9 +201,13 @@ const state = {
   /* Set ids, persisted. Ids are content-derived (`g4`, `w:2025-09-review`) and
      survive a row being inserted; a card's id is its written form, and neither
      is ever an array position. */
-  selection: new Set(DEFAULT_SELECTION),
+  selection: new Set(),
   // Ephemeral, never persisted: true while the picker is open.
   sheet: false,
+  /* True until a selection has been chosen for the first time. The picker then
+     opens by itself, cannot be dismissed, and will not let go until something
+     is picked — there is nothing behind it to do. */
+  firstRun: false,
 }
 
 /* Theme ------------------------------------------------------------------ */
@@ -249,6 +256,13 @@ function loadPrefs() {
     // Private browsing or blocked storage — stay on the defaults.
   }
   applyTheme()
+
+  /* Nothing stored, or nothing in it still resolves: this person has never
+     chosen. Ask, rather than guessing on their behalf. */
+  if (!state.selection.size) {
+    state.firstRun = true
+    state.sheet = true
+  }
 }
 
 /* Grades used to be four decks each — `g4:1` … `g4:4` — and are now one set.
@@ -285,7 +299,11 @@ function setSelected(id, on) {
   if (on) {
     state.selection.add(id)
   } else {
-    if (state.selection.size <= 1) return false
+    /* Empty is normally unreachable, because a round with no cards is not a
+       state worth designing. During the first run it is where everyone starts,
+       and Start stays disabled instead — refusing to untick something a moment
+       after ticking it would be nonsense. */
+    if (!state.firstRun && state.selection.size <= 1) return false
     state.selection.delete(id)
   }
   saveSelection()
@@ -443,6 +461,9 @@ function goHome() {
 }
 
 function setMode(mode) {
+  // Unreachable through the UI — the picker is in the way until something is
+  // chosen — but a round of nothing is not a state to leave possible.
+  if (!state.selection.size) return
   if (state.mode === mode && state.screen === 'practice') return
   state.mode = mode
   restart()
@@ -624,10 +645,22 @@ function setRow(set) {
 
 function renderSheet() {
   if (!state.sheet) return ''
+  const first = state.firstRun
+  const count = activeCards().length
   return `
-    <div class="sheet-scrim" data-close></div>
-    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-      <h2 class="sheet__title" id="sheet-title">What to practice</h2>
+    <div class="sheet-scrim" ${first ? '' : 'data-close'}></div>
+    <section class="sheet" role="dialog" aria-modal="true"
+             aria-labelledby="sheet-title" ${first ? 'aria-describedby="sheet-lede"' : ''}>
+      <h2 class="sheet__title" id="sheet-title">
+        ${first ? 'What would you like to practice?' : 'What to practice'}
+      </h2>
+      ${
+        first
+          ? `<p class="sheet__lede" id="sheet-lede">
+               Pick as many as you like. You can change this whenever you want.
+             </p>`
+          : ''
+      }
       <div class="sheet__list">
         ${SECTIONS.map(
           (section) => `
@@ -637,7 +670,9 @@ function renderSheet() {
       </div>
       <p class="sheet__note" role="status" aria-live="polite"></p>
       <div class="sheet__foot">
-        <button class="btn" data-close>Done · ${activeCards().length} cards</button>
+        <button class="btn" data-close ${first && !count ? 'disabled' : ''}>
+          ${first ? `Start${count ? ` · ${count} cards` : ''}` : `Done · ${count} cards`}
+        </button>
       </div>
     </section>`
 }
@@ -661,7 +696,12 @@ function syncSheet() {
 
   const count = activeCards().length
   const done = app.querySelector('.sheet__foot .btn')
-  if (done) done.textContent = `Done · ${count} cards`
+  if (done) {
+    done.textContent = state.firstRun
+      ? `Start${count ? ` · ${count} cards` : ''}`
+      : `Done · ${count} cards`
+    done.disabled = state.firstRun && !count
+  }
 
   // The summary row is visible through the scrim, so it must not lag behind.
   const name = app.querySelector('.selection__name')
@@ -681,7 +721,11 @@ function openSheet() {
 }
 
 function closeSheet() {
+  // Nothing picked and nothing stored: there is no screen behind this worth
+  // showing, so the dialog simply stays.
+  if (state.firstRun && !state.selection.size) return
   state.sheet = false
+  state.firstRun = false
   render()
   document.getElementById('selection')?.focus()
 }
@@ -720,7 +764,8 @@ function bindSheet() {
   sheet.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       event.stopPropagation()
-      closeSheet()
+      // Escape is a way out, and on the first run there is nothing to go out to.
+      if (!state.firstRun) closeSheet()
       return
     }
     if (event.key !== 'Tab') return

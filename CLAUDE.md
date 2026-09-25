@@ -76,6 +76,9 @@ write endpoint is a Vite plugin marked `apply: 'serve'`, so neither reaches the 
 - There is exactly one layout breakpoint (the mode cards, 1 column to 3 at 44rem) and it is
   deliberate: a column count is discrete and a clamp cannot express it. Sizes stay clamps.
 - Correct/wrong must differ by shape, not only color, and every icon needs a text label.
+- There is no default selection. A student who has never chosen gets a non-dismissible
+  picker; after that it is remembered. A stored selection that no longer resolves asks
+  again rather than falling back to a guess.
 - A round is the whole selection — no cap. One was tried and removed: it sampled randomly,
   so no set was ever guaranteed to be seen in full. Length is controlled by the selection.
   Every count — tally, progress, score ring — follows `state.round`, since "practice the N

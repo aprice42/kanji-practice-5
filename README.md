@@ -38,7 +38,11 @@ Everything the app can practice is one flat pool of cards, and a **set** is a na
 
 Both are resolved at build time into plain membership, so the app never evaluates a query and `npm run check` can verify a set's real contents rather than reimplementing an evaluator.
 
-The home screen's summary row names the current selection and its card count; tapping it opens a flat picker grouped by where each set came from — **Curriculum**, **Worksheets**, and **Practice sets** once any exist. The September review is the default, so the app opens on what it has always played.
+The home screen's summary row names the current selection and its card count; tapping it opens a flat picker grouped by where each set came from — **Curriculum**, **Worksheets**, **Kana**, and **Practice sets** once any exist.
+
+**There is no default selection.** The app used to open on the September review, which is the right answer for exactly one child and the wrong one for everybody else. A student who has never chosen is asked — the picker opens by itself, reading *"What would you like to practice?"*, and cannot be dismissed by the scrim, by Escape, or by Start until something is picked. After that the app remembers, and returning goes straight to the home screen.
+
+The same thing happens if a stored selection stops resolving, because a set was renamed or removed: it asks again rather than guessing. That is the one moment the empty-selection rule below is relaxed — on the first run, unticking back to zero is allowed and Start disables instead, since refusing to untick something a moment after ticking it would be nonsense.
 
 Grades used to be cut into four **Groups** each. They were a quarter of the master list's *print* order, which is not a teaching order, not a difficulty order, and not tied to when anything is taught — so the boundaries described nothing. They are gone.
 
