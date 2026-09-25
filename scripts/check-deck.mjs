@@ -14,7 +14,10 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { parseCards, isFilled, duplicateReadings, isAllowedCollision, deckCharacters, isJapanese, isTraceable } from './deck.mjs'
+import {
+  parseCards, isFilled, duplicateReadings, isAllowedCollision,
+  deckCharacters, isJapanese, isTraceable, GRADES,
+} from './deck.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const read = (p) => readFileSync(join(root, p), 'utf8')
@@ -25,17 +28,14 @@ const fail = (headline, fix) => problems.push({ headline, fix })
 /* 1. src/cards.js was built from the current sources ---------------------- */
 
 /* Re-derive what `npm run cards` would emit, by reading the same directories in
-   the same order. Deck ids and labels are duplicated here rather than imported
-   from the generator, deliberately: a check that shares the generator's idea of
-   what a deck is cannot catch the generator being wrong about it. */
-const GRADES = [
-  { file: 'grade-1.md', prefix: 'g1', label: 'Grade 1' },
-  { file: 'grade-2.md', prefix: 'g2', label: 'Grade 2' },
-  { file: 'grade-3.md', prefix: 'g3', label: 'Grade 3' },
-  { file: 'grade-4.md', prefix: 'g4', label: 'Grade 4' },
-  { file: 'grade-5.md', prefix: 'g5', label: 'Grade 5' },
-  { file: 'challenge.md', prefix: 'ch', label: 'Challenge' },
-]
+   the same order. The derivation is deliberately written out again here rather
+   than imported from the generator: a check that shares the generator's idea of
+   what a deck is cannot catch the generator being wrong about it.
+
+   GRADES is the exception, and is imported. Which files exist and what they are
+   called is data, not derivation — and three hand-kept copies of it had already
+   drifted apart, which is a worse failure than the one the duplication guards
+   against. */
 
 const sources = []
 
@@ -48,19 +48,23 @@ for (const file of existsSync(worksheetDir) ? readdirSync(worksheetDir).sort() :
   sources.push({
     id: `w:${name}`,
     label: parsed.title || name,
+    set: `w:${name}`,
+    grade: null,
     rows: rows.filter(isFilled),
     words: rows.length,
     notes: parsed.groups.reduce((n, g) => n + g.notes.length, 0),
   })
 }
 
-for (const { file, prefix, label } of GRADES) {
+for (const { file, prefix, label, grade, set } of GRADES) {
   if (!existsSync(join(root, 'content/words', file))) continue
   const parsed = parseCards(read(`content/words/${file}`))
   parsed.groups.forEach((group, i) => {
     sources.push({
       id: `${prefix}:${i + 1}`,
       label: `${label} · Group ${i + 1}`,
+      set,
+      grade,
       rows: group.rows.filter(isFilled),
       words: group.rows.length,
       notes: group.notes.length,
@@ -68,7 +72,7 @@ for (const { file, prefix, label } of GRADES) {
   })
 }
 
-const { cards, DECKS } = await import(new URL('../src/cards.js', import.meta.url))
+const { cards, DECKS, SETS } = await import(new URL('../src/cards.js', import.meta.url))
 
 /* A duplicate reading inside one deck would let a single round ask a question
    with two correct answers. Across decks it is the syllabus re-teaching a word
@@ -83,8 +87,23 @@ for (const source of sources) {
   }
 }
 
+/* The grade of each written form, re-derived the same way the generator does —
+   from the curriculum, then looked up for worksheet cards. */
+const gradeOfForm = new Map()
+for (const s of sources) {
+  if (s.grade == null) continue
+  for (const [, written] of s.rows) gradeOfForm.set(written, s.grade)
+}
+
 const expected = sources.flatMap((s) =>
-  s.rows.map(([reading, written, meaning]) => ({ reading, written, meaning, deck: s.id }))
+  s.rows.map(([reading, written, meaning]) => ({
+    reading,
+    written,
+    meaning,
+    deck: s.id,
+    grade: s.grade ?? gradeOfForm.get(written) ?? null,
+    set: s.set,
+  }))
 )
 const same =
   expected.length === cards.length &&
@@ -95,8 +114,12 @@ const same =
       e.meaning === cards[i].meaning &&
       /* `deck` is compared too. Without it a cards.js generated before decks
          existed passes every other check and the app silently plays one flat
-         deck of everything. */
-      e.deck === cards[i].deck
+         deck of everything. The same reasoning now covers `grade` and `sets`:
+         a stale cards.js from before sets existed must not pass. */
+      e.deck === cards[i].deck &&
+      e.grade === cards[i].grade &&
+      cards[i].sets?.length === 1 &&
+      e.set === cards[i].sets[0]
   )
 if (!same) {
   fail(
@@ -120,6 +143,37 @@ if (!DECKS) {
   )
   if (miscounted.length) {
     fail(`The DECKS manifest miscounts ${miscounted.map((s) => s.id).join(', ')}.`, 'npm run cards')
+  }
+}
+
+/* Every card's set is in the SETS manifest, and the manifest's counts are the
+   ones the picker will show. Sets are re-derived here by rolling the sources up
+   rather than by reading the manifest, so a generator that rolls up wrongly
+   fails rather than agreeing with itself. */
+if (!SETS) {
+  fail('src/cards.js exports no SETS manifest.', 'npm run cards')
+} else {
+  const rolled = new Map()
+  for (const s of sources) {
+    const set = rolled.get(s.set) ?? { cards: 0, words: 0 }
+    set.cards += s.rows.length
+    set.words += s.words
+    rolled.set(s.set, set)
+  }
+
+  const listed = new Map(SETS.map((s) => [s.id, s]))
+  const unknown = [...new Set(cards.map((c) => c.sets?.[0]))].filter((id) => !listed.has(id))
+  if (unknown.length) {
+    fail(`Cards name ${unknown.length} set(s) the manifest does not list: ${unknown.join(', ')}.`, 'npm run cards')
+  }
+  const missing = [...rolled.keys()].filter((id) => !listed.has(id))
+  if (missing.length) fail(`The SETS manifest is missing: ${missing.join(', ')}.`, 'npm run cards')
+
+  const wrong = [...rolled].filter(
+    ([id, n]) => listed.has(id) && (listed.get(id).cards !== n.cards || listed.get(id).words !== n.words)
+  )
+  if (wrong.length) {
+    fail(`The SETS manifest miscounts ${wrong.map(([id]) => id).join(', ')}.`, 'npm run cards')
   }
 }
 

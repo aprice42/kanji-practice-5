@@ -28,30 +28,28 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { parseCards, isFilled, duplicateReadings, isAllowedCollision } from './deck.mjs'
+import {
+  parseCards, isFilled, duplicateReadings, isAllowedCollision, GRADES, worksheetLabel,
+} from './deck.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
-/* The grade files, in the order the sheet prints them, with the deck-id prefix
-   and label each one gets. `ch` is the sixth tier the sheet lists past grade 5
-   — not "grade 6", which would claim something the sheet does not say. */
-const GRADES = [
-  { file: 'grade-1.md', prefix: 'g1', label: 'Grade 1', grade: 1 },
-  { file: 'grade-2.md', prefix: 'g2', label: 'Grade 2', grade: 2 },
-  { file: 'grade-3.md', prefix: 'g3', label: 'Grade 3', grade: 3 },
-  { file: 'grade-4.md', prefix: 'g4', label: 'Grade 4', grade: 4 },
-  { file: 'grade-5.md', prefix: 'g5', label: 'Grade 5', grade: 5 },
-  { file: 'challenge.md', prefix: 'ch', label: 'Challenge', grade: 'ch' },
-]
+/* ---------- sets, emitted alongside decks ----------
 
-/* A worksheet's id is w:<basename>, so content/worksheets/2025-09-review.md is
-   `w:2025-09-review`. The basename is content-derived and stable; nothing here
-   is ever keyed on a card's array index, which moves the moment a row is
-   inserted above it. */
-const WORKSHEET_LABELS = { '2025-09-review': 'September review' }
-const worksheetLabel = (name) =>
-  WORKSHEET_LABELS[name] ??
-  name.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+   A set is a named selection of cards: either a QUERY over card properties
+   (`grade = 4`, which redefines itself when a new edition of the school's list
+   is ingested) or an explicit LIST (a worksheet, which stays exactly what the
+   teacher sent home even as the curriculum moves underneath it).
+
+   Both are resolved here, at build time. The app never evaluates a query, and
+   `npm run check` can therefore verify a set's real contents instead of
+   reimplementing an evaluator.
+
+   Nothing reads `sets` or `SETS` yet — the app is still on decks, and every
+   deck maps to exactly one set for now. Grade sets are whole grades: the four
+   `g4:N` decks all belong to set `g4`. */
+
+const SECTION = { curriculum: 'Curriculum', worksheet: 'Worksheets' }
 
 const decks = []
 const problems = []
@@ -85,6 +83,10 @@ for (const file of existsSync(worksheetDir) ? readdirSync(worksheetDir).sort() :
     label: worksheetLabel(name),
     grade: null,
     group: null,
+    set: `w:${name}`,
+    setLabel: worksheetLabel(name),
+    section: SECTION.worksheet,
+    kind: 'list',
     rows: rows.filter(isFilled),
     words: rows.length,
     notes: parsed.groups.reduce((n, g) => n + g.notes.length, 0),
@@ -94,7 +96,7 @@ for (const file of existsSync(worksheetDir) ? readdirSync(worksheetDir).sort() :
 /* ---------- grade worksheets, one deck per group ---------- */
 
 const wordsDir = join(root, 'content/words')
-for (const { file, prefix, label, grade } of GRADES) {
+for (const { file, prefix, label, grade, set } of GRADES) {
   const path = join(wordsDir, file)
   if (!existsSync(path)) continue
   const parsed = parseCards(readFileSync(path, 'utf8'))
@@ -105,6 +107,10 @@ for (const { file, prefix, label, grade } of GRADES) {
       label: `${label} · Group ${i + 1}`,
       grade,
       group: i + 1,
+      set,
+      setLabel: label,
+      section: SECTION.curriculum,
+      kind: 'query',
       rows: group.rows.filter(isFilled),
       words: group.rows.length,
       notes: group.notes.length,
@@ -126,13 +132,51 @@ if (problems.length) {
   process.exit(1)
 }
 
+/* Roll the decks up into sets. Every deck belongs to exactly one, so this is a
+   grouping rather than a re-derivation — the four g4:N decks become set g4. */
+const sets = []
+const setById = new Map()
+for (const deck of decks) {
+  let set = setById.get(deck.set)
+  if (!set) {
+    set = { id: deck.set, label: deck.setLabel, section: deck.section, kind: deck.kind, cards: 0, words: 0 }
+    setById.set(deck.set, set)
+    sets.push(set)
+  }
+  set.cards += deck.rows.length
+  set.words += deck.words
+}
+
+/* The grade a written form belongs to, learned from the curriculum. Worksheet
+   cards get it by lookup, which matters for more than tidiness: the app widens
+   a small selection's distractor pool to the card's grade, and a worksheet card
+   with no grade silently loses that widening. A teacher-composed form the
+   master list has never heard of — 鳥, 休み, 北と南, でん車 — keeps a null grade,
+   which is the honest answer. */
+const gradeOfForm = new Map()
+for (const deck of decks) {
+  if (deck.grade == null) continue
+  for (const [, written] of deck.rows) gradeOfForm.set(written, deck.grade)
+}
+
 const json = (v) => JSON.stringify(v)
 const cardBody = decks
   .flatMap((deck) =>
-    deck.rows.map(
-      ([r, w, m]) =>
-        `  { reading: ${json(r)}, written: ${json(w)}, meaning: ${json(m)}, deck: ${json(deck.id)} },`
-    )
+    deck.rows.map(([r, w, m]) => {
+      const grade = deck.grade ?? gradeOfForm.get(w) ?? null
+      return (
+        `  { reading: ${json(r)}, written: ${json(w)}, meaning: ${json(m)}, ` +
+        `deck: ${json(deck.id)}, grade: ${json(grade)}, sets: ${json([deck.set])} },`
+      )
+    })
+  )
+  .join('\n')
+
+const setBody = sets
+  .map(
+    (s) =>
+      `  { id: ${json(s.id)}, label: ${json(s.label)}, section: ${json(s.section)}, ` +
+      `kind: ${json(s.kind)}, cards: ${s.cards}, words: ${s.words} },`
   )
   .join('\n')
 
@@ -150,10 +194,15 @@ writeFileSync(
   join(root, 'src/cards.js'),
   `// Generated by \`npm run cards\` from content/worksheets/ and content/words/ —\n` +
     `// do not edit by hand.\n` +
-    `// ${total} cards across ${decks.length} decks.\n\n` +
-    `// Every deck, for the selection sheet. \`cards\` counts the rows that are\n` +
-    `// filled in and playable; \`words\` counts every row the deck covers, so\n` +
-    `// progress through the content job stays visible.\n` +
+    `// ${total} cards across ${sets.length} sets.\n\n` +
+    `// Every set, for the picker. \`cards\` counts the rows that are filled in\n` +
+    `// and playable; \`words\` counts every row the set covers, so progress\n` +
+    `// through the content job stays visible. A \`query\` set is defined by a\n` +
+    `// card property and redefines itself when the master list changes; a\n` +
+    `// \`list\` set is an explicit list of words and does not.\n` +
+    `export const SETS = [\n${setBody}\n]\n\n` +
+    `// Decks — the older, finer-grained split, still what the app reads.\n` +
+    `// Superseded by SETS; removed once the app is moved over.\n` +
     `export const DECKS = [\n${deckBody}\n]\n\n` +
     `export const cards = [\n${cardBody}\n]\n`,
   'utf8'

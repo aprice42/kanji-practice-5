@@ -16,6 +16,33 @@
    It is parsed, counted and reported — and never emitted into src/cards.js, so
    it never reaches the font subset either. */
 
+/* The grades, in the order the sheet prints them. `ch` is the sixth tier the
+   sheet lists past grade 5 — not "grade 6", which would claim something the
+   sheet does not say.
+
+   This lives here because three scripts had their own copy of it and they had
+   already drifted: the checker's had no `grade` field at all. Note this is the
+   one thing the checker imports from shared code rather than re-deriving — a
+   list of which files exist is data, not the derivation logic the checker is
+   deliberately keeping independent. */
+export const GRADES = [
+  { file: 'grade-1.md', set: 'g1', prefix: 'g1', label: 'Grade 1', grade: 1 },
+  { file: 'grade-2.md', set: 'g2', prefix: 'g2', label: 'Grade 2', grade: 2 },
+  { file: 'grade-3.md', set: 'g3', prefix: 'g3', label: 'Grade 3', grade: 3 },
+  { file: 'grade-4.md', set: 'g4', prefix: 'g4', label: 'Grade 4', grade: 4 },
+  { file: 'grade-5.md', set: 'g5', prefix: 'g5', label: 'Grade 5', grade: 5 },
+  { file: 'challenge.md', set: 'ch', prefix: 'ch', label: 'Challenge', grade: 'ch' },
+]
+
+/* A worksheet's set id is w:<basename>, so content/worksheets/2025-09-review.md
+   is `w:2025-09-review`. The basename is content-derived and stable — nothing
+   here is ever keyed on a card's array index. */
+const WORKSHEET_LABELS = { '2025-09-review': 'September review' }
+
+export const worksheetLabel = (name) =>
+  WORKSHEET_LABELS[name] ??
+  name.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+
 /* One row per card: | reading (kana) | written form | meaning | check? |.
    Header and separator rows are skipped, as is anything that is not a three-
    or four-cell row.
