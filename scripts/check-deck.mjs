@@ -1,5 +1,5 @@
-/* Confirms the generated files still match the deck. Run with `npm run check`
-   after adding cards, before `npm run build`.
+/* Confirms the generated files still match the content. Run with `npm run
+   check` after adding cards, before `npm run build`.
 
    Every generator here validates its own output, but nothing used to check that
    the outputs were built from the CURRENT source. Adding cards and
@@ -15,7 +15,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import {
-  parseCards, isFilled, duplicateReadings, isAllowedCollision,
+  parseCards, parseSet, isFilled, duplicateReadings, isAllowedCollision,
   deckCharacters, isJapanese, isTraceable, GRADES,
 } from './deck.mjs'
 
@@ -25,30 +25,31 @@ const read = (p) => readFileSync(join(root, p), 'utf8')
 const problems = []
 const fail = (headline, fix) => problems.push({ headline, fix })
 
-/* 1. src/cards.js was built from the current sources ---------------------- */
+/* 1. src/cards.js was built from the current content ---------------------- */
 
 /* Re-derive what `npm run cards` would emit, by reading the same directories in
    the same order. The derivation is deliberately written out again here rather
    than imported from the generator: a check that shares the generator's idea of
-   what a deck is cannot catch the generator being wrong about it.
+   what a set is cannot catch the generator being wrong about it.
 
    GRADES is the exception, and is imported. Which files exist and what they are
    called is data, not derivation — and three hand-kept copies of it had already
    drifted apart, which is a worse failure than the one the duplication guards
    against. */
 
+const listMd = (dir) =>
+  existsSync(join(root, dir))
+    ? readdirSync(join(root, dir)).filter((f) => f.endsWith('.md') && f !== 'README.md').sort()
+    : []
+
 const sources = []
 
-const worksheetDir = join(root, 'content/worksheets')
-for (const file of existsSync(worksheetDir) ? readdirSync(worksheetDir).sort() : []) {
-  if (!file.endsWith('.md') || file === 'README.md') continue
+for (const file of listMd('content/worksheets')) {
   const name = file.replace(/\.md$/, '')
   const parsed = parseCards(read(`content/worksheets/${file}`))
   const rows = parsed.groups.flatMap((g) => g.rows)
   sources.push({
     id: `w:${name}`,
-    label: parsed.title || name,
-    set: `w:${name}`,
     grade: null,
     rows: rows.filter(isFilled),
     words: rows.length,
@@ -56,55 +57,75 @@ for (const file of existsSync(worksheetDir) ? readdirSync(worksheetDir).sort() :
   })
 }
 
-for (const { file, prefix, label, grade, set } of GRADES) {
+for (const { file, set, grade } of GRADES) {
   if (!existsSync(join(root, 'content/words', file))) continue
   const parsed = parseCards(read(`content/words/${file}`))
-  parsed.groups.forEach((group, i) => {
-    sources.push({
-      id: `${prefix}:${i + 1}`,
-      label: `${label} · Group ${i + 1}`,
-      set,
-      grade,
-      rows: group.rows.filter(isFilled),
-      words: group.rows.length,
-      notes: group.notes.length,
-    })
+  const rows = parsed.groups.flatMap((g) => g.rows)
+  sources.push({
+    id: set,
+    grade,
+    rows: rows.filter(isFilled),
+    words: rows.length,
+    notes: parsed.groups.reduce((n, g) => n + g.notes.length, 0),
   })
 }
 
-const { cards, DECKS, SETS } = await import(new URL('../src/cards.js', import.meta.url))
+const { cards, SETS } = await import(new URL('../src/cards.js', import.meta.url))
 
-/* A duplicate reading inside one deck would let a single round ask a question
-   with two correct answers. Across decks it is the syllabus re-teaching a word
-   as more of its kanji arrive, and is reported at the foot of this run. */
+/* One card per written form, membership collected as we go — the same rule the
+   generator applies, arrived at independently. */
+const expectedByForm = new Map()
 for (const source of sources) {
-  for (const collision of duplicateReadings(source.rows)) {
-    if (isAllowedCollision(collision)) continue
-    fail(
-      `${source.id} has two cards reading "${collision.reading}" — ${collision.forms.join(' and ')}.`,
-      'Give one of them a different reading, or name it in ALLOWED_COLLISIONS in scripts/deck.mjs if the source really prints both.'
-    )
+  for (const [reading, written, meaning] of source.rows) {
+    const card = expectedByForm.get(written)
+    if (!card) {
+      expectedByForm.set(written, { reading, written, meaning, sets: [source.id] })
+      continue
+    }
+    if (card.reading !== reading || card.meaning !== meaning) {
+      fail(
+        `${written} is defined two different ways in content/.`,
+        'Correct the transcription — the master list is canonical. `npm run cards` names both sources.'
+      )
+    }
+    if (!card.sets.includes(source.id)) card.sets.push(source.id)
   }
 }
 
-/* The grade of each written form, re-derived the same way the generator does —
-   from the curriculum, then looked up for worksheet cards. */
 const gradeOfForm = new Map()
-for (const s of sources) {
-  if (s.grade == null) continue
-  for (const [, written] of s.rows) gradeOfForm.set(written, s.grade)
+for (const source of sources) {
+  if (source.grade == null) continue
+  for (const [, written] of source.rows) gradeOfForm.set(written, source.grade)
 }
 
-const expected = sources.flatMap((s) =>
-  s.rows.map(([reading, written, meaning]) => ({
-    reading,
-    written,
-    meaning,
-    deck: s.id,
-    grade: s.grade ?? gradeOfForm.get(written) ?? null,
-    set: s.set,
-  }))
-)
+/* Referencing sets add membership but define nothing. Every form they name must
+   resolve to a card, or the set silently practises fewer words than it says. */
+const referencing = []
+for (const file of listMd('content/sets')) {
+  const name = file.replace(/\.md$/, '')
+  const parsed = parseSet(read(`content/sets/${file}`))
+  referencing.push({ id: `s:${name}`, file: `content/sets/${file}`, ...parsed })
+  if (!parsed.title) {
+    fail(`content/sets/${file} has no name.`, 'Give it a `# Heading` — it is what the picker shows.')
+  }
+  for (const form of parsed.forms) {
+    const card = expectedByForm.get(form)
+    if (!card) {
+      fail(
+        `content/sets/${file} lists ${form}, which no card defines.`,
+        'Check the written form against content/words/ — they are exact, kana substitutions and all.'
+      )
+      continue
+    }
+    if (!card.sets.includes(`s:${name}`)) card.sets.push(`s:${name}`)
+  }
+}
+
+const expected = [...expectedByForm.values()].map((c) => ({
+  ...c,
+  grade: gradeOfForm.get(c.written) ?? null,
+}))
+
 const same =
   expected.length === cards.length &&
   expected.every(
@@ -112,14 +133,11 @@ const same =
       e.reading === cards[i].reading &&
       e.written === cards[i].written &&
       e.meaning === cards[i].meaning &&
-      /* `deck` is compared too. Without it a cards.js generated before decks
-         existed passes every other check and the app silently plays one flat
-         deck of everything. The same reasoning now covers `grade` and `sets`:
-         a stale cards.js from before sets existed must not pass. */
-      e.deck === cards[i].deck &&
+      /* `grade` and `sets` are compared too. Without them a cards.js generated
+         before sets existed passes every other check and the app silently
+         plays one flat deck of everything. */
       e.grade === cards[i].grade &&
-      cards[i].sets?.length === 1 &&
-      e.set === cards[i].sets[0]
+      String(e.sets) === String(cards[i].sets)
   )
 if (!same) {
   fail(
@@ -128,52 +146,44 @@ if (!same) {
   )
 }
 
-/* Every card belongs to a deck the manifest knows about, and the manifest's
-   counts are the ones the sheet will show. */
-const manifest = new Map((DECKS ?? []).map((d) => [d.id, d]))
-if (!DECKS) {
-  fail('src/cards.js exports no DECKS manifest.', 'npm run cards')
-} else {
-  const unknown = [...new Set(cards.map((c) => c.deck))].filter((id) => !manifest.has(id))
-  if (unknown.length) {
-    fail(`Cards name ${unknown.length} deck(s) the manifest does not list: ${unknown.join(', ')}.`, 'npm run cards')
-  }
-  const miscounted = sources.filter(
-    (s) => manifest.has(s.id) && (manifest.get(s.id).cards !== s.rows.length || manifest.get(s.id).words !== s.words)
-  )
-  if (miscounted.length) {
-    fail(`The DECKS manifest miscounts ${miscounted.map((s) => s.id).join(', ')}.`, 'npm run cards')
+/* A duplicate reading inside one set would let a round ask a question with two
+   correct answers. Across sets it is the syllabus re-teaching a word, and is
+   reported at the foot of this run. */
+for (const set of [...sources, ...referencing]) {
+  const members = expected.filter((c) => c.sets.includes(set.id))
+  for (const collision of duplicateReadings(members.map((c) => [c.reading, c.written]))) {
+    if (isAllowedCollision(collision)) continue
+    fail(
+      `${set.id} has two cards reading "${collision.reading}" — ${collision.forms.join(' and ')}.`,
+      'Give one a different reading, or name it in ALLOWED_COLLISIONS in scripts/deck.mjs if the source really prints both.'
+    )
   }
 }
 
-/* Every card's set is in the SETS manifest, and the manifest's counts are the
-   ones the picker will show. Sets are re-derived here by rolling the sources up
-   rather than by reading the manifest, so a generator that rolls up wrongly
-   fails rather than agreeing with itself. */
+/* Every card's sets are in the manifest, and the manifest's counts are the ones
+   the picker shows. Rolled up from the sources rather than read back from the
+   manifest, so a generator that counts wrongly fails instead of agreeing with
+   itself. */
 if (!SETS) {
   fail('src/cards.js exports no SETS manifest.', 'npm run cards')
 } else {
-  const rolled = new Map()
-  for (const s of sources) {
-    const set = rolled.get(s.set) ?? { cards: 0, words: 0 }
-    set.cards += s.rows.length
-    set.words += s.words
-    rolled.set(s.set, set)
-  }
-
   const listed = new Map(SETS.map((s) => [s.id, s]))
-  const unknown = [...new Set(cards.map((c) => c.sets?.[0]))].filter((id) => !listed.has(id))
+  const named = [...new Set(cards.flatMap((c) => c.sets ?? []))]
+  const unknown = named.filter((id) => !listed.has(id))
   if (unknown.length) {
     fail(`Cards name ${unknown.length} set(s) the manifest does not list: ${unknown.join(', ')}.`, 'npm run cards')
   }
-  const missing = [...rolled.keys()].filter((id) => !listed.has(id))
-  if (missing.length) fail(`The SETS manifest is missing: ${missing.join(', ')}.`, 'npm run cards')
-
-  const wrong = [...rolled].filter(
-    ([id, n]) => listed.has(id) && (listed.get(id).cards !== n.cards || listed.get(id).words !== n.words)
-  )
-  if (wrong.length) {
-    fail(`The SETS manifest miscounts ${wrong.map(([id]) => id).join(', ')}.`, 'npm run cards')
+  for (const set of [...sources, ...referencing]) {
+    const entry = listed.get(set.id)
+    if (!entry) {
+      fail(`The SETS manifest is missing ${set.id}.`, 'npm run cards')
+      continue
+    }
+    const members = expected.filter((c) => c.sets.includes(set.id))
+    const words = set.words ?? members.length
+    if (entry.cards !== members.length || entry.words !== words) {
+      fail(`The SETS manifest miscounts ${set.id}.`, 'npm run cards')
+    }
   }
 }
 
@@ -234,7 +244,7 @@ const blank = sources.reduce((n, s) => n + (s.words - s.rows.length), 0)
 const flagged = sources.reduce((n, s) => n + s.notes, 0)
 
 if (!problems.length) {
-  console.log(`${cards.length} cards across ${sources.length} decks, ${written.length} characters.`)
+  console.log(`${cards.length} cards across ${SETS.length} sets, ${written.length} characters.`)
   console.log('cards.js matches content/; every character has stroke data and a glyph in the font subset.\n')
 
   /* Progress, not a verdict. A blank row is simply not a card yet, and a flag
@@ -244,15 +254,18 @@ if (!problems.length) {
     const b = s.words - s.rows.length
     if (!b && !s.notes) continue
     console.log(
-      `  ${s.id.padEnd(16)} ${String(s.rows.length).padStart(3)} of ${String(s.words).padStart(3)} filled` +
+      `  ${s.id.padEnd(18)} ${String(s.rows.length).padStart(3)} of ${String(s.words).padStart(3)} filled` +
         `${b ? `   ${b} blank` : ''}${s.notes ? `   ${s.notes} flagged` : ''}`
     )
   }
   if (blank || flagged) console.log(`\n  ${blank} row(s) still blank, ${flagged} flagged for review. Neither is a failure.`)
 
-  const crossDeck = duplicateReadings(cards.map((c) => [c.reading, c.written]))
-  if (crossDeck.length) {
-    console.log(`  ${crossDeck.length} reading(s) span more than one deck — the syllabus re-teaching a word.`)
+  const shared = cards.filter((c) => (c.sets ?? []).length > 1)
+  if (shared.length) console.log(`  ${shared.length} card(s) belong to more than one set.`)
+
+  const crossSet = duplicateReadings(cards.map((c) => [c.reading, c.written]))
+  if (crossSet.length) {
+    console.log(`  ${crossSet.length} reading(s) span more than one set — the syllabus re-teaching a word.`)
   }
   process.exit(0)
 }

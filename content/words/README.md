@@ -128,8 +128,9 @@ grade 1.
 **One grade per session is a reasonable chunk.** There is no need to finish
 everything at once — `npm run scaffold` reports what is left.
 
-Grade 5 is the biggest at 232 words. Splitting it across two sessions by Group
-(Groups 1–2, then 3–4) is fine; the file is safe to leave half-filled.
+Grade 5 is the biggest at 232 words. Splitting it across two sessions is fine
+— the file is safe to leave half-filled, and `npm run scaffold` reports what is
+left.
 
 ## Where things are
 
@@ -155,7 +156,7 @@ Re-running is safe at any time: it merges on the written form and **never
 overwrites a cell you have filled in**. It prints how many rows are filled, how
 many are blank, and how many are flagged.
 
-`npm run check` also reports filled, blank and flagged counts per group, and is
+`npm run check` also reports filled, blank and flagged counts per grade, and is
 safe to run. Do not run `npm run cards`, `fonts` or `strokes` — those regenerate
 files outside this directory and are not part of this job.
 

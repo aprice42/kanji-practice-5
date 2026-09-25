@@ -161,7 +161,10 @@ const state = {
   // id -> 'correct' | 'incorrect'. The source of truth for the score: a card
   // answered wrong in round 1 and right in round 2 simply flips to 'correct'.
   status: new Map(),
-  deck: [],
+  // The cards of the round being played, shuffled. Named `round` and not
+  // `deck` because a deck is no longer a thing in this app — a selection of
+  // sets is.
+  round: [],
   index: 0,
   revealed: false,
   choices: [], // multiple-choice options for the current card
@@ -352,7 +355,7 @@ const answerFace = (card) => faces(card).answer
    selection, but "Practice the N you missed" plays a subset — and scanning all
    743 would have that round report "7 of 743". */
 function byStatus(kind) {
-  return state.deck.filter((card) => state.status.get(card.id) === kind)
+  return state.round.filter((card) => state.status.get(card.id) === kind)
 }
 
 /* Where a multiple-choice question's wrong answers come from.
@@ -380,7 +383,7 @@ function distractorPool(card) {
 function prepareCard() {
   state.revealed = false
   state.picked = null
-  const card = state.deck[state.index]
+  const card = state.round[state.index]
   state.choices =
     state.mode === 'choice'
       ? buildChoices(distractorPool(card), card, state.direction, CHOICE_COUNT)
@@ -393,8 +396,8 @@ function prepareCard() {
    worked start to finish. Length is controlled by what is selected instead,
    which is what Groups are for. Making a 232-card grade digestible is a real
    problem and still an open one; a random sample was not the answer to it. */
-function startRound(deck) {
-  state.deck = shuffle(deck)
+function startRound(list) {
+  state.round = shuffle(list)
   state.index = 0
   state.screen = 'practice'
   prepareCard()
@@ -422,8 +425,8 @@ function setMode(mode) {
 }
 
 function score(kind) {
-  state.status.set(state.deck[state.index].id, kind)
-  if (state.index + 1 >= state.deck.length) {
+  state.status.set(state.round[state.index].id, kind)
+  if (state.index + 1 >= state.round.length) {
     state.screen = 'results'
     render()
     return
@@ -725,7 +728,7 @@ function bindDirectionSwitch() {
       state.direction = btn.dataset.direction
       // Options are built from the answer face, so they must be rebuilt.
       if (state.screen === 'practice' && state.mode === 'choice' && !state.picked) {
-        const card = state.deck[state.index]
+        const card = state.round[state.index]
         state.choices = buildChoices(distractorPool(card), card, state.direction, CHOICE_COUNT)
       }
       render()
@@ -734,7 +737,7 @@ function bindDirectionSwitch() {
 }
 
 function progress() {
-  const total = state.deck.length
+  const total = state.round.length
   const position = state.index + 1
   return `
     <div class="progress">
@@ -829,7 +832,7 @@ function renderHome() {
 }
 
 function renderFlashcard() {
-  const card = state.deck[state.index]
+  const card = state.round[state.index]
   const side = faces(card)
 
   if (!state.revealed) {
@@ -874,7 +877,7 @@ function renderFlashcard() {
 }
 
 function renderChoice() {
-  const card = state.deck[state.index]
+  const card = state.round[state.index]
   const side = faces(card)
   const correctFace = side.answer
   const picked = state.picked
@@ -947,7 +950,7 @@ function renderChoice() {
    Everything inside the card is driven by mountTrace mutating the canvas in
    place. This function runs once per card, not once per stroke. */
 function renderTrace() {
-  const card = state.deck[state.index]
+  const card = state.round[state.index]
 
   app.innerHTML = `
     ${practiceChrome()}
@@ -1015,7 +1018,7 @@ function renderResults() {
   const missed = byStatus('incorrect')
   // The round, not every card that exists — a retry of seven missed cards must
   // report seven, not 743.
-  const total = state.deck.length
+  const total = state.round.length
   const celebration = celebrationFor(correct.length, total)
 
   /* With nothing missed the correct list is the only list, so it is shown

@@ -105,6 +105,35 @@ export function parseCards(md) {
   return { title, groups, stripped }
 }
 
+/* A set file lists WRITTEN FORMS and defines no cards of its own — it points at
+   cards the grade files and worksheets already define. One form per line as a
+   markdown list item; the `#` heading is the set's name.
+
+       # Week 3 test
+
+       - 人口
+       - 正方形
+
+   This is deliberately not `parseCards` with a widened cell count. Teaching
+   that parser to accept a one-cell row would make a truncated worksheet row —
+   a real transcription slip — parse as a set reference instead of failing
+   loudly, which is the opposite of what this project wants from its parsers. */
+export function parseSet(md) {
+  let title = ''
+  const forms = []
+  for (const line of md.split('\n')) {
+    const trimmed = line.trim()
+    const h1 = /^#\s+(.*)$/.exec(trimmed)
+    if (h1) {
+      title ||= h1[1].trim()
+      continue
+    }
+    const item = /^[-*]\s+(.*)$/.exec(trimmed)
+    if (item && item[1].trim()) forms.push(item[1].trim())
+  }
+  return { title, forms }
+}
+
 /* A row with no reading or no meaning is not a card yet. The grade files are
    scaffolded blank and filled in by hand, and 18 rows are deliberately blank
    because the sheet gives two readings and no way to choose — so the build has
@@ -133,14 +162,43 @@ export function duplicateReadings(rows) {
     .map(([reading, forms]) => ({ reading, forms }))
 }
 
-/* The one within-group collision in the 2022 edition. 画用紙 is printed twice,
-   spelled two ways — が用紙 under 紙 and が用し under 用 — both verified against
-   the scan at 300 dpi. It is not a transcription error and must not be "fixed"
-   in the content, so it is named here instead, where a NEW collision still
-   fails the build. */
-const ALLOWED_COLLISIONS = new Set(['がようし'])
+/* Most within-set collisions are one word re-taught as more of its kanji become
+   available: 小いし then 小石, こう校 then 高校, か学者 then 科学者. Both spellings
+   are real, both are printed, and both are things he is expected to read.
 
-export const isAllowedCollision = ({ reading }) => ALLOWED_COLLISIONS.has(reading)
+   They are recognised rather than listed, because the pattern is in the data:
+   the two forms mean the same word, so one form's kanji are a SUBSET of the
+   other's. 小いし {小} ⊂ 小石 {小, 石}. That also covers 画用紙, printed twice by
+   the master list as が用紙 {用, 紙} and が用し {用}, which used to need naming by
+   hand.
+
+   This was invisible while a grade was four decks: the two spellings usually
+   fell in different quarters of the list, so the collision read as cross-deck
+   and was only reported. Making a grade whole brought them into one round. */
+const KANJI_CHAR = /[\u4e00-\u9fff]/
+const kanjiOf = (form) => new Set([...form].filter((c) => KANJI_CHAR.test(c)))
+const subset = (a, b) => [...a].every((c) => b.has(c))
+
+export function isReteaching({ forms }) {
+  const sets = forms.map(kanjiOf)
+  // Every form has to nest with the first; a word re-taught three ways still
+  // nests all the way down (じどう車 ⊂ 自どう車 ⊂ 自動車).
+  return sets.every((s) => subset(s, sets[0]) || subset(sets[0], s))
+}
+
+/* What is left after that rule: two genuinely different words that happen to
+   share a reading. 二本 (two long things) and 日本 (Japan) are both にほん and
+   both grade 2, and their kanji have nothing in common, which is exactly why
+   the rule above refuses to explain them away.
+
+   A round can legitimately ask にほん and want one of them. src/choices.js
+   refuses the twin as a distractor, so a multiple-choice question never shows
+   both — but the build should still say out loud that this exists rather than
+   pretend it does not. */
+const ALLOWED_COLLISIONS = new Set(['にほん'])
+
+export const isAllowedCollision = (collision) =>
+  ALLOWED_COLLISIONS.has(collision.reading) || isReteaching(collision)
 
 /* Every Japanese character the deck needs a glyph for — readings and meanings
    included, since the meaning line is rendered too. */

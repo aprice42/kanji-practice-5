@@ -33,24 +33,29 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
 ## Commands
 
     npm run dev      # local dev server
-    npm run cards    # content/worksheets/ + content/words/ → src/cards.js
+    npm run cards    # content/ → src/cards.js
     npm run scaffold # master kanji list → content/words/*.md
     npm run fonts    # rebuild the Klee One subset (needs network)
     npm run strokes  # rebuild the KanjiVG stroke subset (needs network)
-    npm run check    # generated files still match the deck — run after adding cards
-    npm run audit    # how guessable the multiple-choice questions are
+    npm run check    # generated files still match content/ — run after adding cards
+    npm run audit    # how guessable the multiple-choice questions are, per set
     npm run build    # production build into dist/
 
 ## House rules
 
 - `content/worksheets/*.md` and `content/words/*.md` are the source of truth. `src/cards.js`
-  (both `cards` and the `DECKS` manifest), `src/strokes.js` and `public/fonts/` are all
+  (both `cards` and the `SETS` manifest), `src/strokes.js` and `public/fonts/` are all
   generated from them, and `npm run check` is what proves they still agree — the generators
   only validate their own output, not each other's. `src/strokes.js` comes from KanjiVG,
   CC BY-SA — attribution is required, and lives at the foot of the Trace screen.
-- A reading must be unique within a deck, not across them: a word is re-taught as more of
-  its kanji arrive. Deck ids (`g4:2`, `w:2025-09-review`) are content-derived and safe to
-  persist; a card's `id` is its array index and is not.
+- One card per written form. A word in Grade 4 and on the September worksheet is one card
+  in two sets. A card's `id` IS its written form — never an array index.
+- A reading must be unique within a set, not across them: a word is re-taught as more of
+  its kanji arrive. A collision whose two forms have nested kanji sets is that re-teaching
+  and is allowed automatically; anything else fails the build. Set ids (`g4`,
+  `w:2025-09-review`, `s:week-3-test`) are content-derived and safe to persist.
+- `content/sets/*.md` list written forms and define no cards. Every form must resolve to a
+  card or the build fails by name — that check is what makes hand-built sets safe.
 - Every Japanese string needs `lang="ja"` — that is what applies the Japanese typeface.
 - Colors come from CSS tokens only. Four palettes × light and dark; a literal hex breaks
   seven of the eight combinations.
@@ -62,8 +67,8 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   deliberate: a column count is discrete and a clamp cannot express it. Sizes stay clamps.
 - Correct/wrong must differ by shape, not only color, and every icon needs a text label.
 - A round is the whole selection — no cap. One was tried and removed: it sampled randomly,
-  so no deck was ever guaranteed to be seen in full. Length is controlled by the selection.
-  Every count — tally, progress, score ring — follows `state.deck`, since "practice the N
+  so no set was ever guaranteed to be seen in full. Length is controlled by the selection.
+  Every count — tally, progress, score ring — follows `state.round`, since "practice the N
   you missed" plays a subset.
 - An element toggled by the `hidden` attribute must not be given a `display` rule without
   a matching `[hidden] { display: none }`; `display: flex` beats the user-agent rule. Same

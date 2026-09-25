@@ -3,8 +3,7 @@
 Flashcard PWA for a 5th-grader's kanji homework.
 
 His teacher sends home worksheets of kanji to review; they get transcribed into
-`content/worksheets/` and become a deck. The school's whole Grade 1–5 kanji list lives
-alongside them in `content/words/`, one file per grade, each cut into four groups. He practices on a phone (a Pixel) and an iPad,
+`content/worksheets/` and become a set. The school's whole Grade 1–5 kanji list lives alongside them in `content/words/`, one file per grade. He practices on a phone (a Pixel) and an iPad,
 usually installed to the home screen, sometimes without a network — which is why this is a
 PWA that precaches everything, fonts included.
 
@@ -19,7 +18,7 @@ translation of the heading, not the title of a section — an `<h2>` would put a
 screen reader's heading list. The text is in the DOM either way, which is all a crawler
 sees, and the page has exactly one heading.
 
-All three modes share the same deck, scoring, progress bar and results screen.
+All three modes share the same round, scoring, progress bar and results screen.
 
 Flash cards and multiple choice also carry a **direction switch**:
 
@@ -32,45 +31,37 @@ a control on the start page would be inert for whichever mode you were about to 
 
 ### What a round draws from
 
-The home screen's summary row names the current selection and its card count; tapping it
-opens a sheet of everything available. **Grades** are the school's master list, each cut
-into four **Groups** in the sheet's own numeric order — Groups, not quarters, because the
-four-way split is a sensible size and not a claim about what the school teaches when.
-**Worksheets** are the sheets the teacher actually sent home. The September review is the
-default, so the app opens on the deck it has always played.
+Everything the app can practice is one flat pool of cards, and a **set** is a named selection from it. A card carries the sets it belongs to; it has no single parent. There are two kinds, and the app cannot tell them apart:
 
-A grade's checkbox selects or clears all four of its groups, and shows a dash when only
-some are on — a distinct shape, not a tint, so the partial state survives anyone who
-cannot separate the two colours. The chevron expands the groups.
+- a **query** set, defined by a card property — Grade 4 is `grade = 4`, so it redefines itself when a new edition of the school's list is ingested, with nothing to maintain;
+- a **list** set, an explicit list of written forms — a worksheet, or a practice set in `content/sets/`, which stays exactly what it was as the curriculum moves underneath it.
+
+Both are resolved at build time into plain membership, so the app never evaluates a query and `npm run check` can verify a set's real contents rather than reimplementing an evaluator.
+
+The home screen's summary row names the current selection and its card count; tapping it opens a flat picker grouped by where each set came from — **Curriculum**, **Worksheets**, and **Practice sets** once any exist. The September review is the default, so the app opens on what it has always played.
+
+Grades used to be cut into four **Groups** each. They were a quarter of the master list's *print* order, which is not a teaching order, not a difficulty order, and not tied to when anything is taught — so the boundaries described nothing. They are gone.
 
 Two rules about the selection:
 
-- **It can never be empty.** The handler refuses to clear the last deck rather than
-  disabling every mode and explaining why. A round with no cards is simply unreachable.
-- **A deck with nothing filled in yet reads `not ready` and cannot be picked.** Showing it
-  as `0` would look like a bug; leaving it out would hide that the grade exists.
+- **It can never be empty.** The handler refuses to clear the last set rather than disabling every mode and explaining why. A round with no cards is simply unreachable.
+- **A set with nothing filled in yet reads `not ready` and cannot be picked.** Showing it as `0` would look like a bug; leaving it out would hide that it exists.
 
-It is stored under `kanji-practice:selection` as deck ids, and **validated against the
-`DECKS` manifest on load** — ids that no longer resolve are dropped and the default comes
-back. Deck ids are content-derived and stable; a card's `id` is its array index and would
-rot the moment a row were inserted above it, which is why nothing persisted is keyed on one.
+It is stored under `kanji-practice:selection` as set ids, **validated against the `SETS` manifest on load**, and old `g4:2`-style group ids are migrated to `g4` rather than dropped — dropping is safe but resets the selection without a word, which reads as the app forgetting. Set ids are content-derived and stable; a card's id is its **written form**, which is this project's identity key everywhere.
+
+### One card per written form
+
+47 words appear both under a grade and on the September worksheet. They are **one card in two sets**, not two cards. Before that was true, the same word held two separate scores and could appear in both results lists at once, and neither copy excluded the other from being its own distractor.
+
+Selecting Grade 4 and September review together therefore deals 194 cards, not 230.
 
 ### A round is the whole selection
 
-There is no cap, and one was tried and removed. A cap of twenty drew a fresh random sample
-every round, so nothing guaranteed he ever saw every card in a deck — and the September
-review, 51 cards and his actual homework, could no longer be worked start to finish.
+There is no cap, and one was tried and removed. A cap of twenty drew a fresh random sample every round, so nothing guaranteed he ever saw every card in a set — and the September review, 51 cards and his actual homework, could no longer be worked start to finish.
 
-**Length is controlled by what is selected.** That is what Groups are for: a 232-card grade
-is four groups of about 58 rather than one sitting.
+**Length is controlled by what is selected.** Making a large selection digestible is still an open question; the shape of an answer is probably rounds that draw the cards *not yet seen*, so a few short rounds cover a set exactly once. A random sample gave neither coverage nor a way to tell.
 
-Making a big selection digestible is still an open question. The shape of an answer is
-probably rounds that draw the cards *not yet seen*, so a few short rounds cover a deck
-exactly once — coverage and length at the same time. A random sample gave neither.
-
-Counts still follow the round rather than every card that exists — the tally, the progress
-bar, the score ring — because **Practice the N you missed** plays a subset, and scoring
-that against everything would report "7 of 743".
+Counts follow the round rather than every card that exists — the tally, the progress bar, the score ring — because **Practice the N you missed** plays a subset, and scoring that against everything would report "7 of 747".
 
 ### Flash cards
 
@@ -83,14 +74,16 @@ Prompt plus three options — the right answer and two distractors.
 
 Distractors come from the **active selection**, because a wrong answer is only convincing
 if it is something he is actually studying. Below `MIN_POOL` (8) cards the pool widens to
-the card's whole grade: a group can be as small as seven, and at that size the correct
+the card's whole grade: a set can be small, and at that size the correct
 option is often the only one whose okurigana fits the prompt, which is answerable without
-reading any kanji at all. `npm run audit` measures exactly that, per deck.
+reading any kanji at all. `npm run audit` measures exactly that, per set.
+
+With the Groups gone the smallest selectable set is 30 cards, so the widening cannot currently fire at all. It stays for the practice sets in `content/sets/`, which can be any size.
 
 `buildChoices` also refuses any candidate whose **prompt** face matches the question's, not
 just its answer face. Asked こう with 校 correct, 高 is a different answer and an equally
 correct one. No build-time rule over `content/` can cover this: 54 readings collide across
-the curriculum, the pool widens across decks, and custom worksheets could add more. The
+the curriculum, the pool widens across sets, and practice sets could add more. The
 runtime exclusion is the guarantee.
 Tapping an option marks it right or wrong and reveals the meaning, then a verdict appears
 ("Correct" or "Not quite — it's 魚") with a **Continue** button. Nothing advances until
@@ -318,10 +311,10 @@ npm run dev
 | `npm run build` | production build into `dist/` |
 | `npm run preview` | serve the built output, to check the service worker and offline behaviour |
 | `npm run cards` | `content/worksheets/` + `content/words/` → `src/cards.js` |
-| `npm run fonts` | rebuild the Klee One subset for the current deck (needs network) |
-| `npm run strokes` | rebuild the KanjiVG stroke subset for the current deck (needs network) |
-| `npm run check` | confirm the generated files still match the deck |
-| `npm run audit` | how guessable the multiple-choice questions are, per deck (`npm run audit -- g4:2` for one) |
+| `npm run fonts` | rebuild the Klee One subset for the current cards (needs network) |
+| `npm run strokes` | rebuild the KanjiVG stroke subset for the current cards (needs network) |
+| `npm run check` | confirm the generated files still match `content/` |
+| `npm run audit` | how guessable the multiple-choice questions are, per set (`npm run audit -- g4` for one) |
 | `npm run scaffold` | regenerate `content/words/*.md` from the master kanji list |
 
 ## Deployment
@@ -425,19 +418,13 @@ of Japanese.
 One row per card: `| reading (kana) | written form | meaning |`. The meanings are not on the
 worksheet — they are written by hand here, in plain English a ten-year-old would use.
 
-Every reading must be unique **within a deck**. Two cards sharing a reading would make a
-multiple-choice question have two correct answers; `npm run cards` refuses to write if it
-finds a duplicate inside one deck.
+Every reading must be unique **within a set**. Two cards sharing a reading would make a multiple-choice question have two correct answers; `npm run cards` refuses to write if it finds a duplicate inside one set.
 
-Across decks a shared reading is fine, and is in fact the syllabus: the same word is
-re-taught as more of its kanji become available, so じどうしゃ is legitimately じどう車,
-自どう車 and 自動車. 93 readings span more than one deck. A round draws from one selection,
-and `src/choices.js` refuses a distractor whose prompt face matches the question's, which
-is the guarantee that actually holds at runtime.
+Most apparent duplicates are not duplicates: they are one word re-taught as more of its kanji become available — 小いし then 小石, こう校 then 高校, か学者 then 科学者. Those are recognised rather than listed, because the pattern is in the data: the two forms are the same word, so one form's kanji are a subset of the other's. What survives that rule is a genuine homophone, and there is exactly one — 二本 and 日本 are both にほん and both grade 2, and their kanji have nothing in common. It is named in `ALLOWED_COLLISIONS` in `scripts/deck.mjs`.
 
-One collision is real and lives inside a single deck: 画用紙 is printed twice in the master
-list, as が用紙 under 紙 and が用し under 用. Both were verified against the scan. It is named
-in `ALLOWED_COLLISIONS` in `scripts/deck.mjs` rather than "fixed" in the content.
+Across sets a shared reading is fine, and is in fact the syllabus: the same word is re-taught as more of its kanji become available, so じどうしゃ is legitimately じどう車, 自どう車 and 自動車. 54 readings span more than one set. A round draws from one selection, and `src/choices.js` refuses a distractor whose prompt face matches the question's, which is the guarantee that actually holds at runtime.
+
+The same thing happens *inside* a grade — 画用紙 is printed twice in the master list as が用紙 under 紙 and が用し under 用, both verified against the scan — and those are allowed by the nesting rule above rather than being named or "fixed".
 
 If you want to record the full kanji form for reference, put it in 〔…〕 after the written
 form — `全ぶ〔全部〕`. The generator strips these, so they never reach the app.
@@ -522,10 +509,11 @@ not just the resting state.
 | Path | |
 | --- | --- |
 | `content/worksheets/*.md` | a worksheet as the teacher sent it home — one deck each |
-| `content/words/*.md` | the school's master list by grade, four groups each; readings and meanings hand-written |
+| `content/words/*.md` | the school's master list, one file per grade; readings and meanings hand-written |
+| `content/sets/*.md` | hand-picked practice sets — written forms only, defining no cards |
 | `content/kanji-list/` | the transcribed master list, one directory per edition; `current` names the active one |
 | `content/*.jpg` | scans of the original worksheets |
-| `src/cards.js` | generated from `content/`; exports `cards` and the `DECKS` manifest. Do not edit by hand |
+| `src/cards.js` | generated from `content/`; exports `cards` and the `SETS` manifest. Do not edit by hand |
 | `src/choices.js` | card sides and multiple-choice distractor scoring; shared with the audit |
 | `src/strokes.js` | generated from KanjiVG by `npm run strokes`; do not edit by hand |
 | `src/strokes-geom.js` | sampling and `Path2D` for the stroke data |
@@ -536,7 +524,7 @@ not just the resting state.
 | `src/confetti.js` | the clean-sweep animation |
 | `src/update.js` | service-worker update check behind the home screen's update button |
 | `public/fonts/` | the Klee One subset, its licence, and regeneration notes |
-| `scripts/deck.mjs` | parses a deck's Markdown; shared by `npm run cards` and `npm run check` so they cannot disagree |
+| `scripts/deck.mjs` | parses card tables and set files; shared by `npm run cards` and `npm run check` so they cannot disagree |
 | `scripts/` | the `npm run` helpers above |
 | `wrangler.jsonc` | Cloudflare deploy config — points at `dist/` |
 | `CLAUDE.md` | short orientation for an agent picking this up |

@@ -10,199 +10,182 @@
      Re-running this script preserves every cell you have filled in.
      See content/words/README.md before starting. -->
 
-## Group 1
-
-| Reading (かな) | Written form | Meaning                     | Check?                                         |
-| ------------ | ------------ | --------------------------- | ---------------------------------------------- |
-| もくひょう        | 目ひょう         | goal                        | ? Kana substitution: reconstructed whole word. |
-| しゅわ          | 手話           | sign language               |                                                |
-| はっけん         | はっ見          | discovery                   | ? Kana substitution: reconstructed whole word. |
-| りっぽうたい       | 立方体          | cube                        |                                                |
-| りったい         | 立体           | three-dimensional shape     |                                                |
-| りっぽうセンチ      | 立方センチ        | cubic centimeter            |                                                |
-| まるめる         | 丸める          | to roll into a ball         |                                                |
-| いりぐち         | 入口           | entrance                    |                                                |
-| がいこくご        | 外国語          | foreign language            |                                                |
-| わくせい         | わく星          | planet                      | ? Kana substitution: reconstructed whole word. |
-| なまたまご        | 生たまご         | raw egg                     | ? Kana substitution: reconstructed whole word. |
-| いきもの         | 生きもの         | living thing                | ? Kana substitution: reconstructed whole word. |
-| めいじん         | 名人           | expert                      |                                                |
-| わふう          | わ風           | Japanese style              | ? Kana substitution: reconstructed whole word. |
-| ゆうじん         | 友人           | friend                      |                                                |
-| しんゆう         | しん友          | close friend                | ? Kana substitution: reconstructed whole word. |
-| きゅうじつ        | 休日           | day off                     |                                                |
-| きゅうけい        | 休けい          | break                       | ? Kana substitution: reconstructed whole word. |
-| しゅっしん        | 出しん          | where someone is from       | ? Kana substitution: reconstructed whole word. |
-| しゅっせき        | 出せき          | attendance                  | ? Kana substitution: reconstructed whole word. |
-| たかくけい        | 多角形          | polygon                     |                                                |
-| たぶん          | 多分           | probably                    |                                                |
-| しょうねん        | 少年           | boy                         |                                                |
-| しょうじょ        | 少女           | girl                        |                                                |
-| りょくちゃ        | 緑茶           | green tea                   |                                                |
-| こうこう         | こう校          | high school                 | ? Kana substitution: reconstructed whole word. |
-| がくせい         | 学生           | student                     |                                                |
-| かいそう         | 海草           | seaweed                     |                                                |
-| はんとう         | 半島           | peninsula                   |                                                |
-| くにぐに         | 国々           | countries                   |                                                |
-| べいこく         | 米国           | United States               |                                                |
-| ちり           | 地り           | geography                   | ? Kana substitution: reconstructed whole word. |
-| さっか          | 作か           | writer                      | ? Kana substitution: reconstructed whole word. |
-| ゆうがた         | 夕方           | evening                     |                                                |
-| しゃちょう        | しゃ長          | company president           | ? Kana substitution: reconstructed whole word. |
-| たいら          | 平ら           | flat                        |                                                |
-| へいきん         | 平きん          | average                     | ? Kana substitution: reconstructed whole word. |
-| わしょく         | 和食           | Japanese food               |                                                |
-| わしき          | 和式           | Japanese style              |                                                |
-| わしつ          | 和しつ          | Japanese-style room         | ? Kana substitution: reconstructed whole word. |
-| わえいじてん       | 和英じてん        | Japanese-English dictionary | ? Kana substitution: reconstructed whole word. |
-| えいわじてん       | 英和じてん        | English-Japanese dictionary | ? Kana substitution: reconstructed whole word. |
-| だいどころ        | 台どころ         | kitchen                     | ? Kana substitution: reconstructed whole word. |
-| らいしゅう        | 来週           | next week                   |                                                |
-| みらい          | み来           | future                      | ? Kana substitution: reconstructed whole word. |
-| ふしぎ          | ふ思ぎ          | strange                     | ? Kana substitution: reconstructed whole word. |
-| こまかい         | 細かい          | small / fine                |                                                |
-| はやくちことば      | 早口言ば         | tongue twister              | ? Kana substitution: reconstructed whole word. |
-| まいしゅう        | 毎週           | every week                  |                                                |
-| まいあさ         | 毎朝           | every morning               |                                                |
-| ようしょく        | 洋食           | Western-style food          |                                                |
-| ようしき         | 洋式           | Western style               |                                                |
-| ようしつ         | 洋しつ          | Western-style room          | ? Kana substitution: reconstructed whole word. |
-| こうちゃ         | こう茶          | black tea                   | ? Kana substitution: reconstructed whole word. |
-| おちゃかい        | お茶会          | tea party                   |                                                |
-| どうじ          | 同時           | same time                   |                                                |
-| たんき          | 短気           | short temper                |                                                |
-| たんパン         | 短パン          | shorts                      |                                                |
-
-## Group 2
-
-| Reading (かな) | Written form | Meaning                      | Check?                                                            |
-| ------------ | ------------ | ---------------------------- | ----------------------------------------------------------------- |
-| かいしゃ         | 会社           | company                      |                                                                   |
-| しゃちょう        | 社長           | company president            |                                                                   |
-| まめ           | 豆            | bean                         |                                                                   |
-| だいず          | 大豆           | soybean                      |                                                                   |
-| とうふ          | 豆ふ           | tofu                         | ? Kana substitution: reconstructed whole word.                    |
-| なっとう         | なっ豆          | fermented soybeans           | ? Kana substitution: reconstructed whole word.                    |
-| とうにゅう        | 豆にゅう         | soy milk                     | ? Kana substitution: reconstructed whole word.                    |
-| あかるい         | 明るい          | bright                       |                                                                   |
-|              | 明日           |                              | ? Multiple readings: あした / あす / みょうにち; source does not choose.    |
-| あけまして        | 明けまして        | as the new year begins       | ? English judgement: fragment of a New Year greeting.             |
-| はつめい         | はつ明          | invention                    | ? Kana substitution: reconstructed whole word.                    |
-| せつめい         | せつ明          | explanation                  | ? Kana substitution: reconstructed whole word.                    |
-| くらい          | 暗い           | dark                         |                                                                   |
-| あんしょう        | 暗しょう         | reciting from memory         | ? Kana substitution: reconstructed whole word.                    |
-| あんき          | 暗記           | memorization                 |                                                                   |
-| あんざん         | 暗ざん          | mental math                  | ? Kana substitution: reconstructed whole word.                    |
-|              | 門            |                              | ? Multiple readings: もん / かど; source lists both.                  |
-| かどまつ         | 門松           | New Year's pine decoration   | ? English judgement: Japanese New Year decoration.                |
-| ごじ           | 五時           | five o'clock                 |                                                                   |
-| じかん          | 時間           | time                         |                                                                   |
-| そのとき         | その時          | at that time                 |                                                                   |
-| とけい          | 時けい          | clock                        | ? Kana substitution: reconstructed whole word.                    |
-| ときどき         | 時々           | sometimes                    |                                                                   |
-| のあいだ         | 〜の間          | during / between             | ? English judgement: phrase fragment; meaning depends on context. |
-| にんげん         | 人間           | human                        |                                                                   |
-| なかま          | なか間          | companion                    | ? Kana substitution: reconstructed whole word.                    |
-| おんがく         | 音楽           | music                        |                                                                   |
-| がっき          | 楽き           | musical instrument           | ? Kana substitution: reconstructed whole word.                    |
-| たのしい         | 楽しい          | fun                          |                                                                   |
-| たのしむ         | 楽しむ          | to enjoy                     |                                                                   |
-| たのしみ         | 楽しみ          | something to look forward to |                                                                   |
-| らくらく         | 楽々           | easily                       |                                                                   |
-| きらく          | 気楽           | carefree                     |                                                                   |
-| えいご          | 英語           | English language             |                                                                   |
-| えいこく         | 英国           | United Kingdom               | ? Place-specific: United Kingdom, often called Britain.           |
-| にほんご         | 日本語          | Japanese language            |                                                                   |
-| ちゅうごくご       | 中国語          | Chinese language             |                                                                   |
-| こくご          | 国語           | Japanese language class      | ? School-specific: Japanese language class.                       |
-| ごびょう         | 五秒           | five seconds                 |                                                                   |
-| なんびょう        | 何秒           | how many seconds             |                                                                   |
-| ごぜん          | 午前           | morning / a.m.               |                                                                   |
-| ごご           | 午後           | afternoon / p.m.             |                                                                   |
-| しょうご         | 正午           | noon                         |                                                                   |
-| まえ           | 前            | front / before               |                                                                   |
-| いぜん          | い前           | before                       | ? Kana substitution: reconstructed whole word.                    |
-| ぜんごさゆう       | 前後左右         | front, back, left, and right |                                                                   |
-|              | その後          |                              | ? Multiple readings: そのあと / そのご; context needed.                  |
-| うしろ          | 後ろ           | behind                       |                                                                   |
-| あめのちくもり      | 雨後くもり        | rain, then cloudy            | ? Kana substitution: reconstructed whole word.                    |
-| さいご          | さい後          | last                         | ? Kana substitution: reconstructed whole word.                    |
-| のちほど         | 後ほど          | later                        |                                                                   |
-| せかい          | 世界           | world                        |                                                                   |
-| にじゅういっせいき    | 二十一世き        | 21st century                 | ? Kana substitution: reconstructed whole word.                    |
-| せかいじゅう       | 世界中          | all over the world           |                                                                   |
-| せかいいち        | 世界一          | best in the world            | ? English judgement: best; can mean biggest, fastest, etc.        |
-| せかいちず        | 世界地図         | world map                    |                                                                   |
-| ひろい          | 広い           | wide                         |                                                                   |
-| ひろさ          | 広さ           | size / area                  |                                                                   |
-
-## Group 3
-
-| Reading (かな) | Written form | Meaning                | Check?                                                                  |
-| ------------ | ------------ | ---------------------- | ----------------------------------------------------------------------- |
-| ひろびろ         | 広々           | spacious               |                                                                         |
-| ひろしま         | 広島           | Hiroshima              | ? Place-specific: Hiroshima.                                            |
-| こたえる         | 答える          | to answer              |                                                                         |
-| こたえ          | 答え           | answer                 |                                                                         |
-| こたえあわせ       | 答え合わせ        | checking answers       |                                                                         |
-| とけい          | 時計           | clock                  |                                                                         |
-| けいさんようし      | 計さん用紙        | paper for calculations | ? Kana substitution: reconstructed whole word.                          |
-| ごうけい         | 合計           | total                  |                                                                         |
-| けいさんき        | 計さんき         | calculator             | ? Kana substitution: reconstructed whole word.                          |
-| しき           | 式            | ceremony / formula     | ? English judgement: ceremony or formula; context missing.              |
-| そつぎょうしき      | そつぎょう式       | graduation ceremony    | ? Kana substitution: reconstructed whole word.                          |
-| せんしゅう        | 先週           | last week              |                                                                         |
-| こんしゅう        | 今週           | this week              |                                                                         |
-| いっしゅうかん      | 一週間          | one week               |                                                                         |
-| しゅうまつ        | 週まつ          | weekend                | ? Kana substitution: reconstructed whole word.                          |
-| じぶん          | 自分           | oneself                |                                                                         |
-| じどうしゃ        | 自どう車         | car                    | ? Kana substitution: reconstructed whole word.                          |
-| じてんしゃ        | 自てん車         | bicycle                | ? Kana substitution: reconstructed whole word.                          |
-| じてん          | 自てん          | rotation               | ? Kana substitution: reconstructed whole word.                          |
-| じゆう          | 自ゆう          | freedom                | ? Kana substitution: reconstructed whole word.                          |
-| もんだい         | 問だい          | question / problem     | ? Kana substitution: reconstructed whole word.                          |
-| しつもん         | しつ問          | question               | ? Kana substitution: reconstructed whole word.                          |
-| あね           | 姉            | older sister           |                                                                         |
-| おねえさん        | お姉さん         | older sister (polite)  |                                                                         |
-| しまい          | 姉妹           | sisters                |                                                                         |
-| しまいとし        | 姉妹と市         | sister city            | ? Kana substitution; place-specific: paired partner city.               |
-| しまいしゅう       | 姉妹州          | sister state           | ? Place-specific: paired partner state.                                 |
-| いもうと         | 妹            | younger sister         |                                                                         |
-|              | 家            |                        | ? Multiple readings: いえ / うち; context needed.                           |
-| かぞく          | 家ぞく          | family                 | ? Kana substitution: reconstructed whole word.                          |
-| さっか          | 作家           | writer                 |                                                                         |
-| おんがくか        | 音楽家          | musician               |                                                                         |
-| けんちくか        | けんちく家        | architect              | ? Kana substitution: reconstructed whole word.                          |
-|              | 〜家           |                        | ? Multiple readings: か (expert) / け (family); suffix context needed.    |
-| わたし          | 私            | I / me                 |                                                                         |
-| わたしたち        | 私たち          | we / us                |                                                                         |
-| あに           | 兄            | older brother          |                                                                         |
-| おにいさん        | お兄さん         | older brother (polite) |                                                                         |
-| きょうだい        | 兄弟           | brothers / siblings    |                                                                         |
-| おとうと         | 弟            | younger brother        |                                                                         |
-| にっき          | 日記           | diary                  |                                                                         |
-| きおく          | 記おく          | memory                 | ? Kana substitution: reconstructed whole word.                          |
-| きおくりょく       | 記おく力         | ability to remember    | ? Kana substitution: reconstructed whole word.                          |
-| きろく          | 記ろく          | record                 | ? Kana substitution: reconstructed whole word.                          |
-| ふるい          | 古い           | old                    |                                                                         |
-| ふしぎ          | 不思ぎ          | strange                | ? Kana substitution: reconstructed whole word.                          |
-| ふべん          | 不便           | inconvenient           |                                                                         |
-| ふじゆう         | 不自ゆう         | lack of freedom        | ? Kana substitution; English judgement: can also mean limited mobility. |
-| ふかのう         | 不かのう         | impossible             | ? Kana substitution: reconstructed whole word.                          |
-| ふあん          | 不安           | worry                  |                                                                         |
-| ふとくい         | 不とくい         | not good at            | ? Kana substitution: reconstructed whole word.                          |
-| ふまじめ         | 不まじめ         | not serious            | ? Kana substitution: reconstructed whole word.                          |
-| ふこうへい        | 不こう平         | unfair                 | ? Kana substitution: reconstructed whole word.                          |
-| よてい          | 予定           | plan                   |                                                                         |
-| よやく          | 予やく          | reservation            | ? Kana substitution: reconstructed whole word.                          |
-| よそう          | 予そう          | prediction             | ? Kana substitution: reconstructed whole word.                          |
-| てんきよほう       | 天気予ほう        | weather forecast       | ? Kana substitution: reconstructed whole word.                          |
-| つぎに          | 次に           | next                   |                                                                         |
-
-## Group 4
-
 | Reading (かな) | Written form | Meaning                        | Check?                                                                    |
 | ------------ | ------------ | ------------------------------ | ------------------------------------------------------------------------- |
+| もくひょう        | 目ひょう         | goal                           | ? Kana substitution: reconstructed whole word.                            |
+| しゅわ          | 手話           | sign language                  |                                                                           |
+| はっけん         | はっ見          | discovery                      | ? Kana substitution: reconstructed whole word.                            |
+| りっぽうたい       | 立方体          | cube                           |                                                                           |
+| りったい         | 立体           | three-dimensional shape        |                                                                           |
+| りっぽうセンチ      | 立方センチ        | cubic centimeter               |                                                                           |
+| まるめる         | 丸める          | to roll into a ball            |                                                                           |
+| いりぐち         | 入口           | entrance                       |                                                                           |
+| がいこくご        | 外国語          | foreign language               |                                                                           |
+| わくせい         | わく星          | planet                         | ? Kana substitution: reconstructed whole word.                            |
+| なまたまご        | 生たまご         | raw egg                        | ? Kana substitution: reconstructed whole word.                            |
+| いきもの         | 生きもの         | living thing                   | ? Kana substitution: reconstructed whole word.                            |
+| めいじん         | 名人           | expert                         |                                                                           |
+| わふう          | わ風           | Japanese style                 | ? Kana substitution: reconstructed whole word.                            |
+| ゆうじん         | 友人           | friend                         |                                                                           |
+| しんゆう         | しん友          | close friend                   | ? Kana substitution: reconstructed whole word.                            |
+| きゅうじつ        | 休日           | day off                        |                                                                           |
+| きゅうけい        | 休けい          | break                          | ? Kana substitution: reconstructed whole word.                            |
+| しゅっしん        | 出しん          | where someone is from          | ? Kana substitution: reconstructed whole word.                            |
+| しゅっせき        | 出せき          | attendance                     | ? Kana substitution: reconstructed whole word.                            |
+| たかくけい        | 多角形          | polygon                        |                                                                           |
+| たぶん          | 多分           | probably                       |                                                                           |
+| しょうねん        | 少年           | boy                            |                                                                           |
+| しょうじょ        | 少女           | girl                           |                                                                           |
+| りょくちゃ        | 緑茶           | green tea                      |                                                                           |
+| こうこう         | こう校          | high school                    | ? Kana substitution: reconstructed whole word.                            |
+| がくせい         | 学生           | student                        |                                                                           |
+| かいそう         | 海草           | seaweed                        |                                                                           |
+| はんとう         | 半島           | peninsula                      |                                                                           |
+| くにぐに         | 国々           | countries                      |                                                                           |
+| べいこく         | 米国           | United States                  |                                                                           |
+| ちり           | 地り           | geography                      | ? Kana substitution: reconstructed whole word.                            |
+| さっか          | 作か           | writer                         | ? Kana substitution: reconstructed whole word.                            |
+| ゆうがた         | 夕方           | evening                        |                                                                           |
+| しゃちょう        | しゃ長          | company president              | ? Kana substitution: reconstructed whole word.                            |
+| たいら          | 平ら           | flat                           |                                                                           |
+| へいきん         | 平きん          | average                        | ? Kana substitution: reconstructed whole word.                            |
+| わしょく         | 和食           | Japanese food                  |                                                                           |
+| わしき          | 和式           | Japanese style                 |                                                                           |
+| わしつ          | 和しつ          | Japanese-style room            | ? Kana substitution: reconstructed whole word.                            |
+| わえいじてん       | 和英じてん        | Japanese-English dictionary    | ? Kana substitution: reconstructed whole word.                            |
+| えいわじてん       | 英和じてん        | English-Japanese dictionary    | ? Kana substitution: reconstructed whole word.                            |
+| だいどころ        | 台どころ         | kitchen                        | ? Kana substitution: reconstructed whole word.                            |
+| らいしゅう        | 来週           | next week                      |                                                                           |
+| みらい          | み来           | future                         | ? Kana substitution: reconstructed whole word.                            |
+| ふしぎ          | ふ思ぎ          | strange                        | ? Kana substitution: reconstructed whole word.                            |
+| こまかい         | 細かい          | small / fine                   |                                                                           |
+| はやくちことば      | 早口言ば         | tongue twister                 | ? Kana substitution: reconstructed whole word.                            |
+| まいしゅう        | 毎週           | every week                     |                                                                           |
+| まいあさ         | 毎朝           | every morning                  |                                                                           |
+| ようしょく        | 洋食           | Western-style food             |                                                                           |
+| ようしき         | 洋式           | Western style                  |                                                                           |
+| ようしつ         | 洋しつ          | Western-style room             | ? Kana substitution: reconstructed whole word.                            |
+| こうちゃ         | こう茶          | black tea                      | ? Kana substitution: reconstructed whole word.                            |
+| おちゃかい        | お茶会          | tea party                      |                                                                           |
+| どうじ          | 同時           | same time                      |                                                                           |
+| たんき          | 短気           | short temper                   |                                                                           |
+| たんパン         | 短パン          | shorts                         |                                                                           |
+| かいしゃ         | 会社           | company                        |                                                                           |
+| しゃちょう        | 社長           | company president              |                                                                           |
+| まめ           | 豆            | bean                           |                                                                           |
+| だいず          | 大豆           | soybean                        |                                                                           |
+| とうふ          | 豆ふ           | tofu                           | ? Kana substitution: reconstructed whole word.                            |
+| なっとう         | なっ豆          | fermented soybeans             | ? Kana substitution: reconstructed whole word.                            |
+| とうにゅう        | 豆にゅう         | soy milk                       | ? Kana substitution: reconstructed whole word.                            |
+| あかるい         | 明るい          | bright                         |                                                                           |
+|              | 明日           |                                | ? Multiple readings: あした / あす / みょうにち; source does not choose.            |
+| あけまして        | 明けまして        | as the new year begins         | ? English judgement: fragment of a New Year greeting.                     |
+| はつめい         | はつ明          | invention                      | ? Kana substitution: reconstructed whole word.                            |
+| せつめい         | せつ明          | explanation                    | ? Kana substitution: reconstructed whole word.                            |
+| くらい          | 暗い           | dark                           |                                                                           |
+| あんしょう        | 暗しょう         | reciting from memory           | ? Kana substitution: reconstructed whole word.                            |
+| あんき          | 暗記           | memorization                   |                                                                           |
+| あんざん         | 暗ざん          | mental math                    | ? Kana substitution: reconstructed whole word.                            |
+|              | 門            |                                | ? Multiple readings: もん / かど; source lists both.                          |
+| かどまつ         | 門松           | New Year's pine decoration     | ? English judgement: Japanese New Year decoration.                        |
+| ごじ           | 五時           | five o'clock                   |                                                                           |
+| じかん          | 時間           | time                           |                                                                           |
+| そのとき         | その時          | at that time                   |                                                                           |
+| とけい          | 時けい          | clock                          | ? Kana substitution: reconstructed whole word.                            |
+| ときどき         | 時々           | sometimes                      |                                                                           |
+| のあいだ         | 〜の間          | during / between               | ? English judgement: phrase fragment; meaning depends on context.         |
+| にんげん         | 人間           | human                          |                                                                           |
+| なかま          | なか間          | companion                      | ? Kana substitution: reconstructed whole word.                            |
+| おんがく         | 音楽           | music                          |                                                                           |
+| がっき          | 楽き           | musical instrument             | ? Kana substitution: reconstructed whole word.                            |
+| たのしい         | 楽しい          | fun                            |                                                                           |
+| たのしむ         | 楽しむ          | to enjoy                       |                                                                           |
+| たのしみ         | 楽しみ          | something to look forward to   |                                                                           |
+| らくらく         | 楽々           | easily                         |                                                                           |
+| きらく          | 気楽           | carefree                       |                                                                           |
+| えいご          | 英語           | English language               |                                                                           |
+| えいこく         | 英国           | United Kingdom                 | ? Place-specific: United Kingdom, often called Britain.                   |
+| にほんご         | 日本語          | Japanese language              |                                                                           |
+| ちゅうごくご       | 中国語          | Chinese language               |                                                                           |
+| こくご          | 国語           | Japanese language class        | ? School-specific: Japanese language class.                               |
+| ごびょう         | 五秒           | five seconds                   |                                                                           |
+| なんびょう        | 何秒           | how many seconds               |                                                                           |
+| ごぜん          | 午前           | morning / a.m.                 |                                                                           |
+| ごご           | 午後           | afternoon / p.m.               |                                                                           |
+| しょうご         | 正午           | noon                           |                                                                           |
+| まえ           | 前            | front / before                 |                                                                           |
+| いぜん          | い前           | before                         | ? Kana substitution: reconstructed whole word.                            |
+| ぜんごさゆう       | 前後左右         | front, back, left, and right   |                                                                           |
+|              | その後          |                                | ? Multiple readings: そのあと / そのご; context needed.                          |
+| うしろ          | 後ろ           | behind                         |                                                                           |
+| あめのちくもり      | 雨後くもり        | rain, then cloudy              | ? Kana substitution: reconstructed whole word.                            |
+| さいご          | さい後          | last                           | ? Kana substitution: reconstructed whole word.                            |
+| のちほど         | 後ほど          | later                          |                                                                           |
+| せかい          | 世界           | world                          |                                                                           |
+| にじゅういっせいき    | 二十一世き        | 21st century                   | ? Kana substitution: reconstructed whole word.                            |
+| せかいじゅう       | 世界中          | all over the world             |                                                                           |
+| せかいいち        | 世界一          | best in the world              | ? English judgement: best; can mean biggest, fastest, etc.                |
+| せかいちず        | 世界地図         | world map                      |                                                                           |
+| ひろい          | 広い           | wide                           |                                                                           |
+| ひろさ          | 広さ           | size / area                    |                                                                           |
+| ひろびろ         | 広々           | spacious                       |                                                                           |
+| ひろしま         | 広島           | Hiroshima                      | ? Place-specific: Hiroshima.                                              |
+| こたえる         | 答える          | to answer                      |                                                                           |
+| こたえ          | 答え           | answer                         |                                                                           |
+| こたえあわせ       | 答え合わせ        | checking answers               |                                                                           |
+| とけい          | 時計           | clock                          |                                                                           |
+| けいさんようし      | 計さん用紙        | paper for calculations         | ? Kana substitution: reconstructed whole word.                            |
+| ごうけい         | 合計           | total                          |                                                                           |
+| けいさんき        | 計さんき         | calculator                     | ? Kana substitution: reconstructed whole word.                            |
+| しき           | 式            | ceremony / formula             | ? English judgement: ceremony or formula; context missing.                |
+| そつぎょうしき      | そつぎょう式       | graduation ceremony            | ? Kana substitution: reconstructed whole word.                            |
+| せんしゅう        | 先週           | last week                      |                                                                           |
+| こんしゅう        | 今週           | this week                      |                                                                           |
+| いっしゅうかん      | 一週間          | one week                       |                                                                           |
+| しゅうまつ        | 週まつ          | weekend                        | ? Kana substitution: reconstructed whole word.                            |
+| じぶん          | 自分           | oneself                        |                                                                           |
+| じどうしゃ        | 自どう車         | car                            | ? Kana substitution: reconstructed whole word.                            |
+| じてんしゃ        | 自てん車         | bicycle                        | ? Kana substitution: reconstructed whole word.                            |
+| じてん          | 自てん          | rotation                       | ? Kana substitution: reconstructed whole word.                            |
+| じゆう          | 自ゆう          | freedom                        | ? Kana substitution: reconstructed whole word.                            |
+| もんだい         | 問だい          | question / problem             | ? Kana substitution: reconstructed whole word.                            |
+| しつもん         | しつ問          | question                       | ? Kana substitution: reconstructed whole word.                            |
+| あね           | 姉            | older sister                   |                                                                           |
+| おねえさん        | お姉さん         | older sister (polite)          |                                                                           |
+| しまい          | 姉妹           | sisters                        |                                                                           |
+| しまいとし        | 姉妹と市         | sister city                    | ? Kana substitution; place-specific: paired partner city.                 |
+| しまいしゅう       | 姉妹州          | sister state                   | ? Place-specific: paired partner state.                                   |
+| いもうと         | 妹            | younger sister                 |                                                                           |
+|              | 家            |                                | ? Multiple readings: いえ / うち; context needed.                             |
+| かぞく          | 家ぞく          | family                         | ? Kana substitution: reconstructed whole word.                            |
+| さっか          | 作家           | writer                         |                                                                           |
+| おんがくか        | 音楽家          | musician                       |                                                                           |
+| けんちくか        | けんちく家        | architect                      | ? Kana substitution: reconstructed whole word.                            |
+|              | 〜家           |                                | ? Multiple readings: か (expert) / け (family); suffix context needed.      |
+| わたし          | 私            | I / me                         |                                                                           |
+| わたしたち        | 私たち          | we / us                        |                                                                           |
+| あに           | 兄            | older brother                  |                                                                           |
+| おにいさん        | お兄さん         | older brother (polite)         |                                                                           |
+| きょうだい        | 兄弟           | brothers / siblings            |                                                                           |
+| おとうと         | 弟            | younger brother                |                                                                           |
+| にっき          | 日記           | diary                          |                                                                           |
+| きおく          | 記おく          | memory                         | ? Kana substitution: reconstructed whole word.                            |
+| きおくりょく       | 記おく力         | ability to remember            | ? Kana substitution: reconstructed whole word.                            |
+| きろく          | 記ろく          | record                         | ? Kana substitution: reconstructed whole word.                            |
+| ふるい          | 古い           | old                            |                                                                           |
+| ふしぎ          | 不思ぎ          | strange                        | ? Kana substitution: reconstructed whole word.                            |
+| ふべん          | 不便           | inconvenient                   |                                                                           |
+| ふじゆう         | 不自ゆう         | lack of freedom                | ? Kana substitution; English judgement: can also mean limited mobility.   |
+| ふかのう         | 不かのう         | impossible                     | ? Kana substitution: reconstructed whole word.                            |
+| ふあん          | 不安           | worry                          |                                                                           |
+| ふとくい         | 不とくい         | not good at                    | ? Kana substitution: reconstructed whole word.                            |
+| ふまじめ         | 不まじめ         | not serious                    | ? Kana substitution: reconstructed whole word.                            |
+| ふこうへい        | 不こう平         | unfair                         | ? Kana substitution: reconstructed whole word.                            |
+| よてい          | 予定           | plan                           |                                                                           |
+| よやく          | 予やく          | reservation                    | ? Kana substitution: reconstructed whole word.                            |
+| よそう          | 予そう          | prediction                     | ? Kana substitution: reconstructed whole word.                            |
+| てんきよほう       | 天気予ほう        | weather forecast               | ? Kana substitution: reconstructed whole word.                            |
+| つぎに          | 次に           | next                           |                                                                           |
 | そのつぎ         | その次          | the next one                   |                                                                           |
 | つぎのひ         | 次の日          | the next day                   |                                                                           |
 | のつぎ          | 〜の次          | after                          | ? English judgement: phrase fragment; after the preceding item.           |
