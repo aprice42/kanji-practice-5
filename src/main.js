@@ -46,22 +46,73 @@ const MIN_POOL = 8
    id, and the app never evaluates what "grade 4" means.
    --------------------------------------------------------------------------- */
 
+/* One membership index, and the only place a card's set membership is decided.
+
+   Generated sets are inverted out of `card.sets`. Sets made at runtime cannot
+   appear there — `src/cards.js` is a build artifact — so they carry their own
+   list of written forms and are folded in here. Everything downstream then asks
+   one question and never has to know where a set came from.
+
+   Doing this in one place is load-bearing rather than tidy. `activeCards()`
+   used to read `card.sets` directly, so a runtime set merged into the manifest
+   would have appeared in the picker, ticked, counted toward the summary row —
+   and produced a round of zero cards, silently. */
+const membership = new Map()
+
+const cardByForm = new Map(cards.map((card) => [card.written, card]))
+
+function rebuildMembership() {
+  membership.clear()
+  for (const card of cards) {
+    for (const id of card.sets) {
+      if (!membership.has(id)) membership.set(id, new Set())
+      membership.get(id).add(card.written)
+    }
+  }
+  for (const set of state.userSets) membership.set(set.id, new Set(set.forms))
+}
+
+const formsIn = (id) => membership.get(id) ?? new Set()
+
+/* Every set the app knows about: the ones generated into src/cards.js, plus any
+   the user has made, which arrive from storage after this file has loaded.
+
+   These are functions rather than constants for exactly that reason. As
+   constants they were computed at module load, before storage had been read, so
+   a set made at runtime would have been invisible to the picker and — worse —
+   dropped by the stored-selection validator as an id it had never heard of. */
+const allSets = () => [...SETS, ...state.userSets]
+
 /* A set with nothing filled in yet is listed but cannot be chosen. Showing it
    as `0` would look like a bug, and leaving it out would hide that it exists. */
 const isPlayable = (set) => set.cards > 0
-const playableSets = SETS.filter(isPlayable)
+const playableSets = () => allSets().filter(isPlayable)
 
-/* Sections, in the order the picker shows them, taken from the manifest so a
-   new kind of set — kana, custom — appears without touching this file. */
-const SECTIONS = [...new Set(SETS.map((s) => s.section))].sort(
-  (a, b) => (a === 'Curriculum' ? -1 : b === 'Curriculum' ? 1 : 0)
-)
-const setsIn = (section) => SETS.filter((s) => s.section === section)
+/* Sections, in the order the picker shows them. The order is written out rather
+   than derived: sorting only "Curriculum first" would leave every other section
+   in whatever order it happened to be encountered, so the first set a user ever
+   made would decide where My sets sat forever. A section with nothing in it
+   does not appear. */
+const SECTION_ORDER = ['Curriculum', 'Worksheets', 'Kana', 'Practice sets', 'My sets']
+const sections = () => {
+  const present = new Set(allSets().map((s) => s.section))
+  const known = SECTION_ORDER.filter((name) => present.has(name))
+  const rest = [...present].filter((name) => !SECTION_ORDER.includes(name))
+  return [...known, ...rest]
+}
+const setsIn = (section) => allSets().filter((s) => s.section === section)
 
 /* Display order: by section, then as the manifest lists them. Used by both the
    picker and the summary row, so "Grade 4 & September review" cannot come out
    in one order on the home screen and the other in the panel. */
-const DISPLAY_ORDER = SECTIONS.flatMap(setsIn)
+const displayOrder = () => sections().flatMap(setsIn)
+
+/* Set labels are typed by people. Nothing in this file escaped anything before
+   there were sets the app did not generate itself; every label was a string we
+   had written. The moment a name can be typed — and, next, arrive in a link
+   from a stranger — the three places a label reaches innerHTML need this. */
+const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
+const escapeHtml = (text) => String(text).replace(/[&<>"']/g, (c) => ESCAPES[c])
 
 /* What the results screen says, and how much confetti it throws.
    Thresholds: 0 / 25 / 50 / 75 / 95 / 100 percent. 76–94 keeps the same words
@@ -202,6 +253,9 @@ const state = {
      survive a row being inserted; a card's id is its written form, and neither
      is ever an array position. */
   selection: new Set(),
+  // Sets the user has made. Loaded from storage before loadPrefs, so the
+  // stored-selection validator can see them.
+  userSets: [],
   // Ephemeral, never persisted: true while the picker is open.
   sheet: false,
   /* True until a selection has been chosen for the first time. The picker then
@@ -215,6 +269,13 @@ const state = {
 const THEME_KEY = 'kanji-practice:theme'
 const PALETTE_KEY = 'kanji-practice:palette'
 const SELECTION_KEY = 'kanji-practice:selection'
+const USER_SETS_KEY = 'kanji-practice:sets'
+
+/* Caps. Not storage pressure — 200 written forms is about 2 KB — but because
+   the app pages nothing anywhere, and a 500-word round is not a round. */
+const MAX_SETS = 30
+const MAX_FORMS = 200
+const MAX_NAME = 40
 
 function applyTheme() {
   const root = document.documentElement
@@ -249,7 +310,7 @@ function loadPrefs() {
        ids are dropped; if nothing survives, the default comes back. */
     const saved = JSON.parse(localStorage.getItem(SELECTION_KEY) ?? 'null')
     if (Array.isArray(saved)) {
-      const known = saved.map(migrateSetId).filter((id) => playableSets.some((s) => s.id === id))
+      const known = saved.map(migrateSetId).filter((id) => playableSets().some((s) => s.id === id))
       if (known.length) state.selection = new Set(known)
     }
   } catch {
@@ -273,6 +334,61 @@ function loadPrefs() {
    nearest honest equivalent. */
 const migrateSetId = (id) => (/^(g[1-5]|ch):\d+$/.test(id) ? id.split(':')[0] : id)
 
+/* Sets the user made, read back from storage.
+
+   Validated rather than trusted, the same way the stored selection is. The
+   shape is user-reachable today and will be reachable from a link tomorrow, so
+   anything malformed is dropped rather than parsed hopefully. A form that no
+   longer resolves to a card is dropped too — the generated cards change under
+   a stored set whenever a worksheet is re-ingested — and a set left with
+   nothing is dropped with it. */
+function normaliseUserSet(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  if (typeof raw.id !== 'string' || !/^u:[a-z0-9]+$/.test(raw.id)) return null
+  if (typeof raw.label !== 'string') return null
+  const label = raw.label.replace(/[\u0000-\u001f]/g, '').replace(/\s+/g, ' ').trim().slice(0, MAX_NAME)
+  if (!label) return null
+  if (!Array.isArray(raw.forms)) return null
+  const forms = [...new Set(raw.forms.filter((f) => typeof f === 'string' && cardByForm.has(f)))]
+  if (!forms.length) return null
+  return {
+    id: raw.id,
+    label,
+    forms: forms.slice(0, MAX_FORMS),
+    section: 'My sets',
+    /* `kind` is what a row branches on to decide it is editable. A third value
+       rather than reusing 'list', so nothing has to split an id to find out. */
+    kind: 'custom',
+    created: Number.isFinite(raw.created) ? raw.created : Date.now(),
+    /* The RESOLVED count, not forms.length. A set whose words have left the
+       master list would otherwise show a number the round cannot deliver, and
+       "Done · N cards" would disagree with the round it starts. */
+    cards: forms.length,
+  }
+}
+
+function loadUserSets() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(USER_SETS_KEY) ?? 'null')
+    if (!Array.isArray(saved)) return
+    state.userSets = saved.map(normaliseUserSet).filter(Boolean).slice(0, MAX_SETS)
+  } catch {
+    // Private browsing, blocked storage, or something that is not JSON.
+    state.userSets = []
+  }
+}
+
+/* Unlike a theme preference, a set someone just spent five minutes building
+   must not fail to save in silence. Returns the error so the caller can say so. */
+function saveUserSets() {
+  try {
+    localStorage.setItem(USER_SETS_KEY, JSON.stringify(state.userSets))
+    return null
+  } catch (error) {
+    return error
+  }
+}
+
 function saveSelection() {
   try {
     localStorage.setItem(SELECTION_KEY, JSON.stringify([...state.selection]))
@@ -283,13 +399,16 @@ function saveSelection() {
 
 /* Selection --------------------------------------------------------------- */
 
-/* A card belongs to one or more sets, so membership is a test rather than a
-   lookup. Cheap enough to run per round and per card: 794 cards, one set each
-   today, a handful once they overlap. */
-const activeCards = () => cards.filter((card) => card.sets.some((id) => state.selection.has(id)))
+/* The union of the selected sets. Built from the membership index, so a set
+   made at runtime resolves the same way a generated one does. */
+function activeCards() {
+  const wanted = new Set()
+  for (const id of state.selection) for (const form of formsIn(id)) wanted.add(form)
+  return cards.filter((card) => wanted.has(card.written))
+}
 
 const selectedSets = () =>
-  DISPLAY_ORDER.filter((s) => isPlayable(s) && state.selection.has(s.id))
+  displayOrder().filter((s) => isPlayable(s) && state.selection.has(s.id))
 
 /* The last selected set cannot be turned off. An empty selection would mean a
    round with no cards, so rather than disabling every mode and explaining why,
@@ -637,7 +756,7 @@ function setRow(set) {
     <button class="sheet__check" role="checkbox" aria-checked="${checked}"
             ${ready ? '' : 'disabled'} data-set="${set.id}">
       <span class="sheet__box">${icon(BOX[checked], 'icon--box')}</span>
-      <span class="sheet__label">${set.label}</span>
+      <span class="sheet__label">${escapeHtml(set.label)}</span>
       <span class="sheet__count ${ready ? '' : 'is-muted'}">${ready ? set.cards : 'not ready'}</span>
       <span class="visually-hidden">${ready ? `${set.cards} cards` : 'no cards yet'}</span>
     </button>`
@@ -662,9 +781,9 @@ function renderSheet() {
           : ''
       }
       <div class="sheet__list">
-        ${SECTIONS.map(
+        ${sections().map(
           (section) => `
-          <p class="menu__heading">${section}</p>
+          <p class="menu__heading">${escapeHtml(section)}</p>
           ${setsIn(section).map(setRow).join('')}`
         ).join('')}
       </div>
@@ -869,7 +988,7 @@ function renderHome() {
       <button class="selection" id="selection" aria-haspopup="dialog"
               aria-expanded="${state.sheet ? 'true' : 'false'}">
         <span class="selection__text">
-          <span class="selection__name">${describeSelection()}</span>
+          <span class="selection__name">${escapeHtml(describeSelection())}</span>
           <span class="selection__count">${activeCards().length} cards</span>
         </span>
         ${icon('chevron', 'icon--chevron')}
@@ -1203,5 +1322,11 @@ onUpdateReady(() => {
   if (state.screen === 'home') render()
 })
 
+/* Order matters. The sets the user made have to exist before loadPrefs
+   validates a stored selection against them, or a selection naming one is
+   dropped as unknown — and if it was the only entry, the app decides this
+   person has never chosen and shows them the first-run picker. */
+loadUserSets()
+rebuildMembership()
 loadPrefs()
 render()
