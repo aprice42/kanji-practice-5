@@ -76,6 +76,10 @@ write endpoint is a Vite plugin marked `apply: 'serve'`, so neither reaches the 
 - There is exactly one layout breakpoint (the mode cards, 1 column to 3 at 44rem) and it is
   deliberate: a column count is discrete and a clamp cannot express it. Sizes stay clamps.
 - Correct/wrong must differ by shape, not only color, and every icon needs a text label.
+- Sets the user makes live in `localStorage` and are merged with the generated `SETS` at
+  runtime, so anything reading the set list must be a function, not a module-level constant
+  — they load after this file does. Membership goes through the one index in `main.js`;
+  `card.sets` alone cannot see them.
 - There is no default selection. A student who has never chosen gets a non-dismissible
   picker; after that it is remembered. A stored selection that no longer resolves asks
   again rather than falling back to a guess.

@@ -91,6 +91,22 @@ rather than reassuring: the audit measures whether okurigana gives the answer aw
 single character has no okurigana. It says nothing about whether the kana questions are
 hard.
 
+### Making a set
+
+**New set** in the picker opens the builder — a screen, not a second dialog, because the picker is already `aria-modal` and a modal inside a modal means two focus traps and an ambiguous Escape. Saving returns to the picker with the new set selected, under **My sets**.
+
+The screen is a name, the words chosen so far as removable chips, and a place to find more. **The grid starts empty**: rendering all 839 words is about five thousand elements and shapes 839 Japanese glyphs at once, which stalls a school Chromebook for a screen that shows twelve at a time. Type, or tap a list to browse it. Matches cap at 60 with a "keep typing" line — a query that broad is one to narrow.
+
+The chosen chips are load-bearing rather than decorative. The grid changes under you on every keystroke, so without a running list of what you have picked, *"did I already add 校門?"* is unanswerable.
+
+Search matches the **written form** first, then the reading, then the meaning, and written matches sort ahead of the rest: a child copying a list off a sheet of paper is matching characters. A filter pill narrows the search rather than replacing it, and pressing the active one clears it. There is no All pill — "all" is 839 tiles nobody wants, and search already spans everything.
+
+A set the user made is the only kind with an edit control on its picker row, and `kind: 'custom'` is what says so rather than the shape of its id. Delete lives inside the builder, behind two presses, not next to a checkbox on a 412px phone.
+
+**A set edited down to no words cannot be saved.** Otherwise `isPlayable` starts returning false for a set that is currently selected, and the summary row and the round quietly disagree. **Deleting the only selected set** leaves the state the app reads as "has never chosen", which already has an answer: it asks again.
+
+Not yet: sharing a set as a URL. The set shape — a name and a list of written forms — is exactly what a link would carry.
+
 ### One card per written form
 
 47 words appear both under a grade and on the September worksheet. They are **one card in two sets**, not two cards. Before that was true, the same word held two separate scores and could appear in both results lists at once, and neither copy excluded the other from being its own distractor.

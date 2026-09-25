@@ -1327,3 +1327,185 @@ html, body {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* The set builder ---------------------------------------------------------
+   A screen, so it gets the app's column layout rather than the panel's. Only
+   the results list scrolls; the name, the chosen words and the search stay put,
+   because losing sight of what you have chosen is how you add a word twice.
+   ------------------------------------------------------------------------- */
+.builder__title {
+  margin: 0;
+  font-size: clamp(1rem, 4vw, 1.15rem);
+  font-weight: 600;
+}
+.builder {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.builder__field { display: flex; flex-direction: column; gap: 0.2rem; }
+.builder__field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.builder input[type='text'],
+.builder input[type='search'] {
+  font: inherit;
+  font-size: 1rem;
+  padding: 0.55rem 0.7rem;
+  min-height: 44px;
+  border-radius: 0.6rem;
+  border: 2px solid var(--edge);
+  background: var(--bg);
+  color: var(--ink);
+  width: 100%;
+}
+.builder input:focus { border-color: var(--primary-text); }
+
+.builder__chosenhead {
+  margin: 0 0 0.35rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.builder__count { font-variant-numeric: tabular-nums; }
+.builder__hint { margin: 0; color: var(--muted); font-size: 0.88rem; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.55rem 0.3rem; max-height: 6rem; overflow-y: auto; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--edge);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.25rem 0.5rem;
+  min-height: 34px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--bad); }
+.chip__x { color: var(--muted); font-size: 1.05rem; line-height: 1; }
+.chip:hover .chip__x { color: var(--bad); }
+
+.builder__find { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.pills { display: flex; flex-wrap: wrap; gap: 0.55rem 0.3rem; }
+.pill {
+  border: 1px solid var(--edge);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.7rem;
+  min-height: 34px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.pill:hover { background: var(--surface); }
+/* A pill reads better at 34px than at 44, but a 34px touch target does not.
+   The hit area is grown to 44 with a pseudo-element instead of the box, so the
+   filter row stays one or two lines on a phone rather than three or four. The
+   row gap carries the extra height so neighbours do not overlap. */
+.pill, .chip { position: relative; }
+.pill::after, .chip::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  height: 44px;
+}
+.pill[aria-pressed='true'] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+
+/* The one thing on this screen allowed to scroll. */
+.builder__results { flex: 1; min-height: 0; overflow-y: auto; }
+.wordgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.35rem;
+  padding: 0.1rem;
+}
+.wordtile {
+  border: 2px solid var(--edge);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 0.6rem;
+  padding: 0.4rem 0.3rem;
+  min-height: 48px;
+  cursor: pointer;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.wordtile:hover { border-color: var(--primary-text); }
+.wordtile__w { font-size: 1.05rem; line-height: 1.2; }
+.wordtile__r { font-size: 0.72rem; color: var(--muted); }
+.wordtile[aria-pressed='true'] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+/* The chosen state is a fill AND a tick, because colour alone is not a state. */
+.wordtile[aria-pressed='true'] .wordtile__r { color: var(--on-primary); opacity: 0.85; }
+.wordtile[aria-pressed='true']::after {
+  content: '✓';
+  position: absolute;
+  inset-block-start: 0.15rem;
+  inset-inline-end: 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+.wordtile { position: relative; }
+
+.builder__actions { display: flex; flex-direction: column; gap: 0.4rem; }
+.builder__error { margin: 0; min-height: 1.2rem; font-size: 0.85rem; color: var(--bad); text-align: center; }
+.builder__buttons { display: flex; gap: 0.5rem; }
+.builder__buttons .btn { flex: 1; }
+.btn--quiet { flex: 0 0 auto; }
+.btn--danger {
+  background: transparent;
+  color: var(--bad);
+  border: 2px solid var(--bad);
+}
+.btn--danger:hover { background: var(--surface); }
+
+/* A custom set's row carries a second control, so it becomes a row. Generated
+   rows are still a single button and are untouched. */
+.sheet__row { display: flex; align-items: stretch; gap: 0.2rem; }
+.sheet__row .sheet__check { flex: 1; min-width: 0; }
+.sheet__edit {
+  flex: none;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  min-width: 44px;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sheet__edit:hover { background: var(--surface); color: var(--primary-text); }
+.icon--edit { width: 1.15rem; height: 1.15rem; }

@@ -169,6 +169,9 @@ const ICONS = {
   boxCheck:
     '<rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>' +
     '<path d="M17 24l5 5 9-11" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  pencil:
+    '<path d="M10 38h5l20-20a3.5 3.5 0 0 0-5-5L10 33Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>' +
+    '<path d="M29 14l5 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
   chevron:
     '<path d="M18 14l10 10-10 10" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
   menu:
@@ -233,7 +236,7 @@ const DIRECTIONS = [
 const KANA_SECTION = 'Kana'
 
 const state = {
-  screen: 'home', // 'home' | 'practice' | 'results'
+  screen: 'home', // 'home' | 'practice' | 'results' | 'builder'
   mode: 'flashcards', // 'flashcards' | 'choice'
   direction: 'reading-first',
   // id -> 'correct' | 'incorrect'. The source of truth for the score: a card
@@ -256,6 +259,9 @@ const state = {
   // Sets the user has made. Loaded from storage before loadPrefs, so the
   // stored-selection validator can see them.
   userSets: [],
+  /* The set being built or edited, while the builder screen is up. Never
+     persisted — nothing is written until Save. */
+  builder: null,
   // Ephemeral, never persisted: true while the picker is open.
   sheet: false,
   /* True until a selection has been chosen for the first time. The picker then
@@ -752,7 +758,7 @@ const BOX = { true: 'boxCheck', false: 'box' }
 function setRow(set) {
   const ready = isPlayable(set)
   const checked = String(state.selection.has(set.id))
-  return `
+  const check = `
     <button class="sheet__check" role="checkbox" aria-checked="${checked}"
             ${ready ? '' : 'disabled'} data-set="${set.id}">
       <span class="sheet__box">${icon(BOX[checked], 'icon--box')}</span>
@@ -760,6 +766,19 @@ function setRow(set) {
       <span class="sheet__count ${ready ? '' : 'is-muted'}">${ready ? set.cards : 'not ready'}</span>
       <span class="visually-hidden">${ready ? `${set.cards} cards` : 'no cards yet'}</span>
     </button>`
+
+  /* Only a set the user made is editable, and `kind` says so rather than the
+     shape of its id. A button cannot contain a button, so those rows become a
+     row with two controls; every generated row stays exactly as it was. */
+  if (set.kind !== 'custom') return check
+  return `
+    <div class="sheet__row">
+      ${check}
+      <button class="sheet__edit" data-edit="${set.id}">
+        ${icon('pencil', 'icon--edit')}
+        <span class="visually-hidden">Edit ${escapeHtml(set.label)}</span>
+      </button>
+    </div>`
 }
 
 function renderSheet() {
@@ -789,11 +808,313 @@ function renderSheet() {
       </div>
       <p class="sheet__note" role="status" aria-live="polite"></p>
       <div class="sheet__foot">
+        ${
+          /* Not during the first run: someone who has chosen nothing yet must
+             not be able to route into the builder and come back to a Start
+             button they still cannot press. */
+          first
+            ? ''
+            : `<button class="btn btn--ghost" id="new-set">New set</button>`
+        }
         <button class="btn" data-close ${first && !count ? 'disabled' : ''}>
           ${first ? `Start${count ? ` · ${count} cards` : ''}` : `Done · ${count} cards`}
         </button>
       </div>
     </section>`
+}
+
+/* The set builder ---------------------------------------------------------
+
+   A screen, not a second dialog. The picker is already `aria-modal`, and a
+   modal inside a modal means two focus traps and an ambiguous Escape; the
+   builder also wants the whole viewport on a phone. Opening it closes the
+   picker, and Save or Cancel brings the picker back with the set in it.
+   ------------------------------------------------------------------------- */
+
+const newSetId = () => `u:${Math.random().toString(36).slice(2, 10).padEnd(8, '0')}`
+
+/* Filters are the sets the app generated. Filtering by another set you made is
+   not useful and would grow the row every time you made one. */
+const FILTERS = () => SETS.filter(isPlayable)
+
+function openBuilder(id) {
+  const existing = state.userSets.find((s) => s.id === id)
+  state.builder = {
+    id: existing?.id ?? null,
+    label: existing?.label ?? '',
+    forms: new Set(existing?.forms ?? []),
+    query: '',
+    filter: null,
+    confirmDelete: false,
+    error: '',
+  }
+  state.sheet = false
+  state.screen = 'builder'
+  render()
+}
+
+function closeBuilder() {
+  state.builder = null
+  state.screen = 'home'
+  state.sheet = true
+  render()
+}
+
+/* Written form first, then reading, then meaning — a child copying a list off
+   a sheet of paper is matching characters, and a parent looking for "bicycle"
+   can wait. Written matches sort ahead of the rest for the same reason. */
+function builderMatches() {
+  const { query, filter } = state.builder
+  const q = query.trim().toLowerCase()
+  // Nothing typed and no list chosen: show nothing rather than all 839.
+  if (!q && !filter) return null
+
+  const pool = filter ? cards.filter((c) => formsIn(filter).has(c.written)) : cards
+  if (!q) return pool
+
+  const byWritten = []
+  const byRest = []
+  for (const card of pool) {
+    if (card.written.includes(query.trim())) byWritten.push(card)
+    else if (card.reading.toLowerCase().includes(q)) byRest.push(card)
+    else if (card.meaning && card.meaning.toLowerCase().includes(q)) byRest.push(card)
+  }
+  return [...byWritten, ...byRest]
+}
+
+/* Rendering all 839 is about five thousand elements and shapes 839 Japanese
+   glyphs at once — a visible stall on a school Chromebook, for a screen that
+   shows twelve of them at a time. A query this broad is one the person should
+   narrow. */
+const SHOW_LIMIT = 60
+
+function builderTile(card) {
+  const on = state.builder.forms.has(card.written)
+  return `
+    <button class="wordtile" type="button" aria-pressed="${on}" data-form="${escapeHtml(card.written)}">
+      <span class="wordtile__w"${ja(card.written)}>${escapeHtml(card.written)}</span>
+      <span class="wordtile__r"${ja(card.reading)}>${escapeHtml(card.reading)}</span>
+    </button>`
+}
+
+function renderBuilder() {
+  const b = state.builder
+  const matches = builderMatches()
+  const shown = matches ? matches.slice(0, SHOW_LIMIT) : []
+  const chosen = cards.filter((c) => b.forms.has(c.written))
+  const full = b.forms.size >= MAX_FORMS
+  const canSave = Boolean(b.label.trim()) && b.forms.size > 0
+
+  app.innerHTML = `
+    <header class="topbar">
+      <button class="menu__trigger" id="builder-back">
+        ${icon('home', 'icon--menu')}
+        <span class="visually-hidden">Back without saving</span>
+      </button>
+      <h1 class="builder__title">${b.id ? 'Edit set' : 'New set'}</h1>
+      ${settingsMenu()}
+    </header>
+
+    <div class="builder">
+      <div class="builder__field">
+        <label for="set-name">Name</label>
+        <input type="text" id="set-name" value="${escapeHtml(b.label)}" maxlength="${MAX_NAME}"
+               placeholder="Week 3 test" autocomplete="off" />
+      </div>
+
+      <div class="builder__chosen">
+        <p class="builder__chosenhead">
+          <span>Chosen</span>
+          <span class="builder__count">${b.forms.size}${full ? ` · full` : ''}</span>
+        </p>
+        ${
+          chosen.length
+            ? `<div class="chips">${chosen
+                .map(
+                  (c) => `<button class="chip" type="button" data-drop="${escapeHtml(c.written)}">
+                            <span${ja(c.written)}>${escapeHtml(c.written)}</span>
+                            <span class="chip__x" aria-hidden="true">×</span>
+                            <span class="visually-hidden">Remove</span>
+                          </button>`
+                )
+                .join('')}</div>`
+            : `<p class="builder__hint">Nothing chosen yet.</p>`
+        }
+      </div>
+
+      <div class="builder__find">
+        <div class="builder__field">
+          <label for="set-search">Find words</label>
+          <input type="search" id="set-search" value="${escapeHtml(b.query)}"
+                 placeholder="A word, a reading, or a meaning" autocomplete="off" />
+        </div>
+        <div class="pills" role="group" aria-label="Show words from">
+          ${FILTERS()
+            .map(
+              (set) => `<button class="pill" type="button" data-filter="${set.id}"
+                          aria-pressed="${b.filter === set.id}">${escapeHtml(set.label)}</button>`
+            )
+            .join('')}
+        </div>
+        <div class="builder__results">
+          ${
+            matches === null
+              ? `<p class="builder__hint">Search for a word, or pick a list below to browse it.</p>`
+              : shown.length
+                ? `<div class="wordgrid">${shown.map(builderTile).join('')}</div>
+                   ${
+                     matches.length > SHOW_LIMIT
+                       ? `<p class="builder__hint">${matches.length} matches. Keep typing to narrow it down.</p>`
+                       : ''
+                   }`
+                : `<p class="builder__hint">Nothing matches.</p>`
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="actions builder__actions">
+      <p class="builder__error" role="status" aria-live="polite">${escapeHtml(b.error)}</p>
+      <div class="builder__buttons">
+        ${
+          b.id
+            ? b.confirmDelete
+              ? `<button class="btn btn--danger" id="confirm-delete">Delete for good</button>
+                 <button class="btn btn--secondary" id="keep">Keep it</button>`
+              : `<button class="btn btn--secondary btn--quiet" id="delete-set">Delete</button>`
+            : ''
+        }
+        ${b.confirmDelete ? '' : `<button class="btn" id="save-set" ${canSave ? '' : 'disabled'}>Save</button>`}
+      </div>
+    </div>`
+
+  bindBuilder()
+}
+
+function bindBuilder() {
+  const b = state.builder
+  const name = document.getElementById('set-name')
+  const search = document.getElementById('set-search')
+
+  /* The two text fields update state and refresh only what depends on them, so
+     the caret survives. Everything else re-renders. */
+  name.addEventListener('input', () => {
+    b.label = name.value
+    b.error = ''
+    const save = document.getElementById('save-set')
+    if (save) save.disabled = !(b.label.trim() && b.forms.size)
+  })
+
+  search.addEventListener('input', () => {
+    b.query = search.value
+    const at = search.selectionStart
+    render()
+    const next = document.getElementById('set-search')
+    next.focus()
+    next.setSelectionRange(at, at)
+  })
+
+  /* A pill is a toggle, not a radio: pressing the active one clears it and
+     goes back to searching everything. There is no All pill, because "all" is
+     839 tiles nobody wants and search already spans the lot. */
+  for (const pill of app.querySelectorAll('[data-filter]')) {
+    pill.addEventListener('click', () => {
+      b.filter = b.filter === pill.dataset.filter ? null : pill.dataset.filter
+      render()
+    })
+  }
+
+  for (const tile of app.querySelectorAll('[data-form]')) {
+    tile.addEventListener('click', () => {
+      const form = tile.dataset.form
+      if (b.forms.has(form)) b.forms.delete(form)
+      else if (b.forms.size >= MAX_FORMS) {
+        b.error = `A set holds ${MAX_FORMS} words at most.`
+        render()
+        return
+      } else b.forms.add(form)
+      b.error = ''
+      render()
+    })
+  }
+
+  for (const chip of app.querySelectorAll('[data-drop]')) {
+    chip.addEventListener('click', () => {
+      b.forms.delete(chip.dataset.drop)
+      render()
+    })
+  }
+
+  document.getElementById('builder-back').addEventListener('click', closeBuilder)
+  document.getElementById('save-set')?.addEventListener('click', saveBuilder)
+  document.getElementById('delete-set')?.addEventListener('click', () => {
+    b.confirmDelete = true
+    render()
+  })
+  document.getElementById('keep')?.addEventListener('click', () => {
+    b.confirmDelete = false
+    render()
+  })
+  document.getElementById('confirm-delete')?.addEventListener('click', deleteBuilderSet)
+
+  bindMenus()
+}
+
+function saveBuilder() {
+  const b = state.builder
+  const label = b.label.replace(/\s+/g, ' ').trim().slice(0, MAX_NAME)
+  const forms = cards.filter((c) => b.forms.has(c.written)).map((c) => c.written)
+  if (!label || !forms.length) return
+
+  const existing = b.id ? state.userSets.find((s) => s.id === b.id) : null
+  if (!existing && state.userSets.length >= MAX_SETS) {
+    b.error = `That is ${MAX_SETS} sets, which is as many as this holds. Delete one first.`
+    render()
+    return
+  }
+
+  const id = b.id ?? newSetId()
+  const set = {
+    id,
+    label,
+    forms,
+    section: 'My sets',
+    kind: 'custom',
+    created: existing?.created ?? Date.now(),
+    cards: forms.length,
+  }
+  if (existing) state.userSets[state.userSets.indexOf(existing)] = set
+  else state.userSets.push(set)
+
+  const failed = saveUserSets()
+  if (failed) {
+    // Five minutes of work must not disappear quietly. Stay put and say so.
+    if (existing) state.userSets[state.userSets.indexOf(set)] = existing
+    else state.userSets.pop()
+    b.error = 'There is no room left to save this. Delete a set and try again.'
+    render()
+    return
+  }
+
+  rebuildMembership()
+  state.selection.add(id)
+  saveSelection()
+  closeBuilder()
+}
+
+function deleteBuilderSet() {
+  const id = state.builder.id
+  state.userSets = state.userSets.filter((s) => s.id !== id)
+  saveUserSets()
+  rebuildMembership()
+  state.selection.delete(id)
+  saveSelection()
+
+  /* Deleting the only thing selected leaves the state the app reads as "has
+     never chosen", which already has an answer: ask again. Picking something on
+     their behalf would be the guess this app stopped making. */
+  if (!state.selection.size) state.firstRun = true
+  closeBuilder()
 }
 
 /* Ticking a box updates the controls in place rather than re-rendering.
@@ -877,6 +1198,12 @@ function bindSheet() {
       change(setSelected(id, !state.selection.has(id)))
     })
   }
+
+  for (const btn of sheet.querySelectorAll('[data-edit]')) {
+    btn.addEventListener('click', () => openBuilder(btn.dataset.edit))
+  }
+
+  document.getElementById('new-set')?.addEventListener('click', () => openBuilder(null))
 
   /* Escape closes, and Tab is kept inside — an aria-modal dialog that lets
      focus wander behind the scrim is lying about being modal. */
@@ -1310,6 +1637,7 @@ function render() {
   teardownTrace?.()
   teardownTrace = null
   if (state.screen === 'home') return renderHome()
+  if (state.screen === 'builder') return renderBuilder()
   if (state.screen === 'results') return renderResults()
   if (state.mode === 'trace') return renderTrace()
   return state.mode === 'choice' ? renderChoice() : renderFlashcard()
