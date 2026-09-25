@@ -49,6 +49,44 @@ Two rules about the selection:
 
 It is stored under `kanji-practice:selection` as set ids, **validated against the `SETS` manifest on load**, and old `g4:2`-style group ids are migrated to `g4` rather than dropped — dropping is safe but resets the selection without a word, which reads as the app forgetting. Set ids are content-derived and stable; a card's id is its **written form**, which is this project's identity key everywhere.
 
+### Kana
+
+Two sets, 46 characters each, for students who are not reading kanji yet. They are cards
+like any other and need no special handling in a round, but they differ from word cards in
+three ways that the code has to know about:
+
+- **The reading is a romaji sound** — `a`, `shi`, `tsu`. Hepburn, with one departure: を and
+  ヲ are `wo` rather than Hepburn's `o`. That is what beginner charts teach, and `o` would
+  collide with お/オ, which is a real ambiguity rather than a spelling preference.
+- **There is no meaning**, and that is not an unfinished row. A kana is a sound, not a word.
+  `rowIsFilled(false)` is how a source says so; the two render sites that would otherwise
+  draw an empty paragraph check for it.
+- **Romaji is not Japanese.** A face declares the language of its own content rather than
+  inheriting one from the app being about Japanese, so `shi` is not set in Klee One and not
+  announced as Japanese. The direction control follows the same logic: it reads
+  「かな → 漢字」 for words and "sound → かな" for kana, because neither half of the first
+  names anything on a hiragana card.
+
+### Distractors for a single character
+
+Every distractor signal in `src/choices.js` is derived from the card data — okurigana,
+shared kanji, length — and **none of them survive a single character**. `KANJI` never
+matches, so the shared-kanji term cannot fire, and `tailOf` returns the whole character,
+which makes `isPlausible` reduce to exact equality and score every candidate zero.
+Measured: any two hiragana score 3 against each other, with nothing separating one pair
+from another. Distractors would be random and the questions free.
+
+What makes two kana confusable is how they *look*, which is not in the data. So `CONFUSABLE`
+in `src/choices.js` is the one hand-maintained table in this project: あ/お, ね/れ/わ,
+シ/ツ, ソ/ン and the rest. Asked ね, the options are れ and わ every time.
+
+Add to it when a real child confuses a real pair. That is the only evidence worth having.
+
+Note that `npm run audit` reports 0.0% on both directions for a kana set. That is honest
+rather than reassuring: the audit measures whether okurigana gives the answer away, and a
+single character has no okurigana. It says nothing about whether the kana questions are
+hard.
+
 ### One card per written form
 
 47 words appear both under a grade and on the September worksheet. They are **one card in two sets**, not two cards. Before that was true, the same word held two separate scores and could appear in both results lists at once, and neither copy excluded the other from being its own distractor.
@@ -573,7 +611,11 @@ Things deliberately not built. Worth asking before adding any of them:
   practice or handwriting input — he writes on paper; this is recall", and was overturned
   deliberately when Trace mode was added: writing the characters is half the homework, and
   the app already owned the deck and the scoring.*
-- **No romaji anywhere.** Readings are kana.
+- **No romaji on word cards.** A word's reading is kana. This used to read "no romaji
+  anywhere", and was narrowed deliberately when the kana sets were added: for a child
+  learning あ, the sound *is* the lesson rather than a crutch to lean on, and there is
+  nothing else a kana card's reading could be. Word cards are unchanged — no `jitensha`,
+  ever.
 
 ## Conventions worth keeping
 

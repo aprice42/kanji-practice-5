@@ -31,7 +31,8 @@ import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import {
-  parseCards, parseSet, isFilled, duplicateReadings, isAllowedCollision, GRADES, worksheetLabel,
+  parseCards, parseSet, isFilled, rowIsFilled, duplicateReadings, isAllowedCollision,
+  GRADES, KANA, worksheetLabel,
 } from './deck.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -46,6 +47,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
    reimplementing an evaluator. */
 const SECTION = {
   curriculum: 'Curriculum',
+  kana: 'Kana',
   worksheet: 'Worksheets',
   set: 'Practice sets',
 }
@@ -104,6 +106,27 @@ for (const { file, set, label, grade } of GRADES) {
     words: rows.length,
     notes: parsed.groups.reduce((n, g) => n + g.notes.length, 0),
     file: `content/words/${file}`,
+  })
+}
+
+/* Kana. Each file is one set; the rows have a romaji reading and no meaning at
+   all, so they are filtered with the meaning requirement switched off rather
+   than looking like 92 unfinished rows. */
+for (const { file, set, label } of KANA) {
+  const path = join(root, 'content/kana', file)
+  if (!existsSync(path)) continue
+  const parsed = parseCards(readFileSync(path, 'utf8'))
+  const rows = parsed.groups.flatMap((g) => g.rows)
+  sources.push({
+    id: set,
+    label,
+    section: SECTION.kana,
+    kind: 'list',
+    grade: null,
+    rows: rows.filter(rowIsFilled(false)),
+    words: rows.length,
+    notes: parsed.groups.reduce((n, g) => n + g.notes.length, 0),
+    file: `content/kana/${file}`,
   })
 }
 

@@ -15,8 +15,8 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import {
-  parseCards, parseSet, isFilled, duplicateReadings, isAllowedCollision,
-  deckCharacters, isJapanese, isTraceable, GRADES,
+  parseCards, parseSet, isFilled, rowIsFilled, duplicateReadings, isAllowedCollision,
+  deckCharacters, isJapanese, isTraceable, GRADES, KANA,
 } from './deck.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -65,6 +65,20 @@ for (const { file, set, grade } of GRADES) {
     id: set,
     grade,
     rows: rows.filter(isFilled),
+    words: rows.length,
+    notes: parsed.groups.reduce((n, g) => n + g.notes.length, 0),
+  })
+}
+
+/* Kana: a romaji reading and no meaning, so the meaning requirement is off. */
+for (const { file, set } of KANA) {
+  if (!existsSync(join(root, 'content/kana', file))) continue
+  const parsed = parseCards(read(`content/kana/${file}`))
+  const rows = parsed.groups.flatMap((g) => g.rows)
+  sources.push({
+    id: set,
+    grade: null,
+    rows: rows.filter(rowIsFilled(false)),
     words: rows.length,
     notes: parsed.groups.reduce((n, g) => n + g.notes.length, 0),
   })

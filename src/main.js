@@ -21,6 +21,12 @@ const cards = rawCards.map((card) => ({ ...card, id: card.written }))
 
 const app = document.getElementById('app')
 
+/* Kana cards read in romaji — "shi", not しゃ — and romaji is Latin. Tagging it
+   `lang="ja"` would set it in Klee One and tell a screen reader to read English
+   letters as Japanese. So a face declares the language of its own content
+   rather than inheriting one from the app being about Japanese. */
+const ja = (text) => (/[^\x00-\x7F]/.test(String(text)) ? ' lang="ja"' : '')
+
 const CHOICE_COUNT = 3
 
 /* Below this many cards a multiple-choice question cannot be disguised — there
@@ -149,10 +155,28 @@ const THEMES = [
   { id: 'dark', label: 'Dark', hint: 'Always dark' },
 ]
 
+/* The two directions are always prompt-with-the-reading and
+   prompt-with-the-written-form. What those ARE depends on the cards: for a word
+   it is kana and kanji; for a kana card it is a romaji sound and the character.
+   「かな → 漢字」 on a hiragana set names neither side correctly, so the label
+   comes from the selection. The Japanese half is tagged and the English half is
+   not, rather than tagging the whole button. */
 const DIRECTIONS = [
-  { id: 'reading-first', label: 'かな → 漢字', hint: 'See the reading, recall the written form' },
-  { id: 'written-first', label: '漢字 → かな', hint: 'See the written form, recall the reading' },
+  {
+    id: 'reading-first',
+    word: '<span lang="ja">かな → 漢字</span>',
+    kana: 'sound → <span lang="ja">かな</span>',
+    hint: 'See the reading, recall the written form',
+  },
+  {
+    id: 'written-first',
+    word: '<span lang="ja">漢字 → かな</span>',
+    kana: '<span lang="ja">かな</span> → sound',
+    hint: 'See the written form, recall the reading',
+  },
 ]
+
+const KANA_SECTION = 'Kana'
 
 const state = {
   screen: 'home', // 'home' | 'practice' | 'results'
@@ -710,13 +734,22 @@ function bindSheet() {
   })
 }
 
+/* Kana labels only when the whole selection is kana. A mixed selection is
+   genuinely both, and the kanji labels are the ones that describe the harder
+   half of it. */
+const selectionIsKana = () => {
+  const chosen = selectedSets()
+  return chosen.length > 0 && chosen.every((s) => s.section === KANA_SECTION)
+}
+
 function directionSwitch() {
+  const kind = selectionIsKana() ? 'kana' : 'word'
   return `
     <div class="mode" role="group" aria-label="Practice direction">
       ${DIRECTIONS.map(
         (d) => `<button class="mode__btn ${state.direction === d.id ? 'is-active' : ''}"
                     data-direction="${d.id}" aria-pressed="${state.direction === d.id}"
-                    title="${d.hint}" lang="ja">${d.label}</button>`
+                    title="${d.hint}">${d[kind]}</button>`
       ).join('')}
     </div>`
 }
@@ -839,7 +872,7 @@ function renderFlashcard() {
     app.innerHTML = `
       ${practiceChrome()}
       <div class="stage">
-        <p class="kana" lang="ja">${side.prompt}</p>
+        <p class="kana"${ja(side.prompt)}>${side.prompt}</p>
       </div>
       <div class="actions">
         <button class="btn" id="show">Show answer</button>
@@ -855,10 +888,10 @@ function renderFlashcard() {
   app.innerHTML = `
     ${practiceChrome()}
     <div class="stage">
-      <p class="kanji" lang="ja">${side.answer}</p>
+      <p class="kanji"${ja(side.answer)}>${side.answer}</p>
       <div class="gloss">
-        <p class="meaning">${card.meaning}</p>
-        <p class="meaning meaning--reading" lang="ja">${side.echo}</p>
+        ${card.meaning ? `<p class="meaning">${card.meaning}</p>` : ''}
+        <p class="meaning meaning--reading"${ja(side.echo)}>${side.echo}</p>
       </div>
     </div>
     <div class="actions">
@@ -886,8 +919,15 @@ function renderChoice() {
   app.innerHTML = `
     ${practiceChrome()}
     <div class="stage stage--choice">
-      <p class="kana kana--choice" lang="ja">${side.prompt}</p>
-      <p class="meaning ${picked ? '' : 'is-hidden'}">${card.meaning}</p>
+      <p class="kana kana--choice"${ja(side.prompt)}>${side.prompt}</p>
+      ${
+        /* A kana has no meaning, so there is no strip to reserve. Rendering an
+           empty one leaves a blank gap that un-hides on pick and reads as a
+           meaning that failed to load. */
+        card.meaning
+          ? `<p class="meaning ${picked ? '' : 'is-hidden'}">${card.meaning}</p>`
+          : ''
+      }
     </div>
     <div class="actions">
       ${
@@ -897,7 +937,7 @@ function renderChoice() {
                 ${
                   gotIt
                     ? `${icon('check', 'icon--verdict')} Correct`
-                    : `${icon('cross', 'icon--verdict')} Not quite — it's <span lang="ja">${correctFace}</span>`
+                    : `${icon('cross', 'icon--verdict')} Not quite — it's <span${ja(correctFace)}>${correctFace}</span>`
                 }
               </p>
               <button class="btn" id="continue">Continue</button>
@@ -918,7 +958,7 @@ function renderChoice() {
             let mark = ''
             if (picked && isCorrect) mark = icon('check', 'icon--mark')
             else if (picked && face === picked) mark = icon('cross', 'icon--mark')
-            return `<button class="choice ${cls}" data-face="${face}" lang="ja"
+            return `<button class="choice ${cls}" data-face="${face}"${ja(face)}
                       ${picked ? 'disabled' : ''}><span>${face}</span>${mark}</button>`
           })
           .join('')}
@@ -955,7 +995,7 @@ function renderTrace() {
   app.innerHTML = `
     ${practiceChrome()}
     <div class="stage stage--trace">
-      <p class="kana kana--trace" lang="ja">${card.reading}</p>
+      <p class="kana kana--trace"${ja(card.reading)}>${card.reading}</p>
       <p class="trace__strip" lang="ja" aria-hidden="true">
         ${[...card.written].map((ch) => `<span class="trace__char">${ch}</span>`).join('')}
       </p>
@@ -991,7 +1031,7 @@ function resultRow(card) {
   return `
     <li class="result">
       <span class="result__written" lang="ja">${card.written}</span>
-      <span class="result__reading" lang="ja">${card.reading}</span>
+      <span class="result__reading"${ja(card.reading)}>${card.reading}</span>
     </li>`
 }
 

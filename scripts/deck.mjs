@@ -25,6 +25,13 @@
    one thing the checker imports from shared code rather than re-deriving — a
    list of which files exist is data, not the derivation logic the checker is
    deliberately keeping independent. */
+/* The kana syllabaries. Cards whose reading is a romaji sound and which have no
+   meaning at all — see content/kana/. */
+export const KANA = [
+  { file: 'hiragana.md', set: 'k:hiragana', label: 'Hiragana' },
+  { file: 'katakana.md', set: 'k:katakana', label: 'Katakana' },
+]
+
 export const GRADES = [
   { file: 'grade-1.md', set: 'g1', prefix: 'g1', label: 'Grade 1', grade: 1 },
   { file: 'grade-2.md', set: 'g2', prefix: 'g2', label: 'Grade 2', grade: 2 },
@@ -134,11 +141,18 @@ export function parseSet(md) {
   return { title, forms }
 }
 
-/* A row with no reading or no meaning is not a card yet. The grade files are
-   scaffolded blank and filled in by hand, and 18 rows are deliberately blank
-   because the sheet gives two readings and no way to choose — so the build has
-   to skip them rather than emit a card with an empty face. */
-export const isFilled = ([reading, , meaning]) => Boolean(reading && meaning)
+/* A row with no reading is not a card yet. The grade files are scaffolded blank
+   and filled in by hand, and 18 rows are deliberately blank because the sheet
+   gives two readings and no way to choose — so the build skips them rather than
+   emit a card with an empty face.
+
+   A meaning is required for a WORD and meaningless for a kana: あ is a sound,
+   not something that translates. So the rule is per source, and a kana file
+   says `needsMeaning: false` rather than every kana row looking unfinished. */
+export const rowIsFilled = (needsMeaning) => ([reading, , meaning]) =>
+  Boolean(reading && (meaning || !needsMeaning))
+
+export const isFilled = rowIsFilled(true)
 
 /* Two cards sharing a reading make a multiple-choice question with two correct
    answers — but only if both can appear in the same round, which means only

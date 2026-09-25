@@ -58,6 +58,12 @@ write endpoint is a Vite plugin marked `apply: 'serve'`, so neither reaches the 
   its kanji arrive. A collision whose two forms have nested kanji sets is that re-teaching
   and is allowed automatically; anything else fails the build. Set ids (`g4`,
   `w:2025-09-review`, `s:week-3-test`) are content-derived and safe to persist.
+- Kana cards (`content/kana/*.md`) have a romaji reading and NO meaning. A meaning is
+  required per source, not globally — `rowIsFilled(false)`. Romaji faces must not carry
+  `lang="ja"`; `ja(text)` in main.js decides that from the content, not from the field.
+- Multiple-choice distractors for single kana come from the hand-written `CONFUSABLE` table
+  in `src/choices.js`. Every other distractor signal is shape-based and scores zero on one
+  character, so without that table kana questions are random.
 - `content/sets/*.md` list written forms and define no cards. Every form must resolve to a
   card or the build fails by name — that check is what makes hand-built sets safe.
 - Every Japanese string needs `lang="ja"` — that is what applies the Japanese typeface.
