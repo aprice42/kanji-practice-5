@@ -1,4 +1,4 @@
-import { cards as rawCards, DECKS } from './cards.js'
+import { cards as rawCards, SETS } from './cards.js'
 import { shuffle, facesOf, buildChoices } from './choices.js'
 import { confetti } from './confetti.js'
 import { mountTrace } from './trace.js'
@@ -30,45 +30,29 @@ const MIN_POOL = 8
 
 const DEFAULT_SELECTION = ['w:2025-09-review']
 
-/* Decks -------------------------------------------------------------------
-   DECKS is generated alongside the cards, so labels and counts are never
-   derived here by string-splitting an id.
-   ------------------------------------------------------------------------- */
+/* Sets ---------------------------------------------------------------------
+   A set is a named selection of cards — a whole grade, a worksheet, or later
+   something hand-built. SETS is generated alongside the cards with its labels
+   and counts already resolved, so nothing here derives a label by splitting an
+   id, and the app never evaluates what "grade 4" means.
+   --------------------------------------------------------------------------- */
 
-const deckById = new Map(DECKS.map((d) => [d.id, d]))
+/* A set with nothing filled in yet is listed but cannot be chosen. Showing it
+   as `0` would look like a bug, and leaving it out would hide that it exists. */
+const isPlayable = (set) => set.cards > 0
+const playableSets = SETS.filter(isPlayable)
 
-/* A deck with nothing filled in yet is listed but cannot be chosen. Showing it
-   as `0` would look like a bug, and leaving it out would hide the fact that the
-   grade exists at all. */
-const isPlayable = (deck) => deck.cards > 0
-const playableDecks = DECKS.filter(isPlayable)
+/* Sections, in the order the picker shows them, taken from the manifest so a
+   new kind of set — kana, custom — appears without touching this file. */
+const SECTIONS = [...new Set(SETS.map((s) => s.section))].sort(
+  (a, b) => (a === 'Curriculum' ? -1 : b === 'Curriculum' ? 1 : 0)
+)
+const setsIn = (section) => SETS.filter((s) => s.section === section)
 
-const cardsByDeck = new Map()
-for (const card of cards) {
-  if (!cardsByDeck.has(card.deck)) cardsByDeck.set(card.deck, [])
-  cardsByDeck.get(card.deck).push(card)
-}
-
-/* Grade order as the sheet prints it. `ch` is the sixth tier listed past grade
-   5 — not "grade 6", which would claim something the sheet does not say. */
-const GRADE_ORDER = [1, 2, 3, 4, 5, 'ch']
-const gradeDecks = (grade) => DECKS.filter((d) => d.grade === grade)
-const worksheetDecks = DECKS.filter((d) => d.grade === null)
-
-/* "Grade 4 · Group 2" → "Grade 4". Taken from the manifest rather than written
-   out again here, so the two can never disagree. */
-const gradeLabel = (grade) => gradeDecks(grade)[0]?.label.split(' · ')[0] ?? String(grade)
-
-/* The first character of the first and last written form in a group — 曜–黄 —
-   which is how the school's own sheet says where a stretch of the list starts
-   and stops. */
-function rangeOf(deckId) {
-  const list = cardsByDeck.get(deckId) ?? []
-  if (!list.length) return ''
-  const first = [...list[0].written][0]
-  const last = [...list[list.length - 1].written][0]
-  return first === last ? first : `${first}–${last}`
-}
+/* Display order: by section, then as the manifest lists them. Used by both the
+   picker and the summary row, so "Grade 4 & September review" cannot come out
+   in one order on the home screen and the other in the panel. */
+const DISPLAY_ORDER = SECTIONS.flatMap(setsIn)
 
 /* What the results screen says, and how much confetti it throws.
    Thresholds: 0 / 25 / 50 / 75 / 95 / 100 percent. 76–94 keeps the same words
@@ -116,17 +100,15 @@ const ICONS = {
   brush:
     '<path d="M12 36c0-4 2-6 5-6s5 2 5 5-2 5-5 5c-4 0-6-2-9-2 2-1 4-1 4-2Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>' +
     '<path d="M21 31 38 10a3.5 3.5 0 0 1 5 5L22 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>',
-  /* The three selection states differ in SHAPE, not only in colour: empty,
-     ticked, and a bar for "some of this grade". A partial state carried by a
-     tint alone is invisible to anyone who cannot separate the two colours. */
+  /* The two selection states differ in SHAPE, not only in colour. A state
+     carried by a tint alone is invisible to anyone who cannot separate the two
+     colours. (There was a third, a bar for "some of this grade", until grades
+     stopped being containers of groups.) */
   box:
     '<rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>',
   boxCheck:
     '<rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>' +
     '<path d="M17 24l5 5 9-11" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
-  boxDash:
-    '<rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>' +
-    '<path d="M17 24h14" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>',
   chevron:
     '<path d="M18 14l10 10-10 10" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
   menu:
@@ -186,14 +168,12 @@ const state = {
   picked: null, // the option the user tapped, until they continue
   theme: 'system', // 'system' | 'light' | 'dark'
   palette: 'indigo',
-  /* Deck ids, persisted. Ids are content-derived (`g4:2`, `w:2025-09-review`)
-     and survive a row being inserted; a card's `id` is its array index and
-     would rot the moment the list is edited, which is why nothing persisted
-     here is ever keyed on one. */
+  /* Set ids, persisted. Ids are content-derived (`g4`, `w:2025-09-review`) and
+     survive a row being inserted; a card's id is its written form, and neither
+     is ever an array position. */
   selection: new Set(DEFAULT_SELECTION),
-  /* Ephemeral, never persisted: null when the sheet is closed, otherwise the
-     set of grades expanded inside it. */
-  sheet: null,
+  // Ephemeral, never persisted: true while the picker is open.
+  sheet: false,
 }
 
 /* Theme ------------------------------------------------------------------ */
@@ -229,13 +209,13 @@ function loadPrefs() {
     const savedPalette = localStorage.getItem(PALETTE_KEY)
     if (PALETTES.some((p) => p.id === savedPalette)) state.palette = savedPalette
 
-    /* Validated against the manifest, not trusted. A deck can disappear when
-       the master list is re-ingested or a worksheet is renamed, and a stored id
+    /* Validated against the manifest, not trusted. A set can disappear when the
+       master list is re-ingested or a worksheet is renamed, and a stored id
        that no longer resolves would leave a round with no cards in it. Unknown
        ids are dropped; if nothing survives, the default comes back. */
     const saved = JSON.parse(localStorage.getItem(SELECTION_KEY) ?? 'null')
     if (Array.isArray(saved)) {
-      const known = saved.filter((id) => playableDecks.some((d) => d.id === id))
+      const known = saved.map(migrateSetId).filter((id) => playableSets.some((s) => s.id === id))
       if (known.length) state.selection = new Set(known)
     }
   } catch {
@@ -243,6 +223,14 @@ function loadPrefs() {
   }
   applyTheme()
 }
+
+/* Grades used to be four decks each — `g4:1` … `g4:4` — and are now one set.
+   A stored id from that era is mapped to its grade rather than dropped: the
+   validation above would discard it safely, but the selection would then fall
+   back to the September worksheet without a word, which reads as the app
+   forgetting what he chose. A quarter of a grade becomes the whole grade, the
+   nearest honest equivalent. */
+const migrateSetId = (id) => (/^(g[1-5]|ch):\d+$/.test(id) ? id.split(':')[0] : id)
 
 function saveSelection() {
   try {
@@ -254,24 +242,19 @@ function saveSelection() {
 
 /* Selection --------------------------------------------------------------- */
 
-const activeCards = () => cards.filter((card) => state.selection.has(card.deck))
+/* A card belongs to one or more sets, so membership is a test rather than a
+   lookup. Cheap enough to run per round and per card: 794 cards, one set each
+   today, a handful once they overlap. */
+const activeCards = () => cards.filter((card) => card.sets.some((id) => state.selection.has(id)))
 
-const selectedDecks = () => playableDecks.filter((d) => state.selection.has(d.id))
+const selectedSets = () =>
+  DISPLAY_ORDER.filter((s) => isPlayable(s) && state.selection.has(s.id))
 
-const gradeIsWhole = (grade) =>
-  gradeDecks(grade).filter(isPlayable).every((d) => state.selection.has(d.id))
-
-const gradeState = (grade) => {
-  const decks = gradeDecks(grade).filter(isPlayable)
-  const on = decks.filter((d) => state.selection.has(d.id)).length
-  return on === 0 ? 'false' : on === decks.length ? 'true' : 'mixed'
-}
-
-/* The last selected deck cannot be turned off. An empty selection would mean a
+/* The last selected set cannot be turned off. An empty selection would mean a
    round with no cards, so rather than disabling every mode and explaining why,
    the state is simply made unreachable. Returns false when it refused, which is
-   what the sheet announces. */
-function setDeck(id, on) {
+   what the picker announces. */
+function setSelected(id, on) {
   if (on) {
     state.selection.add(id)
   } else {
@@ -282,71 +265,14 @@ function setDeck(id, on) {
   return true
 }
 
-function setGrade(grade, on) {
-  const ids = gradeDecks(grade).filter(isPlayable).map((d) => d.id)
-  if (on) {
-    for (const id of ids) state.selection.add(id)
-  } else {
-    const remaining = [...state.selection].filter((id) => !ids.includes(id))
-    if (!remaining.length) return false
-    state.selection = new Set(remaining)
-  }
-  saveSelection()
-  return true
-}
-
-/* "1, 2, 3" → "1–3"; "1, 3" stays "1, 3". A run of two is written out rather
-   than dashed, because "Groups 1–2" and "Groups 1, 2" are the same length and
-   the second is unambiguous. */
-function rangeList(numbers) {
-  const parts = []
-  for (let i = 0; i < numbers.length; ) {
-    let j = i
-    while (j + 1 < numbers.length && numbers[j + 1] === numbers[j] + 1) j++
-    parts.push(j - i >= 2 ? `${numbers[i]}–${numbers[j]}` : numbers.slice(i, j + 1).join(', '))
-    i = j + 1
-  }
-  return parts.join(', ')
-}
-
-const listJoin = (items) =>
-  items.length <= 1
-    ? (items[0] ?? '')
-    : `${items.slice(0, -1).join(', ')} & ${items[items.length - 1]}`
-
-/* What the home screen's summary row says. Names what was chosen whenever it
-   can be named, and falls back to counting only when the selection is too
-   scattered for a phrase to be shorter than the list. */
+/* What the home screen's summary row says. Names what was chosen for as long as
+   naming it stays shorter than counting it. */
 function describeSelection() {
-  const selected = selectedDecks()
-  if (!selected.length) return 'Nothing selected'
-
-  const sheets = selected.filter((d) => d.grade === null).map((d) => d.label)
-  const grades = GRADE_ORDER.filter((g) => selected.some((d) => d.grade === g))
-
-  // "Grades 3 & 4" — only when whole grades, and only numbered ones, since
-  // "Grades 3 & Challenge" is not a sentence.
-  if (
-    !sheets.length &&
-    grades.length > 1 &&
-    grades.every((g) => typeof g === 'number' && gradeIsWhole(g))
-  ) {
-    return `Grades ${listJoin(grades.map(String))}`
-  }
-
-  const parts = [...sheets]
-  for (const g of grades) {
-    if (gradeIsWhole(g)) {
-      parts.push(gradeLabel(g))
-      continue
-    }
-    const groups = selected
-      .filter((d) => d.grade === g)
-      .map((d) => d.group)
-      .sort((a, b) => a - b)
-    parts.push(`${gradeLabel(g)} · Group${groups.length > 1 ? 's' : ''} ${rangeList(groups)}`)
-  }
-  return parts.length <= 2 ? listJoin(parts) : `${selected.length} groups`
+  const chosen = selectedSets()
+  if (!chosen.length) return 'Nothing selected'
+  if (chosen.length === 1) return chosen[0].label
+  if (chosen.length === 2) return `${chosen[0].label} & ${chosen[1].label}`
+  return `${chosen.length} sets`
 }
 
 function setPalette(palette) {
@@ -433,17 +359,21 @@ function byStatus(kind) {
 
    Normally the selection, because a distractor is only convincing if it is
    something the child is actually studying. But a question needs same-shaped
-   words to hide the answer among, and a single group can be as small as seven —
-   at that size the correct option is often the only one whose okurigana fits
-   the prompt, which is answerable without reading any kanji at all. So a small
+   words to hide the answer among, and a small set cannot supply them — at that
+   size the correct option is often the only one whose okurigana fits the
+   prompt, which is answerable without reading any kanji at all. So a small
    selection widens to the card's whole grade. `npm run audit` measures exactly
-   this, per deck. */
+   this, per set.
+
+   The grade comes off the card now rather than through a manifest lookup, which
+   fixes worksheet cards: they used to resolve to a deck with no grade and
+   silently lose the widening. A teacher-composed form still has no grade to
+   widen to, and still does not widen — honestly, this time. */
 function distractorPool(card) {
   const active = activeCards()
   if (active.length >= MIN_POOL) return active
-  const grade = deckById.get(card.deck)?.grade
-  if (grade == null) return active
-  const wider = cards.filter((c) => deckById.get(c.deck)?.grade === grade)
+  if (card.grade == null) return active
+  const wider = cards.filter((c) => c.grade === card.grade)
   return wider.length > active.length ? wider : active
 }
 
@@ -650,59 +580,19 @@ function bindMenus() {
    behind it.
    ------------------------------------------------------------------------- */
 
-const BOX = { true: 'boxCheck', false: 'box', mixed: 'boxDash' }
+const BOX = { true: 'boxCheck', false: 'box' }
 
-function sheetCheck({ checked, label, count, ready = true, range = '', data, cls = '' }) {
-  const countText = ready ? String(count) : 'not ready'
+function setRow(set) {
+  const ready = isPlayable(set)
+  const checked = String(state.selection.has(set.id))
   return `
-    <button class="sheet__check ${cls}" role="checkbox" aria-checked="${checked}"
-            ${ready ? '' : 'disabled'} ${data}>
+    <button class="sheet__check" role="checkbox" aria-checked="${checked}"
+            ${ready ? '' : 'disabled'} data-set="${set.id}">
       <span class="sheet__box">${icon(BOX[checked], 'icon--box')}</span>
-      <span class="sheet__label">${label}</span>
-      ${range ? `<span class="sheet__range" lang="ja">${range}</span>` : ''}
-      <span class="sheet__count ${ready ? '' : 'is-muted'}">${countText}</span>
-      <span class="visually-hidden">${ready ? `${count} cards` : 'no cards yet'}</span>
+      <span class="sheet__label">${set.label}</span>
+      <span class="sheet__count ${ready ? '' : 'is-muted'}">${ready ? set.cards : 'not ready'}</span>
+      <span class="visually-hidden">${ready ? `${set.cards} cards` : 'no cards yet'}</span>
     </button>`
-}
-
-function sheetGradeRow(grade) {
-  const decks = gradeDecks(grade)
-  const playable = decks.filter(isPlayable)
-  const total = playable.reduce((n, d) => n + d.cards, 0)
-  const expanded = state.sheet.has(String(grade))
-  const id = `sheet-groups-${grade}`
-  const label = gradeLabel(grade)
-
-  return `
-    <div class="sheet__row">
-      ${sheetCheck({
-        checked: gradeState(grade),
-        label,
-        count: total,
-        ready: playable.length > 0,
-        data: `data-grade="${grade}"`,
-      })}
-      <button class="sheet__expand" aria-expanded="${expanded}" aria-controls="${id}"
-              data-expand="${grade}">
-        ${icon('chevron', 'icon--chevron')}
-        <span class="visually-hidden">${expanded ? 'Hide' : 'Show'} ${label} groups</span>
-      </button>
-    </div>
-    <div class="sheet__groups" id="${id}" ${expanded ? '' : 'hidden'}>
-      ${decks
-        .map((d) =>
-          sheetCheck({
-            checked: String(state.selection.has(d.id)),
-            label: `Group ${d.group}`,
-            count: d.cards,
-            ready: isPlayable(d),
-            range: rangeOf(d.id),
-            data: `data-deck="${d.id}"`,
-            cls: 'sheet__check--group',
-          })
-        )
-        .join('')}
-    </div>`
 }
 
 function renderSheet() {
@@ -712,20 +602,11 @@ function renderSheet() {
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
       <h2 class="sheet__title" id="sheet-title">What to practice</h2>
       <div class="sheet__list">
-        <p class="menu__heading">Grades</p>
-        ${GRADE_ORDER.map(sheetGradeRow).join('')}
-        <p class="menu__heading">Worksheets</p>
-        ${worksheetDecks
-          .map((d) =>
-            sheetCheck({
-              checked: String(state.selection.has(d.id)),
-              label: d.label,
-              count: d.cards,
-              ready: isPlayable(d),
-              data: `data-deck="${d.id}"`,
-            })
-          )
-          .join('')}
+        ${SECTIONS.map(
+          (section) => `
+          <p class="menu__heading">${section}</p>
+          ${setsIn(section).map(setRow).join('')}`
+        ).join('')}
       </div>
       <p class="sheet__note" role="status" aria-live="polite"></p>
       <div class="sheet__foot">
@@ -742,21 +623,13 @@ function renderSheet() {
    every click. The theme and palette switches already avoid this for the same
    reason — see setTheme — so this follows them.
 
-   Everything that can disagree is updated here: each box, the grade boxes that
-   summarise their groups, the Done count, and the summary row behind the
-   scrim. */
+   Everything that can disagree is updated here: each box, the Done count, and
+   the summary row behind the scrim. */
 function syncSheet() {
-  const setBox = (btn, checked) => {
+  for (const btn of app.querySelectorAll('.sheet [data-set]')) {
+    const checked = String(state.selection.has(btn.dataset.set))
     btn.setAttribute('aria-checked', checked)
     btn.querySelector('.sheet__box').innerHTML = icon(BOX[checked], 'icon--box')
-  }
-
-  for (const btn of app.querySelectorAll('.sheet [data-deck]')) {
-    setBox(btn, String(state.selection.has(btn.dataset.deck)))
-  }
-  for (const btn of app.querySelectorAll('.sheet [data-grade]')) {
-    const g = btn.dataset.grade === 'ch' ? 'ch' : Number(btn.dataset.grade)
-    setBox(btn, gradeState(g))
   }
 
   const count = activeCards().length
@@ -775,13 +648,13 @@ function syncSheet() {
    close — a dialog that drops focus to the top of the document is unusable by
    keyboard. */
 function openSheet() {
-  state.sheet = new Set()
+  state.sheet = true
   render()
   document.querySelector('.sheet__list .sheet__check')?.focus()
 }
 
 function closeSheet() {
-  state.sheet = null
+  state.sheet = false
   render()
   document.getElementById('selection')?.focus()
 }
@@ -808,36 +681,10 @@ function bindSheet() {
     }
   }
 
-  for (const btn of sheet.querySelectorAll('[data-deck]')) {
+  for (const btn of sheet.querySelectorAll('[data-set]')) {
     btn.addEventListener('click', () => {
-      const id = btn.dataset.deck
-      change(setDeck(id, !state.selection.has(id)))
-    })
-  }
-
-  for (const btn of sheet.querySelectorAll('[data-grade]')) {
-    btn.addEventListener('click', () => {
-      const g = btn.dataset.grade === 'ch' ? 'ch' : Number(btn.dataset.grade)
-      change(setGrade(g, gradeState(g) !== 'true'))
-    })
-  }
-
-  /* Expanding is also in place — hiding a group list is not worth rebuilding
-     the screen for. state.sheet still records which grades are open, so a real
-     re-render (a theme change with the sheet up) restores them. */
-  for (const btn of sheet.querySelectorAll('[data-expand]')) {
-    btn.addEventListener('click', () => {
-      const grade = btn.dataset.expand
-      const open = !state.sheet.has(grade)
-      if (open) state.sheet.add(grade)
-      else state.sheet.delete(grade)
-      const groups = sheet.querySelector(`#sheet-groups-${grade}`)
-      if (groups) groups.hidden = !open
-      btn.setAttribute('aria-expanded', String(open))
-      const label = btn.querySelector('.visually-hidden')
-      if (label) label.textContent = `${open ? 'Hide' : 'Show'} ${gradeLabel(
-        grade === 'ch' ? 'ch' : Number(grade)
-      )} groups`
+      const id = btn.dataset.set
+      change(setSelected(id, !state.selection.has(id)))
     })
   }
 
