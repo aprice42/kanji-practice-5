@@ -76,6 +76,8 @@ write endpoint is a Vite plugin marked `apply: 'serve'`, so neither reaches the 
 - There is exactly one layout breakpoint (the mode cards, 1 column to 3 at 44rem) and it is
   deliberate: a column count is discrete and a clamp cannot express it. Sizes stay clamps.
 - Correct/wrong must differ by shape, not only color, and every icon needs a text label.
+- The picker has two tabs: Practice chooses, My sets manages. Nothing that edits or deletes
+  belongs on a Practice row — that is the row people tap every day.
 - Sets the user makes live in `localStorage` and are merged with the generated `SETS` at
   runtime, so anything reading the set list must be a function, not a module-level constant
   — they load after this file does. Membership goes through the one index in `main.js`;

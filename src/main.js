@@ -169,6 +169,11 @@ const ICONS = {
   boxCheck:
     '<rect x="10" y="10" width="28" height="28" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>' +
     '<path d="M17 24l5 5 9-11" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  plus:
+    '<path d="M24 12v24M12 24h24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>',
+  trash:
+    '<path d="M12 14h24M19 14v-3h10v3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path d="M15 14l2 24h14l2-24" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>',
   pencil:
     '<path d="M10 38h5l20-20a3.5 3.5 0 0 0-5-5L10 33Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>' +
     '<path d="M29 14l5 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
@@ -264,6 +269,10 @@ const state = {
   builder: null,
   // Ephemeral, never persisted: true while the picker is open.
   sheet: false,
+  // Which half of the picker is showing: choosing, or managing.
+  sheetTab: 'practice',
+  // Which set, if any, is showing its inline "really?" in the library.
+  confirmDelete: null,
   /* True until a selection has been chosen for the first time. The picker then
      opens by itself, cannot be dismissed, and will not let go until something
      is picked — there is nothing behind it to do. */
@@ -767,17 +776,36 @@ function setRow(set) {
       <span class="visually-hidden">${ready ? `${set.cards} cards` : 'no cards yet'}</span>
     </button>`
 
-  /* Only a set the user made is editable, and `kind` says so rather than the
-     shape of its id. A button cannot contain a button, so those rows become a
-     row with two controls; every generated row stays exactly as it was. */
-  if (set.kind !== 'custom') return check
+  /* Every row is one control, including the user's own. Editing and deleting
+     live on the My sets tab instead: they are a different job on a different
+     rhythm, and a destructive button beside the checkbox you came to press is
+     a mis-tap on a 412px screen. */
+  return check
+}
+
+/* A set the user made, on the My sets tab. `kind` is what makes it editable,
+   not the shape of its id. */
+function libraryCard(set) {
+  const confirming = state.confirmDelete === set.id
   return `
-    <div class="sheet__row">
-      ${check}
-      <button class="sheet__edit" data-edit="${set.id}">
-        ${icon('pencil', 'icon--edit')}
-        <span class="visually-hidden">Edit ${escapeHtml(set.label)}</span>
-      </button>
+    <div class="libcard">
+      <span class="libcard__name">
+        ${escapeHtml(set.label)}
+        <small>${set.cards} word${set.cards === 1 ? '' : 's'}</small>
+      </span>
+      ${
+        confirming
+          ? `<button class="libcard__confirm" data-reallydelete="${set.id}">Delete</button>
+             <button class="libcard__keep" data-keepset="${set.id}">Keep</button>`
+          : `<button class="libcard__act" data-edit="${set.id}">
+               ${icon('pencil', 'icon--act')}
+               <span class="visually-hidden">Edit ${escapeHtml(set.label)}</span>
+             </button>
+             <button class="libcard__act libcard__act--danger" data-delete="${set.id}">
+               ${icon('trash', 'icon--act')}
+               <span class="visually-hidden">Delete ${escapeHtml(set.label)}</span>
+             </button>`
+      }
     </div>`
 }
 
@@ -785,37 +813,58 @@ function renderSheet() {
   if (!state.sheet) return ''
   const first = state.firstRun
   const count = activeCards().length
+  /* No tabs during the first run. Someone who has chosen nothing yet has one
+     job, and a second tab holding an empty library is a detour away from it. */
+  const tab = first ? 'practice' : state.sheetTab
+  const mine = state.userSets
+
   return `
     <div class="sheet-scrim" ${first ? '' : 'data-close'}></div>
     <section class="sheet" role="dialog" aria-modal="true"
              aria-labelledby="sheet-title" ${first ? 'aria-describedby="sheet-lede"' : ''}>
       <h2 class="sheet__title" id="sheet-title">
-        ${first ? 'What would you like to practice?' : 'What to practice'}
+        ${first ? 'What would you like to practice?' : tab === 'practice' ? 'What to practice' : 'My sets'}
       </h2>
       ${
         first
           ? `<p class="sheet__lede" id="sheet-lede">
                Pick as many as you like. You can change this whenever you want.
              </p>`
-          : ''
+          : `<div class="tabs" role="tablist" aria-label="Choosing or managing">
+               <button role="tab" id="tab-practice" data-tab="practice"
+                       aria-selected="${tab === 'practice'}" aria-controls="sheet-panel">Practice</button>
+               <button role="tab" id="tab-mine" data-tab="mine"
+                       aria-selected="${tab === 'mine'}" aria-controls="sheet-panel">My sets</button>
+             </div>`
       }
-      <div class="sheet__list">
-        ${sections().map(
-          (section) => `
-          <p class="menu__heading">${escapeHtml(section)}</p>
-          ${setsIn(section).map(setRow).join('')}`
-        ).join('')}
+      <div class="sheet__list" id="sheet-panel" role="tabpanel"
+           aria-labelledby="${first ? 'sheet-title' : `tab-${tab}`}">
+        ${
+          tab === 'practice'
+            ? sections()
+                .map(
+                  (section) => `
+            <p class="menu__heading">${escapeHtml(section)}</p>
+            ${setsIn(section).map(setRow).join('')}`
+                )
+                .join('')
+            : `${
+                mine.length
+                  ? mine.map(libraryCard).join('')
+                  : `<p class="sheet__empty">
+                       Nothing here yet. A set is any words you want to practise
+                       together — the ones on this week's test, or the ones you
+                       keep getting wrong.
+                     </p>`
+              }
+               <button class="libnew" id="new-set">
+                 ${icon('plus', 'icon--act')}
+                 <span><b>New set</b><small>Pick words and give it a name</small></span>
+               </button>`
+        }
       </div>
       <p class="sheet__note" role="status" aria-live="polite"></p>
       <div class="sheet__foot">
-        ${
-          /* Not during the first run: someone who has chosen nothing yet must
-             not be able to route into the builder and come back to a Start
-             button they still cannot press. */
-          first
-            ? ''
-            : `<button class="btn btn--ghost" id="new-set">New set</button>`
-        }
         <button class="btn" data-close ${first && !count ? 'disabled' : ''}>
           ${first ? `Start${count ? ` · ${count} cards` : ''}` : `Done · ${count} cards`}
         </button>
@@ -845,7 +894,6 @@ function openBuilder(id) {
     forms: new Set(existing?.forms ?? []),
     query: '',
     filter: null,
-    confirmDelete: false,
     error: '',
   }
   state.sheet = false
@@ -857,6 +905,8 @@ function closeBuilder() {
   state.builder = null
   state.screen = 'home'
   state.sheet = true
+  // Back to the tab the builder was opened from, which is always My sets.
+  state.sheetTab = 'mine'
   render()
 }
 
@@ -976,15 +1026,8 @@ function renderBuilder() {
     <div class="actions builder__actions">
       <p class="builder__error" role="status" aria-live="polite">${escapeHtml(b.error)}</p>
       <div class="builder__buttons">
-        ${
-          b.id
-            ? b.confirmDelete
-              ? `<button class="btn btn--danger" id="confirm-delete">Delete for good</button>
-                 <button class="btn btn--secondary" id="keep">Keep it</button>`
-              : `<button class="btn btn--secondary btn--quiet" id="delete-set">Delete</button>`
-            : ''
-        }
-        ${b.confirmDelete ? '' : `<button class="btn" id="save-set" ${canSave ? '' : 'disabled'}>Save</button>`}
+        <button class="btn btn--secondary" id="builder-cancel">Cancel</button>
+        <button class="btn" id="save-set" ${canSave ? '' : 'disabled'}>Save</button>
       </div>
     </div>`
 
@@ -1046,16 +1089,8 @@ function bindBuilder() {
   }
 
   document.getElementById('builder-back').addEventListener('click', closeBuilder)
+  document.getElementById('builder-cancel').addEventListener('click', closeBuilder)
   document.getElementById('save-set')?.addEventListener('click', saveBuilder)
-  document.getElementById('delete-set')?.addEventListener('click', () => {
-    b.confirmDelete = true
-    render()
-  })
-  document.getElementById('keep')?.addEventListener('click', () => {
-    b.confirmDelete = false
-    render()
-  })
-  document.getElementById('confirm-delete')?.addEventListener('click', deleteBuilderSet)
 
   bindMenus()
 }
@@ -1102,8 +1137,7 @@ function saveBuilder() {
   closeBuilder()
 }
 
-function deleteBuilderSet() {
-  const id = state.builder.id
+function deleteSet(id) {
   state.userSets = state.userSets.filter((s) => s.id !== id)
   saveUserSets()
   rebuildMembership()
@@ -1113,8 +1147,12 @@ function deleteBuilderSet() {
   /* Deleting the only thing selected leaves the state the app reads as "has
      never chosen", which already has an answer: ask again. Picking something on
      their behalf would be the guess this app stopped making. */
-  if (!state.selection.size) state.firstRun = true
-  closeBuilder()
+  if (!state.selection.size) {
+    state.firstRun = true
+    state.sheetTab = 'practice'
+  }
+  state.confirmDelete = null
+  render()
 }
 
 /* Ticking a box updates the controls in place rather than re-rendering.
@@ -1156,6 +1194,8 @@ function syncSheet() {
    keyboard. */
 function openSheet() {
   state.sheet = true
+  state.sheetTab = 'practice'
+  state.confirmDelete = null
   render()
   document.querySelector('.sheet__list .sheet__check')?.focus()
 }
@@ -1199,8 +1239,49 @@ function bindSheet() {
     })
   }
 
+  for (const btn of sheet.querySelectorAll('[data-tab]')) {
+    btn.addEventListener('click', () => {
+      state.sheetTab = btn.dataset.tab
+      state.confirmDelete = null
+      render()
+      document.getElementById(`tab-${state.sheetTab}`)?.focus()
+    })
+  }
+
+  /* Left and right move between tabs, which is what a tablist is expected to
+     do and what a keyboard user will try. */
+  for (const btn of sheet.querySelectorAll('[role="tab"]')) {
+    btn.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+      event.preventDefault()
+      state.sheetTab = state.sheetTab === 'practice' ? 'mine' : 'practice'
+      state.confirmDelete = null
+      render()
+      document.getElementById(`tab-${state.sheetTab}`)?.focus()
+    })
+  }
+
   for (const btn of sheet.querySelectorAll('[data-edit]')) {
     btn.addEventListener('click', () => openBuilder(btn.dataset.edit))
+  }
+
+  /* Two presses, not a confirm dialog: this panel is already a dialog, and a
+     browser confirm is the kind of thing that gets clicked through. */
+  for (const btn of sheet.querySelectorAll('[data-delete]')) {
+    btn.addEventListener('click', () => {
+      state.confirmDelete = btn.dataset.delete
+      render()
+      document.querySelector(`[data-reallydelete="${state.confirmDelete}"]`)?.focus()
+    })
+  }
+  for (const btn of sheet.querySelectorAll('[data-keepset]')) {
+    btn.addEventListener('click', () => {
+      state.confirmDelete = null
+      render()
+    })
+  }
+  for (const btn of sheet.querySelectorAll('[data-reallydelete]')) {
+    btn.addEventListener('click', () => deleteSet(btn.dataset.reallydelete))
   }
 
   document.getElementById('new-set')?.addEventListener('click', () => openBuilder(null))

@@ -93,7 +93,13 @@ hard.
 
 ### Making a set
 
-**New set** in the picker opens the builder — a screen, not a second dialog, because the picker is already `aria-modal` and a modal inside a modal means two focus traps and an ambiguous Escape. Saving returns to the picker with the new set selected, under **My sets**.
+The picker has two tabs. **Practice** is the checkbox list and does one job: choose what to drill, then press Done. **My sets** is the library — make a set, edit one, delete one, and later share one.
+
+They were one list at first, and the split is about rhythm rather than tidiness. Choosing happens every time the app opens and wants to stay two taps however many sets exist; making and tidying happens rarely, takes minutes, and is destructive at the edges. Sharing a footer meant weighing "New set" against "Done" on every visit, and a delete button beside the checkbox you came to press is a mis-tap on a 412px phone.
+
+The tabs are hidden during the first run. Someone who has chosen nothing has one job, and a second tab holding an empty library is a detour away from it.
+
+**New set** opens the builder — a screen, not a third layer, because the picker is already `aria-modal` and a modal inside a modal means two focus traps and an ambiguous Escape. Saving returns to My sets with the new set selected.
 
 The screen is a name, the words chosen so far as removable chips, and a place to find more. **The grid starts empty**: rendering all 839 words is about five thousand elements and shapes 839 Japanese glyphs at once, which stalls a school Chromebook for a screen that shows twelve at a time. Type, or tap a list to browse it. Matches cap at 60 with a "keep typing" line — a query that broad is one to narrow.
 
@@ -101,7 +107,7 @@ The chosen chips are load-bearing rather than decorative. The grid changes under
 
 Search matches the **written form** first, then the reading, then the meaning, and written matches sort ahead of the rest: a child copying a list off a sheet of paper is matching characters. A filter pill narrows the search rather than replacing it, and pressing the active one clears it. There is no All pill — "all" is 839 tiles nobody wants, and search already spans everything.
 
-A set the user made is the only kind with an edit control on its picker row, and `kind: 'custom'` is what says so rather than the shape of its id. Delete lives inside the builder, behind two presses, not next to a checkbox on a 412px phone.
+Every Practice row is a single control, including the user's own. Editing and deleting live on the My sets tab, where a set is a card rather than a row — a name, a word count and two actions. `kind: 'custom'` is what makes a set editable, not the shape of its id. Delete takes two presses, inline on the card; the builder has only Cancel and Save, because a destructive button inside an editor you are halfway through is worse than one in a management view.
 
 **A set edited down to no words cannot be saved.** Otherwise `isPlayable` starts returning false for a set that is currently selected, and the summary row and the round quietly disagree. **Deleting the only selected set** leaves the state the app reads as "has never chosen", which already has an answer: it asks again.
 

@@ -1482,30 +1482,110 @@ html, body {
 .builder__error { margin: 0; min-height: 1.2rem; font-size: 0.85rem; color: var(--bad); text-align: center; }
 .builder__buttons { display: flex; gap: 0.5rem; }
 .builder__buttons .btn { flex: 1; }
-.btn--quiet { flex: 0 0 auto; }
-.btn--danger {
-  background: transparent;
-  color: var(--bad);
-  border: 2px solid var(--bad);
-}
-.btn--danger:hover { background: var(--surface); }
 
-/* A custom set's row carries a second control, so it becomes a row. Generated
-   rows are still a single button and are untouched. */
-.sheet__row { display: flex; align-items: stretch; gap: 0.2rem; }
-.sheet__row .sheet__check { flex: 1; min-width: 0; }
-.sheet__edit {
+
+/* Picker tabs -------------------------------------------------------------
+   Choosing what to practise and managing a library of sets are two jobs on two
+   rhythms — one happens every time the app opens and wants two taps, the other
+   happens rarely and is destructive at the edges. They share a panel, not a
+   list.
+   ------------------------------------------------------------------------- */
+.tabs {
+  display: flex;
+  gap: 0.2rem;
+  background: var(--rule);
+  border-radius: 0.6rem;
+  padding: 0.2rem;
+}
+.tabs button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  min-height: 44px;
+  border-radius: 0.45rem;
+  cursor: pointer;
+}
+.tabs button[aria-selected='true'] {
+  background: var(--bg);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+.tabs button:hover:not([aria-selected='true']) { color: var(--primary-text); }
+
+.sheet__empty {
+  margin: 0.4rem 0.35rem 0.6rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-wrap: pretty;
+}
+
+/* A set the user made, in the library. A card rather than a row: it carries a
+   name, a count and two actions, and none of them is a checkbox. */
+.libcard {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  padding: 0.45rem 0.5rem 0.45rem 0.7rem;
+  margin-bottom: 0.35rem;
+}
+.libcard__name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.libcard__name small { display: block; color: var(--muted); font-size: 0.78rem; }
+.libcard__act {
   flex: none;
   appearance: none;
   border: 0;
   background: transparent;
   color: var(--muted);
   min-width: 44px;
-  border-radius: 0.625rem;
+  min-height: 44px;
+  border-radius: 0.5rem;
   cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.libcard__act:hover { background: var(--bg); color: var(--primary-text); }
+.libcard__act--danger:hover { color: var(--bad); }
+.icon--act { width: 1.15rem; height: 1.15rem; }
+
+.libcard__confirm, .libcard__keep {
+  flex: none;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 0 0.7rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.libcard__confirm { border: 2px solid var(--bad); background: transparent; color: var(--bad); }
+.libcard__confirm:hover { background: var(--bg); }
+.libcard__keep { border: 0; background: transparent; color: var(--ink); }
+.libcard__keep:hover { background: var(--bg); }
+
+/* The way into the builder. Dashed, because it makes something rather than
+   being something. */
+.libnew {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  border: 2px dashed var(--edge);
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  min-height: 44px;
+  cursor: pointer;
 }
-.sheet__edit:hover { background: var(--surface); color: var(--primary-text); }
-.icon--edit { width: 1.15rem; height: 1.15rem; }
+.libnew:hover { border-color: var(--primary-text); background: var(--surface); }
+.libnew b { display: block; font-weight: 600; }
+.libnew small { display: block; color: var(--muted); font-size: 0.78rem; }
+.libnew .icon--act { flex: none; color: var(--muted); }
