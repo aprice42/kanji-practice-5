@@ -866,7 +866,20 @@ function renderSheet() {
       <p class="sheet__note" role="status" aria-live="polite"></p>
       <div class="sheet__foot">
         <button class="btn" data-close ${first && !count ? 'disabled' : ''}>
-          ${first ? `Start${count ? ` · ${count} cards` : ''}` : `Done · ${count} cards`}
+          ${
+            /* The count belongs to the practice selection, so it is only shown
+               where you are choosing one. On My sets it would be reporting a
+               number you did not just change.
+
+               The button itself stays: Escape and the scrim also close this,
+               but neither is discoverable on a phone, and a panel with no
+               visible way out is a dead end. */
+            first
+              ? `Start${count ? ` · ${count} cards` : ''}`
+              : tab === 'practice'
+                ? `Done · ${count} cards`
+                : 'Done'
+          }
         </button>
       </div>
     </section>`
@@ -1177,7 +1190,9 @@ function syncSheet() {
   if (done) {
     done.textContent = state.firstRun
       ? `Start${count ? ` · ${count} cards` : ''}`
-      : `Done · ${count} cards`
+      : state.sheetTab === 'practice'
+        ? `Done · ${count} cards`
+        : 'Done'
     done.disabled = state.firstRun && !count
   }
 
