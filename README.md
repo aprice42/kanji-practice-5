@@ -1,4 +1,4 @@
-# Kanji Practice
+# JDLI Kanji Practice
 
 Flashcard PWA for a 5th-grader's kanji homework.
 
@@ -14,7 +14,7 @@ The app opens on a home screen: the title, its English translation, and the thre
 
 The translation is a `<p>` inside an `<hgroup>` with the `<h1>`, not an `<h2>`. It is a
 translation of the heading, not the title of a section — an `<h2>` would put a phantom
-"Kanji Practice" section containing the mode buttons into the document outline and every
+"JDLI Kanji Practice" section containing the mode buttons into the document outline and every
 screen reader's heading list. The text is in the DOM either way, which is all a crawler
 sees, and the page has exactly one heading.
 

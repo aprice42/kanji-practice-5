@@ -16,9 +16,12 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
       },
       manifest: {
-        name: 'Kanji Practice',
-        short_name: 'Kanji',
-        description: 'Flashcards for review kanji practice',
+        name: 'JDLI Kanji Practice',
+        // Home-screen labels get truncated around 12 characters on both
+        // platforms, so this is the long name's first half, not an initialism
+        // nobody outside the program would read.
+        short_name: 'JDLI Kanji',
+        description: 'Kanji and kana practice for the Japanese Dual Language Immersion program',
         /* The default color scheme, Indigo, in its light theme: `--bg` for the
            browser and PWA chrome (main.js keeps this in step with the live token
            at runtime, so this is only the value before the app boots) and the

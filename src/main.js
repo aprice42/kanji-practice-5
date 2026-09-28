@@ -1159,7 +1159,7 @@ function renderShare() {
 
   document.getElementById('share-send')?.addEventListener('click', () => {
     navigator
-      .share({ title: set.label, text: `${set.label} — kanji practice`, url: state.share.url })
+      .share({ title: set.label, text: `${set.label} — JDLI Kanji Practice`, url: state.share.url })
       .catch(() => {
         /* Cancelling rejects, and so does a failure. Either way nothing was
            sent, and the screen should not claim otherwise. */
@@ -2030,7 +2030,7 @@ function renderHome() {
     <div class="home">
       <hgroup class="home__heading">
         <h1 class="home__title" lang="ja">漢字の練習</h1>
-        <p class="home__tagline">Kanji Practice</p>
+        <p class="home__tagline">JDLI Kanji Practice</p>
       </hgroup>
       ${
         isUpdateReady()

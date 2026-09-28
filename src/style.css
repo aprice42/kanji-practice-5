@@ -571,7 +571,7 @@ html, body {
 }
 
 /* A <p> in an <hgroup>, not an <h2>. It is a translation of the heading above
-   it, not the title of a section — an h2 would put a phantom "Kanji Practice"
+   it, not the title of a section — an h2 would put a phantom "JDLI Kanji Practice"
    section containing the mode buttons into the document outline and every
    screen reader's heading list. The text is in the DOM either way, which is all
    a crawler cares about. */
