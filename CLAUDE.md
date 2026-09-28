@@ -92,6 +92,9 @@ write endpoint is a Vite plugin marked `apply: 'serve'`, so neither reaches the 
 - There is no default selection. A student who has never chosen gets a non-dismissible
   picker; after that it is remembered. A stored selection that no longer resolves asks
   again rather than falling back to a guess.
+- Direction and round size are set on the setup screen before the first card and hold for
+  the session. Nothing about how a round works may be changeable during it — direction used
+  to be, and flipping it rebuilt the multiple-choice options under the live question.
 - A session is one pass through the selection, SHUFFLED ONCE and dealt in rounds, so a few
   short rounds cover it exactly once. That is the difference from the cap that was tried and
   removed, which re-sampled at random and guaranteed nothing. Above `ASK_ABOVE` cards the

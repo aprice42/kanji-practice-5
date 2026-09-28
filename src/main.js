@@ -139,9 +139,12 @@ function celebrationFor(correct, total) {
 }
 
 const MODES = {
-  flashcards: { label: 'Flash cards', icon: 'cards', hint: 'Show the answer, then mark yourself' },
-  choice: { label: 'Multiple choice', icon: 'choice', hint: 'Pick the right answer from three' },
-  trace: { label: 'Trace', icon: 'brush', hint: 'Draw the written form, stroke by stroke' },
+  flashcards: { label: 'Flash cards', icon: 'cards', hint: 'Show the answer, then mark yourself', directional: true },
+  choice: { label: 'Multiple choice', icon: 'choice', hint: 'Pick the right answer from three', directional: true },
+  /* Trace always shows the reading and always draws the written form — there is
+     no other way round for it, which is why direction was never on the home
+     screen. */
+  trace: { label: 'Trace', icon: 'brush', hint: 'Draw the written form, stroke by stroke', directional: false },
 }
 
 /* Icons -------------------------------------------------------------------
@@ -648,14 +651,23 @@ function nextRound() {
   dealRound()
 }
 
-/* Pace is a property of the SITTING, not of the selection: how much time
-   someone has tonight is not a stable answer, so it is asked every time rather
-   than remembered. Below ASK_ABOVE there is nothing worth asking. */
+/* How this sitting is going to work: which way round, and how long a round is.
+
+   Both belong to the sitting rather than to the selection — how much time
+   someone has tonight is not a stable answer, and neither is whether they feel
+   like reading or recalling — so both are asked every time rather than
+   remembered.
+
+   The screen appears when there is something to ask: a direction, if the mode
+   has one, or a round size, if the selection is long enough for it to matter.
+   Trace on a short set has neither, and starts straight away. */
+const needsSetup = (mode) => MODES[mode].directional || activeCards().length > ASK_ABOVE
+
 function askPace(mode) {
   if (!state.selection.size) return
   state.mode = mode
   state.keeping = null
-  if (activeCards().length <= ASK_ABOVE) {
+  if (!needsSetup(mode)) {
     state.session = null
     state.status.clear()
     startRound(activeCards())
@@ -1157,6 +1169,8 @@ function renderPace() {
   const total = activeCards().length
   const plan = roundPlan(total, paceSize)
   const rounds = paceMode === 'rounds'
+  const long = total > ASK_ABOVE
+  const kind = selectionIsKana() ? 'kana' : 'word'
 
   app.innerHTML = `
     <header class="topbar">
@@ -1175,7 +1189,26 @@ function renderPace() {
         <p class="pace__count">${total} cards</p>
       </div>
 
-      <div class="pace__choices" role="radiogroup" aria-label="How to work through them">
+      ${
+        MODES[state.pendingMode].directional
+          ? `<div class="pace__group">
+               <p class="pace__label" id="pace-direction-label">Which way round</p>
+               <div class="mode" role="radiogroup" aria-labelledby="pace-direction-label">
+                 ${DIRECTIONS.map(
+                   (d) => `<button class="mode__btn ${state.direction === d.id ? 'is-active' : ''}"
+                             type="button" role="radio" aria-checked="${state.direction === d.id}"
+                             data-direction="${d.id}" title="${d.hint}">${d[kind]}</button>`
+                 ).join('')}
+               </div>
+             </div>`
+          : ''
+      }
+
+      ${
+        long
+          ? `<div class="pace__group">
+               <p class="pace__label" id="pace-length-label">How much at a time</p>
+               <div class="pace__choices" role="radiogroup" aria-labelledby="pace-length-label">
         <button class="pick" type="button" role="radio" aria-checked="${rounds}" data-mode="rounds">
           <span class="pick__mark">${icon(rounds ? 'boxCheck' : 'box', 'icon--box')}</span>
           <span class="pick__text">
@@ -1203,7 +1236,10 @@ function renderPace() {
             <small>One long round, no breaks</small>
           </span>
         </button>
-      </div>
+               </div>
+             </div>`
+          : ''
+      }
     </div>
 
     <div class="actions">
@@ -1212,8 +1248,16 @@ function renderPace() {
 
   document.getElementById('pace-back').addEventListener('click', goHome)
   document.getElementById('pace-go').addEventListener('click', () =>
-    startSession(paceMode === 'rounds' ? paceSize : null)
+    // A selection too short to split is one round whatever the control says.
+    startSession(long && paceMode === 'rounds' ? paceSize : null)
   )
+  for (const btn of app.querySelectorAll('[data-direction]')) {
+    btn.addEventListener('click', () => {
+      state.direction = btn.dataset.direction
+      render()
+      document.querySelector(`[data-direction="${state.direction}"]`)?.focus()
+    })
+  }
   for (const btn of app.querySelectorAll('[data-mode]')) {
     btn.addEventListener('click', () => {
       paceMode = btn.dataset.mode
@@ -1902,32 +1946,10 @@ const selectionIsKana = () => {
   return chosen.length > 0 && chosen.every((s) => s.section === KANA_SECTION)
 }
 
-function directionSwitch() {
-  const kind = selectionIsKana() ? 'kana' : 'word'
-  return `
-    <div class="mode" role="group" aria-label="Practice direction">
-      ${DIRECTIONS.map(
-        (d) => `<button class="mode__btn ${state.direction === d.id ? 'is-active' : ''}"
-                    data-direction="${d.id}" aria-pressed="${state.direction === d.id}"
-                    title="${d.hint}">${d[kind]}</button>`
-      ).join('')}
-    </div>`
-}
-
-function bindDirectionSwitch() {
-  for (const btn of app.querySelectorAll('.mode__btn')) {
-    btn.addEventListener('click', () => {
-      if (state.direction === btn.dataset.direction) return
-      state.direction = btn.dataset.direction
-      // Options are built from the answer face, so they must be rebuilt.
-      if (state.screen === 'practice' && state.mode === 'choice' && !state.picked) {
-        const card = state.round[state.index]
-        state.choices = buildChoices(distractorPool(card), card, state.direction, CHOICE_COUNT)
-      }
-      render()
-    })
-  }
-}
+/* Direction used to live in the round, on a control above the card, and could
+   be flipped mid-round — which rebuilt the multiple-choice options underneath
+   the question being asked. It is set once before the first card now, on the
+   setup screen, and holds for the whole session. */
 
 function progress() {
   const total = state.round.length
@@ -1950,13 +1972,11 @@ function practiceChrome() {
       ${tally()}
       ${settingsMenu()}
     </header>
-    ${state.mode === 'trace' ? '' : directionSwitch()}
     ${progress()}`
 }
 
 function bindChrome() {
   bindMenus()
-  bindDirectionSwitch()
 }
 
 /* Screens ---------------------------------------------------------------- */

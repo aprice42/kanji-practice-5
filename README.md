@@ -25,9 +25,14 @@ Flash cards and multiple choice also carry a **direction switch**:
 - **かな → 漢字** — see the reading, recall the written form (default)
 - **漢字 → かな** — see the written form, recall the reading
 
-It sits inside those two rounds and **not on the home screen**, because it has no meaning
-for the third mode — Trace always shows the reading and always draws the written form, so
-a control on the start page would be inert for whichever mode you were about to pick.
+It is chosen **before the first card**, on the setup screen, and holds for the whole
+session. It is not on the home screen, because it has no meaning for the third mode —
+Trace always shows the reading and always draws the written form, so a control on the
+start page would be inert for whichever mode you were about to pick.
+
+It used to sit above the card and could be flipped mid-round, which rebuilt the
+multiple-choice options underneath the question being asked. Setting it once is both
+steadier for the person practising and one control less between the top bar and the card.
 
 ### What a round draws from
 
@@ -154,11 +159,22 @@ Four states that are designed rather than discovered:
 
 Selecting Grade 4 and September review together therefore deals 194 cards, not 230.
 
-### Rounds, and the question before them
+### Setting up a session
 
-Grade 5 is 226 cards. Rather than hide the fix in a setting, the app asks after the words are chosen and before the first card: **all at once, or in rounds?** That is the moment the number means anything — "226 cards" reads very differently from "Grade 5", and *eleven rounds* is a shape a size control alone never shows.
+Between choosing the words and the first card there is one screen asking how this sitting
+should work: **which way round**, and **how much at a time**.
 
-It asks **every time**, and does not remember. Pace is a property of the sitting rather than of the selection: how much time someone has tonight is not a stable answer. Below about forty cards it does not ask at all, because a checkpoint after twenty of twenty-six is an interruption rather than a kindness.
+Both belong to the sitting rather than to the selection — how much time someone has
+tonight is not a stable answer, and neither is whether they feel like reading or recalling
+— so both are asked every time rather than remembered.
+
+The screen appears when there is something to ask. Direction, if the mode has one; round
+size, if the selection is long enough for it to matter. Trace on a short set has neither
+and starts straight away. Below about forty cards the length question does not appear,
+because a checkpoint after twenty of twenty-six is an interruption rather than a kindness.
+
+Asking beats configuring here: "226 cards" reads very differently from "Grade 5", and
+*eleven rounds* is a shape a size control alone never shows.
 
 A **session** is one pass through the selection, **shuffled once** and dealt out in order. That is the whole difference from the cap that was tried and removed: a few short rounds cover the selection *exactly once*, where a cap re-sampled it at random every round and never guaranteed a card was seen at all. Verified by playing a full Grade 5 session — 226 cards dealt, 226 distinct.
 
