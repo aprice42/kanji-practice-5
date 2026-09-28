@@ -39,11 +39,13 @@ steadier for the person practising and one control less between the top bar and 
 Everything the app can practice is one flat pool of cards, and a **set** is a named selection from it. A card carries the sets it belongs to; it has no single parent. There are two kinds, and the app cannot tell them apart:
 
 - a **query** set, defined by a card property — Grade 4 is `grade = 4`, so it redefines itself when a new edition of the school's list is ingested, with nothing to maintain;
-- a **list** set, an explicit list of written forms — a worksheet, or a practice set in `content/sets/`, which stays exactly what it was as the curriculum moves underneath it.
+- a **list** set, an explicit list of written forms — a worksheet, which stays exactly what it was as the curriculum moves underneath it.
 
 Both are resolved at build time into plain membership, so the app never evaluates a query and `npm run check` can verify a set's real contents rather than reimplementing an evaluator.
 
-The home screen's summary row names the current selection and its card count; tapping it opens a flat picker grouped by where each set came from — **Curriculum**, **Worksheets**, **Kana**, and **Practice sets** once any exist.
+Sets people make themselves are the third kind, and the only one that is not built. They live in `localStorage`, are merged with the generated manifest at runtime, and travel between devices as a share link — see **Sets people make themselves**. There was once a fourth, `content/sets/*.md`, written by a dev-only builder and shipped inside the bundle; it was removed once anyone could build a set in the app and hand it over with a link, because a set that needs a commit and a deploy is not a set a teacher can make.
+
+The home screen's summary row names the current selection and its card count; tapping it opens a flat picker grouped by where each set came from — **Curriculum**, **Worksheets**, **Kana**, and **My sets** once any exist.
 
 **There is no default selection.** The app used to open on the September review, which is the right answer for exactly one child and the wrong one for everybody else. A student who has never chosen is asked — the picker opens by itself, reading *"What would you like to practice?"*, and cannot be dismissed by the scrim, by Escape, or by its own button until something is picked. After that the app remembers, and returning goes straight to the home screen.
 
@@ -207,7 +209,7 @@ the card's whole grade: a set can be small, and at that size the correct
 option is often the only one whose okurigana fits the prompt, which is answerable without
 reading any kanji at all. `npm run audit` measures exactly that, per set.
 
-With the Groups gone the smallest selectable set is 30 cards, so the widening cannot currently fire at all. It stays for the practice sets in `content/sets/`, which can be any size.
+With the Groups gone the smallest generated set is 30 cards, so the widening cannot fire on any of them. It stays for the sets people make themselves, which can be any size — a set of the seven words you keep missing is exactly the case it exists for.
 
 `buildChoices` also refuses any candidate whose **prompt** face matches the question's, not
 just its answer face. Asked こう with 校 correct, 高 is a different answer and an equally
@@ -446,12 +448,6 @@ npm run dev
 | `npm run audit` | how guessable the multiple-choice questions are, per set (`npm run audit -- g4` for one) |
 | `npm run scaffold` | regenerate `content/words/*.md` from the master kanji list |
 
-The dev server also serves the **set builder** at `/build-set.html`: every card as a
-checkable tile, with search and a per-grade filter, writing `content/sets/<name>.md`. It
-exists only in development — `build-set.html` is not a build entry point, and the endpoint
-it posts to is a Vite plugin marked `apply: 'serve'`, so neither is in `dist/`. The page
-cannot write a file itself, which is the only reason that endpoint exists.
-
 ## Deployment
 
 Deployed as a **Cloudflare Worker serving static assets** — not Cloudflare Pages, despite
@@ -645,8 +641,6 @@ not just the resting state.
 | --- | --- |
 | `content/worksheets/*.md` | a worksheet as the teacher sent it home — one deck each |
 | `content/words/*.md` | the school's master list, one file per grade; readings and meanings hand-written |
-| `content/sets/*.md` | hand-picked practice sets — written forms only, defining no cards |
-| `build-set.html`, `src/build-set.js` | the set builder; dev only, never built |
 | `content/kanji-list/` | the transcribed master list, one directory per edition; `current` names the active one |
 | `content/*.jpg` | scans of the original worksheets |
 | `src/cards.js` | generated from `content/`; exports `cards` and the `SETS` manifest. Do not edit by hand |

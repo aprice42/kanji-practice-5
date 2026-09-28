@@ -100,7 +100,7 @@ const playableSets = () => allSets().filter(isPlayable)
    in whatever order it happened to be encountered, so the first set a user ever
    made would decide where My sets sat forever. A section with nothing in it
    does not appear. */
-const SECTION_ORDER = ['Curriculum', 'Worksheets', 'Kana', 'Practice sets', 'My sets']
+const SECTION_ORDER = ['Curriculum', 'Worksheets', 'Kana', 'My sets']
 const sections = () => {
   const present = new Set(allSets().map((s) => s.section))
   const known = SECTION_ORDER.filter((name) => present.has(name))

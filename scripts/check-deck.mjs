@@ -15,7 +15,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import {
-  parseCards, parseSet, isFilled, rowIsFilled, duplicateReadings, isAllowedCollision,
+  parseCards, isFilled, rowIsFilled, duplicateReadings, isAllowedCollision,
   deckCharacters, isJapanese, isTraceable, GRADES, KANA,
 } from './deck.mjs'
 
@@ -112,29 +112,6 @@ for (const source of sources) {
   for (const [, written] of source.rows) gradeOfForm.set(written, source.grade)
 }
 
-/* Referencing sets add membership but define nothing. Every form they name must
-   resolve to a card, or the set silently practises fewer words than it says. */
-const referencing = []
-for (const file of listMd('content/sets')) {
-  const name = file.replace(/\.md$/, '')
-  const parsed = parseSet(read(`content/sets/${file}`))
-  referencing.push({ id: `s:${name}`, file: `content/sets/${file}`, ...parsed })
-  if (!parsed.title) {
-    fail(`content/sets/${file} has no name.`, 'Give it a `# Heading` — it is what the picker shows.')
-  }
-  for (const form of parsed.forms) {
-    const card = expectedByForm.get(form)
-    if (!card) {
-      fail(
-        `content/sets/${file} lists ${form}, which no card defines.`,
-        'Check the written form against content/words/ — they are exact, kana substitutions and all.'
-      )
-      continue
-    }
-    if (!card.sets.includes(`s:${name}`)) card.sets.push(`s:${name}`)
-  }
-}
-
 const expected = [...expectedByForm.values()].map((c) => ({
   ...c,
   grade: gradeOfForm.get(c.written) ?? null,
@@ -163,7 +140,7 @@ if (!same) {
 /* A duplicate reading inside one set would let a round ask a question with two
    correct answers. Across sets it is the syllabus re-teaching a word, and is
    reported at the foot of this run. */
-for (const set of [...sources, ...referencing]) {
+for (const set of sources) {
   const members = expected.filter((c) => c.sets.includes(set.id))
   for (const collision of duplicateReadings(members.map((c) => [c.reading, c.written]))) {
     if (isAllowedCollision(collision)) continue
@@ -187,7 +164,7 @@ if (!SETS) {
   if (unknown.length) {
     fail(`Cards name ${unknown.length} set(s) the manifest does not list: ${unknown.join(', ')}.`, 'npm run cards')
   }
-  for (const set of [...sources, ...referencing]) {
+  for (const set of sources) {
     const entry = listed.get(set.id)
     if (!entry) {
       fail(`The SETS manifest is missing ${set.id}.`, 'npm run cards')

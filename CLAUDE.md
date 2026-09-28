@@ -41,10 +41,6 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
     npm run audit    # how guessable the multiple-choice questions are, per set
     npm run build    # production build into dist/
 
-The set builder is at /build-set.html on the dev server — pick cards, name a set, and it
-writes content/sets/<name>.md. Dev only: build-set.html is not a build entry point and its
-write endpoint is a Vite plugin marked `apply: 'serve'`, so neither reaches the phone.
-
 ## House rules
 
 - `content/worksheets/*.md` and `content/words/*.md` are the source of truth. `src/cards.js`
@@ -57,15 +53,17 @@ write endpoint is a Vite plugin marked `apply: 'serve'`, so neither reaches the 
 - A reading must be unique within a set, not across them: a word is re-taught as more of
   its kanji arrive. A collision whose two forms have nested kanji sets is that re-teaching
   and is allowed automatically; anything else fails the build. Set ids (`g4`,
-  `w:2025-09-review`, `s:week-3-test`) are content-derived and safe to persist.
+  `w:2025-09-review`, `k:hiragana`) are content-derived and safe to persist.
 - Kana cards (`content/kana/*.md`) have a romaji reading and NO meaning. A meaning is
   required per source, not globally — `rowIsFilled(false)`. Romaji faces must not carry
   `lang="ja"`; `ja(text)` in main.js decides that from the content, not from the field.
 - Multiple-choice distractors for single kana come from the hand-written `CONFUSABLE` table
   in `src/choices.js`. Every other distractor signal is shape-based and scores zero on one
   character, so without that table kana questions are random.
-- `content/sets/*.md` list written forms and define no cards. Every form must resolve to a
-  card or the build fails by name — that check is what makes hand-built sets safe.
+- Hand-picked sets are NOT content. There is no `content/sets/`, no dev builder and no
+  "Practice sets" section: a set that needs a commit and a deploy is not one a teacher can
+  make. Sets are built in the app and handed over as a link. Do not reintroduce a
+  build-time set format — the app-side path is the whole feature.
 - Every Japanese string needs `lang="ja"` — that is what applies the Japanese typeface.
 - Colors come from CSS tokens only. Four palettes × light and dark; a literal hex breaks
   seven of the eight combinations.

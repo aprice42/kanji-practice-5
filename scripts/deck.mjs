@@ -112,35 +112,6 @@ export function parseCards(md) {
   return { title, groups, stripped }
 }
 
-/* A set file lists WRITTEN FORMS and defines no cards of its own — it points at
-   cards the grade files and worksheets already define. One form per line as a
-   markdown list item; the `#` heading is the set's name.
-
-       # Week 3 test
-
-       - 人口
-       - 正方形
-
-   This is deliberately not `parseCards` with a widened cell count. Teaching
-   that parser to accept a one-cell row would make a truncated worksheet row —
-   a real transcription slip — parse as a set reference instead of failing
-   loudly, which is the opposite of what this project wants from its parsers. */
-export function parseSet(md) {
-  let title = ''
-  const forms = []
-  for (const line of md.split('\n')) {
-    const trimmed = line.trim()
-    const h1 = /^#\s+(.*)$/.exec(trimmed)
-    if (h1) {
-      title ||= h1[1].trim()
-      continue
-    }
-    const item = /^[-*]\s+(.*)$/.exec(trimmed)
-    if (item && item[1].trim()) forms.push(item[1].trim())
-  }
-  return { title, forms }
-}
-
 /* A row with no reading is not a card yet. The grade files are scaffolded blank
    and filled in by hand, and 18 rows are deliberately blank because the sheet
    gives two readings and no way to choose — so the build skips them rather than

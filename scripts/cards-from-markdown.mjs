@@ -1,16 +1,12 @@
 /* Regenerates src/cards.js from the content under content/.
    Run with `npm run cards` after editing any of it.
 
-   Three things define or name cards:
+   Two things define cards:
 
      content/words/*.md       the school's master kanji list, one file per
                               grade. Defines cards. Each file is one set.
      content/worksheets/*.md  a worksheet as the teacher sent it home. Defines
                               cards, and is also a set.
-     content/sets/*.md        a hand-picked practice set. Defines nothing — it
-                              lists written forms the files above already
-                              define, and fails the build if one does not
-                              resolve.
 
    Transcribe the source EXACTLY as printed, including places where it writes
    part of a word in kana because that kanji has not been taught yet (でん車,
@@ -31,7 +27,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import {
-  parseCards, parseSet, isFilled, rowIsFilled, duplicateReadings, isAllowedCollision,
+  parseCards, isFilled, rowIsFilled, duplicateReadings, isAllowedCollision,
   GRADES, KANA, worksheetLabel,
 } from './deck.mjs'
 
@@ -39,8 +35,11 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 /* A set is a named selection of cards: either a QUERY over card properties
    (`grade = 4`, which redefines itself when a new edition of the school's list
-   is ingested) or an explicit LIST (a worksheet, a hand-picked practice set),
-   which stays exactly what it was as the curriculum moves underneath it.
+   is ingested) or an explicit LIST (a worksheet), which stays exactly what it
+   was as the curriculum moves underneath it.
+
+   Sets people make themselves are a RUNTIME thing — built in the app, carried
+   between devices by a share link — and never pass through here.
 
    Both are resolved here, at build time. The app never evaluates a query, and
    `npm run check` can therefore verify a set's real contents instead of
@@ -49,7 +48,6 @@ const SECTION = {
   curriculum: 'Curriculum',
   kana: 'Kana',
   worksheet: 'Worksheets',
-  set: 'Practice sets',
 }
 
 const markdownIn = (dir) =>
@@ -187,54 +185,9 @@ for (const source of sources) {
 }
 for (const card of cards) card.grade = gradeOfForm.get(card.written) ?? null
 
-/* ---------- sets that only reference cards ---------- */
-
-const referencing = []
-for (const file of markdownIn('content/sets')) {
-  const name = file.replace(/\.md$/, '')
-  const parsed = parseSet(readFileSync(join(root, 'content/sets', file), 'utf8'))
-  referencing.push({
-    id: `s:${name}`,
-    label: parsed.title,
-    section: SECTION.set,
-    kind: 'list',
-    forms: parsed.forms,
-    file: `content/sets/${file}`,
-  })
-}
-
-const setProblems = []
-for (const set of referencing) {
-  if (!set.forms.length) setProblems.push(`  ${set.file} lists no words.`)
-  // No filename fallback: the heading is what the picker shows, and deriving
-  // "Week 3 Test" from a filename is worse than being asked for it.
-  if (!set.label) setProblems.push(`  ${set.file} has no name — give it a \`# Heading\`.`)
-
-  const seen = new Set()
-  for (const form of set.forms) {
-    if (seen.has(form)) {
-      setProblems.push(`  ${set.file} lists ${form} twice.`)
-      continue
-    }
-    seen.add(form)
-    const card = byForm.get(form)
-    if (!card) {
-      setProblems.push(
-        `  ${set.file} lists ${form}, which no card defines.\n` +
-          `    The written forms are exact, kana substitutions and all — check it` +
-          ` against content/words/.`
-      )
-      continue
-    }
-    card.sets.push(set.id)
-  }
-}
-
-if (setProblems.length) fail([`${setProblems.length} problem(s) in content/sets/:`, '', ...setProblems])
-
 /* ---------- the manifest ---------- */
 
-const sets = [...sources, ...referencing].map((s) => ({
+const sets = sources.map((s) => ({
   id: s.id,
   label: s.label,
   section: s.section,
@@ -244,7 +197,7 @@ for (const set of sets) {
   const members = cards.filter((c) => c.sets.includes(set.id))
   set.cards = members.length
   // `words` counts the rows a set covers, blanks included — progress through
-  // the content job. A referencing set has no rows of its own to be blank.
+  // the content job.
   set.words = sources.find((s) => s.id === set.id)?.words ?? members.length
 }
 
