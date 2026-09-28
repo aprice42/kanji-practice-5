@@ -1636,3 +1636,61 @@ html, body {
 }
 .share__actions { display: flex; flex-direction: column; gap: 0.4rem; }
 .share__status { margin: 0; min-height: 1.2rem; font-size: 0.85rem; text-align: center; color: var(--good); }
+
+/* Receiving a shared set -------------------------------------------------- */
+.receive {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  text-align: center;
+  overflow-y: auto;
+}
+.receive__head { display: flex; flex-direction: column; gap: 0.1rem; }
+.receive__from { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.receive__name { margin: 0; font-weight: 600; font-size: clamp(1.15rem, 5vw, 1.4rem); overflow-wrap: anywhere; }
+.receive__count { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.receive__note { margin: 0; color: var(--muted); }
+.receive__trouble { margin: 0; max-width: 24rem; text-wrap: pretty; }
+
+.receive__banner {
+  margin: 0;
+  max-width: 24rem;
+  font-size: 0.85rem;
+  text-align: left;
+  text-wrap: pretty;
+  border: 1px solid var(--edge);
+  border-left-width: 4px;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--surface);
+}
+.receive__banner--ok { border-left-color: var(--good); }
+.receive__banner--warn { border-left-color: var(--bad); }
+
+.receive__words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  justify-content: center;
+  max-width: 26rem;
+}
+.word {
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.95rem;
+}
+/* Struck through AND dashed AND muted: a word being left out is not something
+   to signal with colour alone. */
+.word--gone {
+  color: var(--muted);
+  border-style: dashed;
+  text-decoration: line-through;
+}
+
+.receive__actions { display: flex; flex-direction: column; gap: 0.4rem; }
+.receive__status { margin: 0; min-height: 1.2rem; font-size: 0.85rem; text-align: center; color: var(--bad); }

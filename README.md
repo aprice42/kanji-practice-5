@@ -125,6 +125,19 @@ The link carries **references, not cards**: every copy of the app already has th
 
 The QR encoder is loaded on demand, so it is its own 21 KB chunk rather than part of the app's first parse. It is still precached, because a teacher on bad school wifi is exactly who needs it to work offline.
 
+### Opening a shared set
+
+A link opens a screen showing who it is from, the name, the count and **the words themselves**, with Save and Not now. Nothing is written until the person agrees — a link from outside the app is untrusted input, and the words are the thing: "Week 3 test, 30 words" tells you nothing, while seeing こん立て tells you whether it is the right list.
+
+The fragment is read once and removed from the address bar immediately, because `applyUpdate()` reloads the page to install a new service worker and a reload preserves the fragment. Without that, the same link would be offered again after every update. A link opened while the app is already on screen changes the fragment without reloading, so `hashchange` is handled too.
+
+Four states that are designed rather than discovered:
+
+- **A brand-new student opens a link.** The set beats the first-run picker — it is why they opened the app, and saving it satisfies the same requirement the picker exists to enforce. Declining still lands them on the picker, because they have then chosen nothing.
+- **Their app is older than the sender's.** The words that do not resolve are shown struck through and the button reads *Save these 9*. Quietly saving 9 of 12 is how a child sits a test missing three words nobody knows about.
+- **They already have it**, matched on contents rather than name — the same list forwarded twice is the same set whatever it got called. It says so and offers to open the one they have.
+- **The link arrived truncated.** Messaging apps wrap long URLs; deflate fails on a half payload, so it says the link looks incomplete rather than saving a short word list.
+
 > **Known gap: iOS Home Screen.** iOS partitions storage between Safari and an installed home-screen web app — session, cookies, `localStorage` and the service worker are all separate. A link tapped in Messages opens in Safari, saves there, and the installed app cannot see it. This works everywhere else: any desktop browser, Android installed, and iOS in Safari. There is an undocumented Cache Storage bridge that may work around it; it is not built, because it cannot be tested without an HTTPS deploy and an iPad.
 
 ### One card per written form

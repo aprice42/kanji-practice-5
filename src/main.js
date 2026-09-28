@@ -3,7 +3,7 @@ import { shuffle, facesOf, buildChoices } from './choices.js'
 import { confetti } from './confetti.js'
 import { mountTrace } from './trace.js'
 import { isUpdateReady, onUpdateReady, checkForUpdate, applyUpdate } from './update.js'
-import { shareUrl } from './share.js'
+import { shareUrl, decodeSet, takeSharedFromUrl, ShareError } from './share.js'
 import './style.css'
 
 /* A card's id is its written form, not its position in the array.
@@ -245,7 +245,7 @@ const DIRECTIONS = [
 const KANA_SECTION = 'Kana'
 
 const state = {
-  screen: 'home', // 'home' | 'practice' | 'results' | 'builder' | 'share'
+  screen: 'home', // 'home' | 'practice' | 'results' | 'builder' | 'share' | 'receive'
   mode: 'flashcards', // 'flashcards' | 'choice'
   direction: 'reading-first',
   // id -> 'correct' | 'incorrect'. The source of truth for the score: a card
@@ -273,6 +273,8 @@ const state = {
   builder: null,
   /* The set being shared, while the share screen is up. */
   share: null,
+  /* A set arriving from a link. Nothing is written until it is accepted. */
+  incoming: null,
   // Ephemeral, never persisted: true while the picker is open.
   sheet: false,
   // Which half of the picker is showing: choosing, or managing.
@@ -1032,6 +1034,178 @@ function renderShare() {
   })
 
   bindMenus()
+}
+
+/* Receiving a set -------------------------------------------------------
+   A link from outside the app is untrusted input, so nothing is written until
+   the person says yes — and what they are saying yes to is shown in full. The
+   words are the thing: "Week 3 test, 30 words" tells you nothing, while seeing
+   こん立て tells you whether it is the right list.
+   ------------------------------------------------------------------------- */
+
+const sameWords = (a, b) =>
+  a.length === b.length && [...a].sort().join(' ') === [...b].sort().join(' ')
+
+async function receiveShared(payload) {
+  try {
+    const { label, forms } = await decodeSet(payload)
+    const known = forms.filter((form) => cardByForm.has(form))
+    const missing = forms.filter((form) => !cardByForm.has(form))
+
+    if (!known.length) {
+      state.incoming = { state: 'none', label, missing }
+    } else {
+      /* Matched on contents rather than name: the same list sent twice, or
+         forwarded by a friend, is the same set whatever it got called. */
+      const duplicate = state.userSets.find((set) => sameWords(set.forms, known))
+      state.incoming = { state: 'ready', label, known, missing, duplicate }
+    }
+  } catch (error) {
+    state.incoming = { state: 'error', reason: error instanceof ShareError ? error.message : 'incomplete' }
+  }
+  render()
+}
+
+const RECEIVE_TROUBLE = {
+  incomplete:
+    'This link looks incomplete. Messaging apps sometimes cut long links in half — ask for it again, or copy the whole thing.',
+  newer:
+    'This link was made by a newer version of the app. Update yours and open it again.',
+  unsupported:
+    'This browser cannot read shared links. Opening it in a different browser should work.',
+  empty: 'There was no set in that link.',
+}
+
+function renderReceive() {
+  const it = state.incoming
+  const body = () => {
+    if (!it || it.state === 'loading') {
+      return `<p class="receive__note">Opening the shared set…</p>`
+    }
+    if (it.state === 'error') {
+      return `<p class="receive__trouble">${escapeHtml(RECEIVE_TROUBLE[it.reason] ?? RECEIVE_TROUBLE.incomplete)}</p>`
+    }
+    if (it.state === 'none') {
+      return `<p class="receive__trouble">
+          None of the words in “${escapeHtml(it.label)}” are in your version of the app yet.
+          Updating the app may bring them in.
+        </p>`
+    }
+    return `
+      <div class="receive__head">
+        <p class="receive__from">Someone shared a set with you</p>
+        <p class="receive__name">${escapeHtml(it.label)}</p>
+        <p class="receive__count">
+          ${it.known.length} word${it.known.length === 1 ? '' : 's'}${
+            it.missing.length ? ` of ${it.known.length + it.missing.length}` : ''
+          }
+        </p>
+      </div>
+      ${
+        it.duplicate
+          ? `<p class="receive__banner receive__banner--ok">
+               You already have these words, saved as “${escapeHtml(it.duplicate.label)}”.
+             </p>`
+          : ''
+      }
+      ${
+        it.missing.length
+          ? `<p class="receive__banner receive__banner--warn">
+               ${it.missing.length} word${it.missing.length === 1 ? ' is' : 's are'} not in your
+               version of the app yet and will be left out. Updating may bring
+               ${it.missing.length === 1 ? 'it' : 'them'} in.
+             </p>`
+          : ''
+      }
+      <div class="receive__words">
+        ${it.known.map((w) => `<span class="word"${ja(w)}>${escapeHtml(w)}</span>`).join('')}
+        ${it.missing
+          .map((w) => `<span class="word word--gone"${ja(w)}>${escapeHtml(w)}</span>`)
+          .join('')}
+      </div>`
+  }
+
+  const ready = it && it.state === 'ready'
+
+  app.innerHTML = `
+    <header class="topbar">
+      <span class="topbar__spacer"></span>
+      <span class="topbar__spacer"></span>
+      ${settingsMenu()}
+    </header>
+
+    <div class="receive">${body()}</div>
+
+    <div class="actions receive__actions">
+      <p class="receive__status" role="status" aria-live="polite">${escapeHtml(it?.status ?? '')}</p>
+      ${
+        ready
+          ? it.duplicate
+            ? `<button class="btn" id="receive-open">Open the one I have</button>`
+            : `<button class="btn" id="receive-save">Save ${
+                it.missing.length ? `these ${it.known.length}` : 'it'
+              }</button>`
+          : ''
+      }
+      <button class="btn ${ready ? 'btn--secondary' : ''}" id="receive-dismiss">
+        ${ready ? 'Not now' : 'Continue to the app'}
+      </button>
+    </div>`
+
+  document.getElementById('receive-save')?.addEventListener('click', saveIncoming)
+  document.getElementById('receive-open')?.addEventListener('click', () => {
+    state.selection.add(state.incoming.duplicate.id)
+    saveSelection()
+    dismissIncoming()
+  })
+  document.getElementById('receive-dismiss').addEventListener('click', dismissIncoming)
+  bindMenus()
+}
+
+function saveIncoming() {
+  const it = state.incoming
+  if (state.userSets.length >= MAX_SETS) {
+    it.status = `That is ${MAX_SETS} sets, which is as many as this holds. Delete one and open the link again.`
+    render()
+    return
+  }
+
+  const set = {
+    id: newSetId(),
+    label: it.label,
+    forms: it.known.slice(0, MAX_FORMS),
+    section: 'My sets',
+    kind: 'custom',
+    created: Date.now(),
+    cards: Math.min(it.known.length, MAX_FORMS),
+  }
+  state.userSets.push(set)
+  const failed = saveUserSets()
+  if (failed) {
+    state.userSets.pop()
+    it.status = 'There is no room left to save this. Delete a set and open the link again.'
+    render()
+    return
+  }
+
+  rebuildMembership()
+  state.selection.add(set.id)
+  saveSelection()
+  dismissIncoming()
+}
+
+/* Declining still has to leave them somewhere sensible. Someone who has never
+   chosen anything came here from a link and has chosen nothing — which is
+   exactly the state the first-run picker exists for. */
+function dismissIncoming() {
+  state.incoming = null
+  state.screen = 'home'
+  if (!state.selection.size) {
+    state.firstRun = true
+    state.sheet = true
+    state.sheetTab = 'practice'
+  }
+  render()
 }
 
 /* The set builder ---------------------------------------------------------
@@ -1888,6 +2062,7 @@ function render() {
   if (state.screen === 'home') return renderHome()
   if (state.screen === 'builder') return renderBuilder()
   if (state.screen === 'share') return renderShare()
+  if (state.screen === 'receive') return renderReceive()
   if (state.screen === 'results') return renderResults()
   if (state.mode === 'trace') return renderTrace()
   return state.mode === 'choice' ? renderChoice() : renderFlashcard()
@@ -1900,6 +2075,11 @@ onUpdateReady(() => {
   if (state.screen === 'home') render()
 })
 
+/* Read before anything else and removed from the address bar immediately, so a
+   reload — including the one `applyUpdate()` does to install a new service
+   worker — cannot offer the same link a second time. */
+const sharedPayload = takeSharedFromUrl()
+
 /* Order matters. The sets the user made have to exist before loadPrefs
    validates a stored selection against them, or a selection naming one is
    dropped as unknown — and if it was the only entry, the app decides this
@@ -1907,4 +2087,29 @@ onUpdateReady(() => {
 loadUserSets()
 rebuildMembership()
 loadPrefs()
+
+if (sharedPayload) {
+  /* A shared link beats the first-run picker. It is why they opened the app,
+     and saving the set satisfies the same requirement the picker exists to
+     enforce. `firstRun` is left set, so declining still lands them there. */
+  state.incoming = { state: 'loading' }
+  state.screen = 'receive'
+  state.sheet = false
+}
+
 render()
+if (sharedPayload) receiveShared(sharedPayload)
+
+/* A link opened while the app is already on screen changes the fragment
+   without reloading, so boot never runs again and the set would be ignored.
+   Found by driving it: navigating from the app to one of its own share links
+   did nothing at all. */
+addEventListener('hashchange', () => {
+  const payload = takeSharedFromUrl()
+  if (!payload) return
+  state.incoming = { state: 'loading' }
+  state.screen = 'receive'
+  state.sheet = false
+  render()
+  receiveShared(payload)
+})
