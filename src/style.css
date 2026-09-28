@@ -1523,7 +1523,7 @@ html, body {
 
 
 /* Picker tabs -------------------------------------------------------------
-   Choosing what to practise and managing a library of sets are two jobs on two
+   Choosing what to practice and managing a library of sets are two jobs on two
    rhythms — one happens every time the app opens and wants two taps, the other
    happens rarely and is destructive at the edges. They share a panel, not a
    list.
