@@ -89,10 +89,14 @@ write endpoint is a Vite plugin marked `apply: 'serve'`, so neither reaches the 
 - There is no default selection. A student who has never chosen gets a non-dismissible
   picker; after that it is remembered. A stored selection that no longer resolves asks
   again rather than falling back to a guess.
-- A round is the whole selection — no cap. One was tried and removed: it sampled randomly,
-  so no set was ever guaranteed to be seen in full. Length is controlled by the selection.
-  Every count — tally, progress, score ring — follows `state.round`, since "practice the N
-  you missed" plays a subset.
+- A session is one pass through the selection, SHUFFLED ONCE and dealt in rounds, so a few
+  short rounds cover it exactly once. That is the difference from the cap that was tried and
+  removed, which re-sampled at random and guaranteed nothing. Above `ASK_ABOVE` cards the
+  app asks all-at-once-or-in-rounds before the first card, every time — pace belongs to the
+  sitting, not the selection, so it is never remembered.
+- Every count — tally, progress, score ring — follows `state.round`, since a retry and
+  "practice the N you missed" both play a subset. `state.session.firstTry` is written once
+  per card and never overwritten, so a retry cannot turn a miss into a win.
 - An element toggled by the `hidden` attribute must not be given a `display` rule without
   a matching `[hidden] { display: none }`; `display: flex` beats the user-agent rule. Same
   trap as `.is-hidden` below.

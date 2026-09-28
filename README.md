@@ -154,11 +154,19 @@ Four states that are designed rather than discovered:
 
 Selecting Grade 4 and September review together therefore deals 194 cards, not 230.
 
-### A round is the whole selection
+### Rounds, and the question before them
 
-There is no cap, and one was tried and removed. A cap of twenty drew a fresh random sample every round, so nothing guaranteed he ever saw every card in a set — and the September review, 51 cards and his actual homework, could no longer be worked start to finish.
+Grade 5 is 226 cards. Rather than hide the fix in a setting, the app asks after the words are chosen and before the first card: **all at once, or in rounds?** That is the moment the number means anything — "226 cards" reads very differently from "Grade 5", and *eleven rounds* is a shape a size control alone never shows.
 
-**Length is controlled by what is selected.** Making a large selection digestible is still an open question; the shape of an answer is probably rounds that draw the cards *not yet seen*, so a few short rounds cover a set exactly once. A random sample gave neither coverage nor a way to tell.
+It asks **every time**, and does not remember. Pace is a property of the sitting rather than of the selection: how much time someone has tonight is not a stable answer. Below about forty cards it does not ask at all, because a checkpoint after twenty of twenty-six is an interruption rather than a kindness.
+
+A **session** is one pass through the selection, **shuffled once** and dealt out in order. That is the whole difference from the cap that was tried and removed: a few short rounds cover the selection *exactly once*, where a cap re-sampled it at random every round and never guaranteed a card was seen at all. Verified by playing a full Grade 5 session — 226 cards dealt, 226 distinct.
+
+Rounds are a fixed size, except that a tail shorter than half a round is folded into the one before it. "Round 12 of 12 · 1 card" is a checkpoint for nothing, so 226 at 20 is eleven rounds, the last of 26.
+
+**The checkpoint** between rounds carries how the round went, where the session has got to, and three ways out: the next round, another go at what was just missed, or stopping. The session line is the point — *Round 2 of 11* is a promise that this ends, and without it a checkpoint is an interruption that keeps happening.
+
+A retry does **not** advance the session; it comes back to the same checkpoint, still offering the next round. And the score shows both figures: the dial is where they have got to, while *first try 16 of 20* is the honest number a retry cannot move.
 
 Counts follow the round rather than every card that exists — the tally, the progress bar, the score ring — because **Practice the N you missed** plays a subset, and scoring that against everything would report "7 of 747".
 

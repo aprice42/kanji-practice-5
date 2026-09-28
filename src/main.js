@@ -35,6 +35,12 @@ const CHOICE_COUNT = 3
    are drawn from the card's whole grade instead of the selection. */
 const MIN_POOL = 8
 
+/* Below this, a selection is one round and the question is not worth asking —
+   a checkpoint after twenty of twenty-six cards is an interruption rather than
+   a kindness. */
+const ASK_ABOVE = 40
+const ROUND_SIZES = [10, 20, 30]
+
 /* There is no default selection. The app used to open on the September
    worksheet, which is the right answer for exactly one child and the wrong one
    for everyone else in the program. A student who has never chosen is asked
@@ -245,7 +251,7 @@ const DIRECTIONS = [
 const KANA_SECTION = 'Kana'
 
 const state = {
-  screen: 'home', // 'home' | 'practice' | 'results' | 'builder' | 'share' | 'receive'
+  screen: 'home', // 'home' | 'pace' | 'practice' | 'results' | 'builder' | 'share' | 'receive'
   mode: 'flashcards', // 'flashcards' | 'choice'
   direction: 'reading-first',
   // id -> 'correct' | 'incorrect'. The source of truth for the score: a card
@@ -277,6 +283,11 @@ const state = {
   incoming: null,
   /* Naming the missed words, on the results screen. null when not naming. */
   keeping: null,
+  /* A pass through the selection, dealt out in rounds. null when a round is
+     just a round. */
+  session: null,
+  /* The mode waiting on an answer to "how do you want to do this?" */
+  pendingMode: null,
   // Ephemeral, never persisted: true while the picker is open.
   sheet: false,
   // Which half of the picker is showing: choosing, or managing.
@@ -591,12 +602,79 @@ function startRound(list) {
   render()
 }
 
+/* How a pass through the selection is cut up.
+
+   Fixed-size rounds, except that a tail shorter than half a round is folded
+   into the one before it rather than left standing alone — "Round 12 of 12 ·
+   1 card" is a checkpoint for nothing. */
+function roundPlan(total, size) {
+  if (!size || total <= size) return [total]
+  const plan = Array(Math.floor(total / size)).fill(size)
+  const tail = total % size
+  if (tail === 0) return plan
+  if (tail < size / 2) plan[plan.length - 1] += tail
+  else plan.push(tail)
+  return plan
+}
+
+/* A session is one pass through the selection, SHUFFLED ONCE and dealt out in
+   order. That is the whole difference from the round cap that was tried and
+   removed: a few short rounds cover the selection exactly once, where a cap
+   re-sampled it at random every round and never guaranteed a card was seen. */
+function startSession(size) {
+  const cards = activeCards()
+  state.status.clear()
+  state.session = {
+    order: shuffle(cards),
+    plan: roundPlan(cards.length, size),
+    roundIndex: 0,
+    dealt: 0,
+    total: cards.length,
+    firstTry: new Map(),
+  }
+  dealRound()
+}
+
+function dealRound() {
+  const s = state.session
+  const size = s.plan[s.roundIndex]
+  const slice = s.order.slice(s.dealt, s.dealt + size)
+  s.dealt += size
+  startRound(slice)
+}
+
+function nextRound() {
+  state.session.roundIndex++
+  dealRound()
+}
+
+/* Pace is a property of the SITTING, not of the selection: how much time
+   someone has tonight is not a stable answer, so it is asked every time rather
+   than remembered. Below ASK_ABOVE there is nothing worth asking. */
+function askPace(mode) {
+  if (!state.selection.size) return
+  state.mode = mode
+  state.keeping = null
+  if (activeCards().length <= ASK_ABOVE) {
+    state.session = null
+    state.status.clear()
+    startRound(activeCards())
+    return
+  }
+  state.pendingMode = mode
+  state.screen = 'pace'
+  render()
+}
+
 function restart() {
   state.status.clear()
-  startRound(activeCards())
+  state.session = null
+  askPace(state.mode)
 }
 
 function practiceMissed() {
+  // Not a round of the session: it does not advance `roundIndex`, so the
+  // checkpoint after it is the same one, still offering the next round.
   startRound(byStatus('incorrect'))
 }
 
@@ -610,12 +688,16 @@ function setMode(mode) {
   // chosen — but a round of nothing is not a state to leave possible.
   if (!state.selection.size) return
   if (state.mode === mode && state.screen === 'practice') return
-  state.mode = mode
-  restart()
+  askPace(mode)
 }
 
 function score(kind) {
-  state.status.set(state.round[state.index].id, kind)
+  const id = state.round[state.index].id
+  /* Recorded once and never overwritten. The dial says where they have got to;
+     the first-try number is the honest one, and a retry must not quietly turn
+     a miss into a win. */
+  if (state.session && !state.session.firstTry.has(id)) state.session.firstTry.set(id, kind)
+  state.status.set(id, kind)
   if (state.index + 1 >= state.round.length) {
     state.screen = 'results'
     render()
@@ -1036,6 +1118,88 @@ function renderShare() {
       })
   })
 
+  bindMenus()
+}
+
+/* What a checkpoint says about the session it sits inside. "Round 2 of 11" is
+   a promise that this ends; without it a checkpoint is an interruption that
+   keeps happening. The first-try figure sits here too — the dial is where they
+   have got to, and this is the honest number a retry cannot move. */
+function sessionLine() {
+  const s = state.session
+  if (!s) return ''
+  const first = [...s.firstTry.values()].filter((k) => k === 'correct').length
+  const tried = s.firstTry.size
+  return `
+    <div class="session">
+      <div class="session__track">
+        <div class="session__fill" style="width: ${(s.dealt / s.total) * 100}%"></div>
+      </div>
+      <p class="session__row">
+        <span>Round ${s.roundIndex + 1} of ${s.plan.length}</span>
+        <span>${s.dealt} of ${s.total} cards</span>
+      </p>
+      ${tried ? `<p class="session__first">First try ${first} of ${tried}</p>` : ''}
+    </div>`
+}
+
+/* How do you want to do this? ---------------------------------------------
+   Asked after the words are chosen and before the first card, because that is
+   the moment the number means anything — "226 cards" reads very differently
+   from "Grade 5", and "eleven rounds" is a shape a size control alone never
+   shows you.
+   ------------------------------------------------------------------------- */
+
+let paceSize = 20
+
+function renderPace() {
+  const total = activeCards().length
+  const plan = roundPlan(total, paceSize)
+
+  app.innerHTML = `
+    <header class="topbar">
+      <button class="menu__trigger" id="pace-back">
+        ${icon('home', 'icon--menu')}
+        <span class="visually-hidden">Back without starting</span>
+      </button>
+      <span class="topbar__spacer"></span>
+      ${settingsMenu()}
+    </header>
+
+    <div class="pace">
+      <div class="pace__head">
+        <p class="pace__mode">${escapeHtml(MODES[state.pendingMode].label)}</p>
+        <p class="pace__name">${escapeHtml(describeSelection())}</p>
+        <p class="pace__count">${total} cards</p>
+      </div>
+
+      <button class="pick pick--primary" id="pace-rounds">
+        <b>In rounds of ${paceSize}</b>
+        <small>${plan.length} round${plan.length === 1 ? '' : 's'}, with a break after each one</small>
+      </button>
+
+      <div class="seg" role="group" aria-label="How many cards in a round">
+        ${ROUND_SIZES.map(
+          (n) => `<button type="button" data-pace="${n}" aria-pressed="${paceSize === n}">${n}</button>`
+        ).join('')}
+      </div>
+
+      <button class="pick" id="pace-all">
+        <b>All ${total} at once</b>
+        <small>One long round, no breaks</small>
+      </button>
+    </div>`
+
+  document.getElementById('pace-back').addEventListener('click', goHome)
+  document.getElementById('pace-rounds').addEventListener('click', () => startSession(paceSize))
+  document.getElementById('pace-all').addEventListener('click', () => startSession(null))
+  for (const btn of app.querySelectorAll('[data-pace]')) {
+    btn.addEventListener('click', () => {
+      paceSize = Number(btn.dataset.pace)
+      render()
+      document.querySelector(`[data-pace="${paceSize}"]`)?.focus()
+    })
+  }
   bindMenus()
 }
 
@@ -2024,6 +2188,11 @@ function scoreRing(correct, total) {
 function renderResults() {
   const correct = byStatus('correct')
   const missed = byStatus('incorrect')
+  /* Whether there is more of the session to come. A retry does not advance the
+     session, so the checkpoint after one still offers the next round — without
+     that, retrying your misses stranded you at the end of a session you were
+     eleven rounds from finishing. */
+  const more = Boolean(state.session) && state.session.roundIndex + 1 < state.session.plan.length
   // The round, not every card that exists — a retry of seven missed cards must
   // report seven, not 743.
   const total = state.round.length
@@ -2068,6 +2237,7 @@ function renderResults() {
           ${icon('spark', 'icon--spark')} ${celebration.message}
         </p>
         <span class="visually-hidden">${correct.length} of ${total} correct</span>
+        ${sessionLine()}
       </div>
 
       <div class="results__body">
@@ -2098,22 +2268,42 @@ function renderResults() {
                </div>
              </div>`
           : `${
+              /* Mid-session the next round is what they came back for, so it
+                 leads. A retry and keeping the misses are both about the round
+                 that just ended, so they follow it. */
+              more
+                ? `<button class="btn" id="next-round">
+                     Next round · ${state.session.plan[state.session.roundIndex + 1]} cards
+                   </button>`
+                : ''
+            }
+            ${
               missed.length
-                ? `<button class="btn" id="retry">Practice the ${missed.length} you missed</button>
+                ? `<button class="btn btn--secondary" id="retry">
+                     ${more ? `Try the ${missed.length} just missed` : `Practice the ${missed.length} you missed`}
+                   </button>
                    <button class="btn btn--secondary" id="keep-start">
                      Keep ${missed.length === 1 ? 'it' : `these ${missed.length}`} as a set
                    </button>`
                 : ''
             }
-            <button class="btn btn--secondary" id="restart">Start over</button>`
+            <button class="btn ${more || missed.length ? 'btn--secondary' : ''}" id="restart">
+              ${more ? 'Stop for now' : 'Start over'}
+            </button>`
       }
     </div>`
 
   bindMenus()
+  document.getElementById('next-round')?.addEventListener('click', nextRound)
   if (missed.length && document.getElementById('retry')) {
     document.getElementById('retry').addEventListener('click', practiceMissed)
   }
-  document.getElementById('restart')?.addEventListener('click', restart)
+  document.getElementById('restart')?.addEventListener('click', () => {
+    // Mid-session this button means "stop", which is going home, not starting
+    // the whole thing again.
+    if (more) return goHome()
+    restart()
+  })
 
   /* Naming happens here rather than in the builder. The builder exists to FIND
      words; these words are already in hand, and sending someone to a search
@@ -2154,6 +2344,7 @@ function render() {
   teardownTrace = null
   if (state.screen === 'home') return renderHome()
   if (state.screen === 'builder') return renderBuilder()
+  if (state.screen === 'pace') return renderPace()
   if (state.screen === 'share') return renderShare()
   if (state.screen === 'receive') return renderReceive()
   if (state.screen === 'results') return renderResults()
