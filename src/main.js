@@ -1151,10 +1151,12 @@ function sessionLine() {
    ------------------------------------------------------------------------- */
 
 let paceSize = 20
+let paceMode = 'rounds'
 
 function renderPace() {
   const total = activeCards().length
   const plan = roundPlan(total, paceSize)
+  const rounds = paceMode === 'rounds'
 
   app.innerHTML = `
     <header class="topbar">
@@ -1173,26 +1175,52 @@ function renderPace() {
         <p class="pace__count">${total} cards</p>
       </div>
 
-      <button class="pick pick--primary" id="pace-rounds">
-        <b>In rounds of ${paceSize}</b>
-        <small>${plan.length} round${plan.length === 1 ? '' : 's'}, with a break after each one</small>
-      </button>
+      <div class="pace__choices" role="radiogroup" aria-label="How to work through them">
+        <button class="pick" type="button" role="radio" aria-checked="${rounds}" data-mode="rounds">
+          <span class="pick__mark">${icon(rounds ? 'boxCheck' : 'box', 'icon--box')}</span>
+          <span class="pick__text">
+            <b>In rounds of ${paceSize}</b>
+            <small>${plan.length} round${plan.length === 1 ? '' : 's'}, with a break after each one</small>
+          </span>
+        </button>
 
-      <div class="seg" role="group" aria-label="How many cards in a round">
-        ${ROUND_SIZES.map(
-          (n) => `<button type="button" data-pace="${n}" aria-pressed="${paceSize === n}">${n}</button>`
-        ).join('')}
+        ${
+          /* Only while it applies. An inert size control under an unselected
+             option is a thing to wonder about rather than a thing to use. */
+          rounds
+            ? `<div class="seg" role="group" aria-label="How many cards in a round">
+                 ${ROUND_SIZES.map(
+                   (n) => `<button type="button" data-pace="${n}" aria-pressed="${paceSize === n}">${n}</button>`
+                 ).join('')}
+               </div>`
+            : ''
+        }
+
+        <button class="pick" type="button" role="radio" aria-checked="${!rounds}" data-mode="all">
+          <span class="pick__mark">${icon(rounds ? 'box' : 'boxCheck', 'icon--box')}</span>
+          <span class="pick__text">
+            <b>All ${total} at once</b>
+            <small>One long round, no breaks</small>
+          </span>
+        </button>
       </div>
+    </div>
 
-      <button class="pick" id="pace-all">
-        <b>All ${total} at once</b>
-        <small>One long round, no breaks</small>
-      </button>
+    <div class="actions">
+      <button class="btn" id="pace-go">Let's go!</button>
     </div>`
 
   document.getElementById('pace-back').addEventListener('click', goHome)
-  document.getElementById('pace-rounds').addEventListener('click', () => startSession(paceSize))
-  document.getElementById('pace-all').addEventListener('click', () => startSession(null))
+  document.getElementById('pace-go').addEventListener('click', () =>
+    startSession(paceMode === 'rounds' ? paceSize : null)
+  )
+  for (const btn of app.querySelectorAll('[data-mode]')) {
+    btn.addEventListener('click', () => {
+      paceMode = btn.dataset.mode
+      render()
+      document.querySelector(`[data-mode="${paceMode}"]`)?.focus()
+    })
+  }
   for (const btn of app.querySelectorAll('[data-pace]')) {
     btn.addEventListener('click', () => {
       paceSize = Number(btn.dataset.pace)
@@ -2268,16 +2296,6 @@ function renderResults() {
                </div>
              </div>`
           : `${
-              /* Mid-session the next round is what they came back for, so it
-                 leads. A retry and keeping the misses are both about the round
-                 that just ended, so they follow it. */
-              more
-                ? `<button class="btn" id="next-round">
-                     Next round · ${state.session.plan[state.session.roundIndex + 1]} cards
-                   </button>`
-                : ''
-            }
-            ${
               missed.length
                 ? `<button class="btn btn--secondary" id="retry">
                      ${more ? `Try the ${missed.length} just missed` : `Practice the ${missed.length} you missed`}
@@ -2288,8 +2306,20 @@ function renderResults() {
                 : ''
             }
             <button class="btn ${more || missed.length ? 'btn--secondary' : ''}" id="restart">
-              ${more ? 'Stop for now' : 'Start over'}
-            </button>`
+              ${more ? 'Back to home' : 'Start over'}
+            </button>
+            ${
+              /* Last, and deliberately. During a round the ✓ and ✗ buttons sit
+                 in this same strip, so whatever lands at the bottom is where a
+                 thumb already is — and answering three cards in a rhythm should
+                 not be able to quit the session. The harmless action takes that
+                 spot; leaving is one row up. */
+              more
+                ? `<button class="btn" id="next-round">
+                     Next round · ${state.session.plan[state.session.roundIndex + 1]} cards
+                   </button>`
+                : ''
+            }`
       }
     </div>`
 

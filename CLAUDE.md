@@ -76,6 +76,9 @@ write endpoint is a Vite plugin marked `apply: 'serve'`, so neither reaches the 
 - There is exactly one layout breakpoint (the mode cards, 1 column to 3 at 44rem) and it is
   deliberate: a column count is discrete and a clamp cannot express it. Sizes stay clamps.
 - Correct/wrong must differ by shape, not only color, and every icon needs a text label.
+- The bottom of `.actions` is where the ✓/✗ buttons sit during a round, so nothing that
+  ends or discards anything may be the bottom button on a screen that follows one. Put the
+  harmless action there.
 - A shared link carries written forms, not cards, and lives in the URL fragment. A
   truncated link must fail loudly — deflate catches it — never save a short word list.
   Sharing does NOT work for an iOS app installed to the Home Screen: storage there is

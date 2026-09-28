@@ -1737,12 +1737,21 @@ html, body {
 .pace__name { margin: 0; font-weight: 600; font-size: clamp(1.05rem, 4.5vw, 1.25rem); overflow-wrap: anywhere; }
 .pace__count { margin: 0; color: var(--muted); font-size: 0.85rem; }
 
-.pick {
+.pace__choices {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.5rem;
   width: 100%;
   max-width: 22rem;
+}
+/* These choose; they do not start. Starting is the button at the foot of the
+   screen, because a screen whose first element begins the thing gives you no
+   moment to read the second element. */
+.pick {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
   border: 2px solid var(--edge);
   border-radius: 0.8rem;
   background: var(--surface);
@@ -1754,13 +1763,15 @@ html, body {
   cursor: pointer;
 }
 .pick:hover { border-color: var(--primary-text); }
+.pick__mark { flex: none; display: flex; color: var(--muted); }
+.pick__text { display: flex; flex-direction: column; gap: 0.1rem; }
 .pick b { font-size: 1.05rem; font-weight: 600; }
 .pick small { color: var(--muted); font-size: 0.82rem; }
-/* The suggested answer, marked by its edge rather than by being the only one
-   that looks like a button. */
-.pick--primary { border-color: var(--primary-text); }
+/* Chosen is a tick AND an edge, never colour on its own. */
+.pick[aria-checked='true'] { border-color: var(--primary-text); }
+.pick[aria-checked='true'] .pick__mark { color: var(--primary-text); }
 
-.pace .seg { width: 100%; max-width: 22rem; }
+.pace .seg { width: 100%; }
 .seg {
   display: flex;
   gap: 0.2rem;

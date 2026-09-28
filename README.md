@@ -164,7 +164,11 @@ A **session** is one pass through the selection, **shuffled once** and dealt out
 
 Rounds are a fixed size, except that a tail shorter than half a round is folded into the one before it. "Round 12 of 12 · 1 card" is a checkpoint for nothing, so 226 at 20 is eleven rounds, the last of 26.
 
-**The checkpoint** between rounds carries how the round went, where the session has got to, and three ways out: the next round, another go at what was just missed, or stopping. The session line is the point — *Round 2 of 11* is a promise that this ends, and without it a checkpoint is an interruption that keeps happening.
+**The checkpoint** between rounds carries how the round went, where the session has got to, and three ways out: the next round, another go at what was just missed, or going home. The session line is the point — *Round 2 of 11* is a promise that this ends, and without it a checkpoint is an interruption that keeps happening.
+
+**The next round is the bottom button, and that is a safety decision rather than a typographic one.** During a round the ✓ and ✗ buttons sit in this same strip, so whatever lands at the bottom is where a thumb already is, and answering three cards in a rhythm should not be able to end the session. The harmless action takes that spot and leaving is one row up — measured at 412×730, the exit moved from 13px away from the judge buttons to 75px.
+
+The pace screen's two options **choose** rather than start; `Let's go!` at the foot starts. A screen whose first element begins the thing gives no moment to read the second one.
 
 A retry does **not** advance the session; it comes back to the same checkpoint, still offering the next round. And the score shows both figures: the dial is where they have got to, while *first try 16 of 20* is the honest number a retry cannot move.
 
