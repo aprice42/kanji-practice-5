@@ -275,6 +275,8 @@ const state = {
   share: null,
   /* A set arriving from a link. Nothing is written until it is accepted. */
   incoming: null,
+  /* Naming the missed words, on the results screen. null when not naming. */
+  keeping: null,
   // Ephemeral, never persisted: true while the picker is open.
   sheet: false,
   // Which half of the picker is showing: choosing, or managing.
@@ -581,6 +583,7 @@ function prepareCard() {
    which is what Groups are for. Making a 232-card grade digestible is a real
    problem and still an open one; a random sample was not the answer to it. */
 function startRound(list) {
+  state.keeping = null
   state.round = shuffle(list)
   state.index = 0
   state.screen = 'practice'
@@ -1034,6 +1037,57 @@ function renderShare() {
   })
 
   bindMenus()
+}
+
+/* Keeping the words from a round -----------------------------------------
+   The results screen already knows which seven were wrong and already offers to
+   practise them — as a round that evaporates. This keeps them.
+
+   It is the moment the need actually arises. Nobody opens a set builder
+   thinking "I should curate a word list"; they finish a round, miss the same
+   seven again, and want those seven tomorrow.
+   ------------------------------------------------------------------------- */
+
+const defaultKeepName = () =>
+  `Missed ${new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}`
+
+function keepMissed(missed) {
+  const keeping = state.keeping
+  const label = keeping.name.replace(/\s+/g, ' ').trim().slice(0, MAX_NAME)
+  const forms = missed.map((card) => card.written).slice(0, MAX_FORMS)
+  if (!label || !forms.length) return
+
+  if (state.userSets.length >= MAX_SETS) {
+    keeping.status = `That is ${MAX_SETS} sets, which is as many as this holds. Delete one first.`
+    render()
+    return
+  }
+
+  const set = {
+    id: newSetId(),
+    label,
+    forms,
+    section: 'My sets',
+    kind: 'custom',
+    created: Date.now(),
+    cards: forms.length,
+  }
+  state.userSets.push(set)
+  const failed = saveUserSets()
+  if (failed) {
+    state.userSets.pop()
+    keeping.status = 'There is no room left to save this. Delete a set and try again.'
+    render()
+    return
+  }
+
+  rebuildMembership()
+  /* Deliberately NOT selected. "Practice the N you missed" is the button for
+     doing them now; this one is for having them tomorrow, and changing what
+     they are practising mid-results would be answering a question nobody
+     asked. */
+  state.keeping = { naming: false, name: '', status: `Saved to My sets as “${label}”.` }
+  render()
 }
 
 /* Receiving a set -------------------------------------------------------
@@ -2031,19 +2085,58 @@ function renderResults() {
       </div>
     </div>
     <div class="actions">
+      <p class="results__saved" role="status" aria-live="polite">${escapeHtml(state.keeping?.status ?? '')}</p>
       ${
-        missed.length
-          ? `<button class="btn" id="retry">Practice the ${missed.length} you missed</button>`
-          : ''
+        state.keeping?.naming
+          ? `<div class="keep">
+               <label class="keep__label" for="keep-name">Name this set</label>
+               <input type="text" id="keep-name" value="${escapeHtml(state.keeping.name)}"
+                      maxlength="${MAX_NAME}" autocomplete="off" />
+               <div class="keep__row">
+                 <button class="btn btn--secondary" id="keep-cancel">Cancel</button>
+                 <button class="btn" id="keep-save">Save it</button>
+               </div>
+             </div>`
+          : `${
+              missed.length
+                ? `<button class="btn" id="retry">Practice the ${missed.length} you missed</button>
+                   <button class="btn btn--secondary" id="keep-start">
+                     Keep ${missed.length === 1 ? 'it' : `these ${missed.length}`} as a set
+                   </button>`
+                : ''
+            }
+            <button class="btn btn--secondary" id="restart">Start over</button>`
       }
-      <button class="btn btn--secondary" id="restart">Start over</button>
     </div>`
 
   bindMenus()
-  if (missed.length) {
+  if (missed.length && document.getElementById('retry')) {
     document.getElementById('retry').addEventListener('click', practiceMissed)
   }
-  document.getElementById('restart').addEventListener('click', restart)
+  document.getElementById('restart')?.addEventListener('click', restart)
+
+  /* Naming happens here rather than in the builder. The builder exists to FIND
+     words; these words are already in hand, and sending someone to a search
+     screen to name seven things they just saw would be a detour away from the
+     moment that made them want it. */
+  document.getElementById('keep-start')?.addEventListener('click', () => {
+    state.keeping = { naming: true, name: defaultKeepName(), status: '' }
+    render()
+    const field = document.getElementById('keep-name')
+    field?.focus()
+    field?.select()
+  })
+  document.getElementById('keep-cancel')?.addEventListener('click', () => {
+    state.keeping = null
+    render()
+  })
+  const keepField = document.getElementById('keep-name')
+  keepField?.addEventListener('input', () => {
+    state.keeping.name = keepField.value
+    const save = document.getElementById('keep-save')
+    if (save) save.disabled = !keepField.value.trim()
+  })
+  document.getElementById('keep-save')?.addEventListener('click', () => keepMissed(missed))
 
   // Something for every round with at least one right, more of it the better
   // the score. A zero-score round gets none.

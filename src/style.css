@@ -1694,3 +1694,28 @@ html, body {
 
 .receive__actions { display: flex; flex-direction: column; gap: 0.4rem; }
 .receive__status { margin: 0; min-height: 1.2rem; font-size: 0.85rem; text-align: center; color: var(--bad); }
+
+/* Keeping the missed words as a set --------------------------------------- */
+.results__saved { margin: 0; min-height: 1.2rem; font-size: 0.85rem; text-align: center; color: var(--good); }
+.keep { display: flex; flex-direction: column; gap: 0.4rem; }
+.keep__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.keep input[type='text'] {
+  font: inherit;
+  font-size: 1rem;
+  padding: 0.55rem 0.7rem;
+  min-height: 44px;
+  border-radius: 0.6rem;
+  border: 2px solid var(--edge);
+  background: var(--bg);
+  color: var(--ink);
+  width: 100%;
+}
+.keep input:focus { border-color: var(--primary-text); }
+.keep__row { display: flex; gap: 0.5rem; }
+.keep__row .btn { flex: 1; }
