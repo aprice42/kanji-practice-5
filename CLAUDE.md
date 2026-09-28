@@ -1,7 +1,8 @@
 # Kanji Practice
 
-A flashcard PWA for a 5th-grader's kanji homework, built from worksheets his teacher sends
-home. Read `README.md` before changing anything — particularly **Decisions already
+A flashcard PWA for kanji practice. It started as one 5th-grader's homework, built from
+worksheets his teacher sends home; it now ships the school's Grade 1-5 curriculum and the
+kana and nothing child-specific, so any student in the program can use it out of the box. Read `README.md` before changing anything — particularly **Decisions already
 settled**, **Non-goals** and **How this gets verified**. Several choices here look
 arbitrary and are not.
 
@@ -48,12 +49,13 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   generated from them, and `npm run check` is what proves they still agree — the generators
   only validate their own output, not each other's. `src/strokes.js` comes from KanjiVG,
   CC BY-SA — attribution is required, and lives at the foot of the Trace screen.
-- One card per written form. A word in Grade 4 and on the September worksheet is one card
-  in two sets. A card's `id` IS its written form — never an array index.
+- One card per written form. A word in Grade 4 and also on a worksheet is one card in two
+  sets. A card's `id` IS its written form — never an array index.
 - A reading must be unique within a set, not across them: a word is re-taught as more of
   its kanji arrive. A collision whose two forms have nested kanji sets is that re-teaching
   and is allowed automatically; anything else fails the build. Set ids (`g4`,
-  `w:2025-09-review`, `k:hiragana`) are content-derived and safe to persist.
+  `w:2025-09-review`, `k:hiragana`) are content-derived and safe to persist. The `w:`
+  shape is reserved for the next worksheet; none ships today.
 - Kana cards (`content/kana/*.md`) have a romaji reading and NO meaning. A meaning is
   required per source, not globally — `rowIsFilled(false)`. Romaji faces must not carry
   `lang="ja"`; `ja(text)` in main.js decides that from the content, not from the field.

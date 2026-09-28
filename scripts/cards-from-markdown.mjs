@@ -132,11 +132,11 @@ if (!sources.length) fail(['No card sources found under content/.'])
 
 /* ---------- one card per written form ---------- */
 
-/* Two sources defining the same written form must agree about it. They do today
-   — all 47 overlaps between the grades and the September worksheet are
-   identical — so this is a guard rather than work. It matters because silently
-   preferring one source is how a transcription defect disappears without anyone
-   learning it was there. */
+/* Two sources defining the same written form must agree about it. With only the
+   grade files shipping there is nothing to overlap right now, so this is a
+   guard waiting for the next worksheet rather than work. It matters because
+   silently preferring one source is how a transcription defect disappears
+   without anyone learning it was there. */
 const byForm = new Map()
 const disagreements = []
 
@@ -166,8 +166,8 @@ if (disagreements.length) {
     ...disagreements,
     '',
     'The master list is canonical. Correct the transcription rather than picking',
-    'a side here — two forms that really are different words, like the sheet’s',
-    'てん車 and the worksheet’s でん車, stay two separate cards and never reach this.',
+    'a side here — two forms that really are different words, like てん車 and a',
+    'worksheet’s でん車, stay two separate cards and never reach this.',
   ])
 }
 

@@ -159,9 +159,9 @@ Four states that are designed rather than discovered:
 
 ### One card per written form
 
-47 words appear both under a grade and on the September worksheet. They are **one card in two sets**, not two cards. Before that was true, the same word held two separate scores and could appear in both results lists at once, and neither copy excluded the other from being its own distractor.
+A word that appears under a grade and again on a worksheet is **one card in two sets**, not two cards. Before that was true, the same word held two separate scores and could appear in both results lists at once, and neither copy excluded the other from being its own distractor. Selecting both sets therefore deals the union, not the sum.
 
-Selecting Grade 4 and September review together therefore deals 194 cards, not 230.
+The app currently ships only the grade files and the kana, so nothing overlaps and the rule has nothing to do — it is the guard the next worksheet lands on. The one worksheet that did ship, a September review, overlapped 47 of its 51 words with the grades; it was removed along with the built-time practice sets, so that out of the box the app is the school's curriculum and nothing else. The four words only it defined (鳥, でん車, 休み, 北と南) took no kanji with them: every character survives in the grade lists, and でん車 has a near-twin in Grade 3's てん車.
 
 ### Setting up a session
 
