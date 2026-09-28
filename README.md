@@ -265,7 +265,7 @@ memory. A character he has finished drawing stays visible â€” he has earned it â
 reveal resets for each new character.
 
 Asking for the answer being a deliberate, reversible act is the whole difference between
-practice and colouring in.
+practice and coloring in.
 
 Each stroke is checked as it is finished: right stroke, right place, right direction,
 right order. Accepted strokes ink in and the character builds up; a rejected one flashes
