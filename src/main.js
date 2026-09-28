@@ -459,7 +459,7 @@ function setSelected(id, on) {
   } else {
     /* Empty is normally unreachable, because a round with no cards is not a
        state worth designing. During the first run it is where everyone starts,
-       and Start stays disabled instead — refusing to untick something a moment
+       and Confirm stays disabled instead — refusing to untick something a moment
        after ticking it would be nonsense. */
     if (!state.firstRun && state.selection.size <= 1) return false
     state.selection.delete(id)
@@ -983,8 +983,11 @@ function renderSheet() {
                The button itself stays: Escape and the scrim also close this,
                but neither is discoverable on a phone, and a panel with no
                visible way out is a dead end. */
+            /* Not "Start": this closes the picker and lands on the home
+               screen, where a mode still has to be chosen. It confirms a
+               choice; it does not begin anything. */
             first
-              ? `Start${count ? ` · ${count} cards` : ''}`
+              ? `Confirm${count ? ` · ${count} cards` : ''}`
               : tab === 'practice'
                 ? `Done · ${count} cards`
                 : 'Done'
@@ -1802,7 +1805,7 @@ function syncSheet() {
   const done = app.querySelector('.sheet__foot .btn')
   if (done) {
     done.textContent = state.firstRun
-      ? `Start${count ? ` · ${count} cards` : ''}`
+      ? `Confirm${count ? ` · ${count} cards` : ''}`
       : state.sheetTab === 'practice'
         ? `Done · ${count} cards`
         : 'Done'
