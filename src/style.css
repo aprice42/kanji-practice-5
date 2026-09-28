@@ -32,6 +32,7 @@
 :root[data-palette='indigo'] {
   --bg: #faf7f1;
   --surface: #f2ede3;
+  --tint: #dce4f2;
   --ink: #1f2430;
   /* Dark enough to clear 4.5:1 on --rule, the segmented-control track that
      inactive labels sit on. */
@@ -51,6 +52,7 @@
 :root[data-palette='ink'] {
   --bg: #f7f5f0;
   --surface: #edeae3;
+  --tint: #e0dcd1;
   --ink: #20201e;
   --muted: #5c5b56;
   --rule: #d8d4ca;
@@ -68,6 +70,7 @@
 :root[data-palette='matcha'] {
   --bg: #f6f8f7;
   --surface: #e9efec;
+  --tint: #d3e4de;
   --ink: #16211e;
   --muted: #54615c;
   --rule: #cfdad5;
@@ -85,6 +88,7 @@
 :root[data-palette='plum'] {
   --bg: #faf6f7;
   --surface: #f1e9ec;
+  --tint: #e9d9e6;
   --ink: #241d26;
   --muted: #5e5362;
   --rule: #ddd0d6;
@@ -105,6 +109,7 @@
   :root[data-palette='indigo']:not([data-theme='light']) {
     --bg: #141824;
     --surface: #1e2433;
+    --tint: #2b3856;
     --ink: #eae6dd;
     --muted: #a6adc0;
     --rule: #333b4f;
@@ -121,6 +126,7 @@
   :root[data-palette='ink']:not([data-theme='light']) {
     --bg: #1a1a18;
     --surface: #252522;
+    --tint: #353530;
     --ink: #efece5;
     --muted: #a9a69d;
     --rule: #3a3a36;
@@ -137,6 +143,7 @@
   :root[data-palette='matcha']:not([data-theme='light']) {
     --bg: #101816;
     --surface: #1a2421;
+    --tint: #223b35;
     --ink: #e6ece9;
     --muted: #a0aeaa;
     --rule: #2e3c38;
@@ -155,6 +162,7 @@
   :root[data-palette='plum']:not([data-theme='light']) {
     --bg: #181320;
     --surface: #221b2c;
+    --tint: #382942;
     --ink: #ece6ef;
     --muted: #ab9fb4;
     --rule: #372d44;
@@ -175,6 +183,7 @@
 :root[data-palette='indigo'][data-theme='dark'] {
   --bg: #141824;
   --surface: #1e2433;
+  --tint: #2b3856;
   --ink: #eae6dd;
   --muted: #a6adc0;
   --rule: #333b4f;
@@ -191,6 +200,7 @@
 :root[data-palette='ink'][data-theme='dark'] {
   --bg: #1a1a18;
   --surface: #252522;
+  --tint: #353530;
   --ink: #efece5;
   --muted: #a9a69d;
   --rule: #3a3a36;
@@ -207,6 +217,7 @@
 :root[data-palette='matcha'][data-theme='dark'] {
   --bg: #101816;
   --surface: #1a2421;
+  --tint: #223b35;
   --ink: #e6ece9;
   --muted: #a0aeaa;
   --rule: #2e3c38;
@@ -225,6 +236,7 @@
 :root[data-palette='plum'][data-theme='dark'] {
   --bg: #181320;
   --surface: #221b2c;
+  --tint: #382942;
   --ink: #ece6ef;
   --muted: #ab9fb4;
   --rule: #372d44;
@@ -1287,6 +1299,32 @@ html, body {
 }
 .sheet__check:hover:not([disabled]) { background: var(--surface); }
 .sheet__check[disabled] { cursor: default; color: var(--muted); }
+/* Chosen is FOUR signals at once — tint, an edge bar, a heavier label and the
+   tick — because one of them is always failing somebody: colour for a
+   colourblind reader, weight on a washed-out school screen, the 1.35rem tick
+   for a seven-year-old scanning a list of nine at arm's length. The border is
+   transparent when off so switching one on does not move the row. */
+.sheet__check {
+  position: relative;
+  border: 2px solid transparent;
+}
+.sheet__check[aria-checked='true'] {
+  background: var(--tint);
+  border-color: var(--primary-text);
+  font-weight: 600;
+  padding-left: 0.85rem;
+}
+.sheet__check[aria-checked='true']::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block: 0.35rem;
+  width: 5px;
+  border-radius: 3px;
+  background: var(--primary-text);
+}
+.sheet__check[aria-checked='true']:hover { background: var(--tint); }
+.sheet__check[aria-checked='true'] .sheet__count { color: var(--primary-text); }
 .sheet__box { display: flex; flex: none; }
 .icon--box { width: 1.35rem; height: 1.35rem; }
 .sheet__check[aria-checked='false'] .sheet__box { color: var(--muted); }
@@ -1809,3 +1847,96 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 .session__first { margin: 0; font-size: 0.72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+
+/* What you have chosen, kept in sight ------------------------------------
+   The picker holds nine rows and a phone shows about six, so the moment a
+   child scrolls to the kana their choices leave the screen. The tray is the
+   answer, and it is the same idea as the builder's "Chosen" list one screen
+   further in.
+
+   The chips are spans, not buttons. Tapping one to remove it is the obvious
+   gesture and also a destructive tap sitting directly on a scroll surface —
+   the rows below are where you change your mind.
+   ------------------------------------------------------------------------- */
+.sheet__tray {
+  flex: none;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 0.7rem;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.sheet__trayhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+.sheet__traycount { font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+/* Capped and scrollable: every grade plus both kana is nine chips, which would
+   otherwise push the rows it describes off the screen. */
+.chiplist { display: flex; flex-wrap: wrap; gap: 0.3rem; max-height: 4.5rem; overflow-y: auto; }
+.selchip {
+  font-size: 0.8rem;
+  line-height: 1.3;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  background: var(--primary);
+  color: var(--on-primary);
+  white-space: nowrap;
+}
+/* The overflow counter is not a set, so it does not look like one. */
+.selchip--more {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--edge);
+}
+.sheet__trayempty { font-size: 0.82rem; color: var(--muted); }
+
+/* The summary row names what is chosen instead of collapsing to "3 sets" —
+   three is exactly the point where a child stops being able to hold it. */
+.selection .chiplist { max-height: none; margin-bottom: 0.15rem; }
+
+/* In a round. Goes in the progress row rather than on a line of its own: the
+   app is sized to fit a phone without scrolling, and this costs no height. */
+.progress__who {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 11rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* My sets: a set in play looked identical to one that was not, which makes
+   deleting the wrong one easy. The word is there because the colour is not
+   allowed to be the only signal. */
+/* 2px, with the padding giving back the pixel, so switching a set on does not
+   nudge the card. */
+.libcard--on {
+  border-color: var(--primary-text);
+  border-width: 2px;
+  background: var(--tint);
+  padding: 0.4rem 0.45rem 0.4rem 0.65rem;
+}
+.libcard__tag {
+  flex: none;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--on-primary);
+  background: var(--primary);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+}

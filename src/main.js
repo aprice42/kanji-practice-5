@@ -478,6 +478,25 @@ function describeSelection() {
   return `${chosen.length} sets`
 }
 
+/* Chips, not a sentence. describeSelection() gives up at three and says
+   "3 sets", which is precisely the point a child stops being able to hold the
+   answer in their head — and three is one grade plus both kana, an ordinary
+   choice rather than an edge case.
+
+   `max` is how many names are shown before the rest become a counter. The
+   counter is honest about hiding something; the old string was not. */
+function selectionChips(max = Infinity) {
+  const chosen = selectedSets()
+  if (!chosen.length) return ''
+  const shown = chosen.slice(0, max)
+  const hidden = chosen.length - shown.length
+  return `
+    <span class="chiplist">
+      ${shown.map((s) => `<span class="selchip">${escapeHtml(s.label)}</span>`).join('')}
+      ${hidden ? `<span class="selchip selchip--more">+${hidden} more</span>` : ''}
+    </span>`
+}
+
 function setPalette(palette) {
   state.palette = palette
   applyTheme()
@@ -892,12 +911,14 @@ function setRow(set) {
    not the shape of its id. */
 function libraryCard(set) {
   const confirming = state.confirmDelete === set.id
+  const on = state.selection.has(set.id)
   return `
-    <div class="libcard">
+    <div class="libcard ${on ? 'libcard--on' : ''}">
       <span class="libcard__name">
         ${escapeHtml(set.label)}
         <small>${set.cards} word${set.cards === 1 ? '' : 's'}</small>
       </span>
+      ${on && !confirming ? `<span class="libcard__tag">Practicing</span>` : ''}
       ${
         confirming
           ? `<button class="libcard__confirm" data-reallydelete="${set.id}">Delete</button>
@@ -914,6 +935,30 @@ function libraryCard(set) {
                ${icon('trash', 'icon--act')}
                <span class="visually-hidden">Delete ${escapeHtml(set.label)}</span>
              </button>`
+      }
+    </div>`
+}
+
+/* What is chosen, above the rows that change it. Practice tab only: My sets is
+   a managing job, and a tray there would describe a selection you did not come
+   to that tab to change. */
+function sheetTray(tab) {
+  const chosen = selectedSets()
+  const cards = activeCards().length
+  /* Rendered even on My sets, just hidden. Returning '' there would leave
+     nothing for syncTray to find when you come back. */
+  return `
+    <div class="sheet__tray" ${tab === 'practice' ? '' : 'hidden'}>
+      <p class="sheet__trayhead">
+        <span>Practicing</span>
+        <span class="sheet__traycount">${
+          chosen.length ? `${chosen.length} set${chosen.length === 1 ? '' : 's'} · ${cards} cards` : ''
+        }</span>
+      </p>
+      ${
+        chosen.length
+          ? selectionChips()
+          : `<p class="sheet__trayempty">Nothing picked yet — tap a list below.</p>`
       }
     </div>`
 }
@@ -950,7 +995,7 @@ function sheetList(tab) {
       state.userSets.length
         ? state.userSets.map(libraryCard).join('')
         : `<p class="sheet__empty">
-             Nothing here yet. A set is any words you want to practise together —
+             Nothing here yet. A set is any words you want to practice together —
              the ones on this week's test, or the ones you keep getting wrong.
            </p>`
     }
@@ -969,6 +1014,7 @@ function refreshSheet() {
   const tab = state.firstRun ? 'practice' : state.sheetTab
 
   sheet.querySelector('.sheet__title').textContent = sheetTitle(tab)
+  syncTray()
   const panel = sheet.querySelector('.sheet__list')
   panel.innerHTML = sheetList(tab)
   panel.setAttribute('aria-labelledby', state.firstRun ? 'sheet-title' : `tab-${tab}`)
@@ -1008,6 +1054,7 @@ function renderSheet() {
                        aria-selected="${tab === 'mine'}" aria-controls="sheet-panel">My sets</button>
              </div>`
       }
+      ${sheetTray(tab)}
       <div class="sheet__list" id="sheet-panel" role="tabpanel"
            aria-labelledby="${first ? 'sheet-title' : `tab-${tab}`}">${sheetList(tab)}</div>
       <p class="sheet__note" role="status" aria-live="polite"></p>
@@ -1221,7 +1268,7 @@ function renderPace() {
     <div class="pace">
       <div class="pace__head">
         <p class="pace__mode">${escapeHtml(MODES[state.pendingMode].label)}</p>
-        <p class="pace__name">${escapeHtml(describeSelection())}</p>
+        <p class="pace__name">${selectionSummary()}</p>
         <p class="pace__count">${total} cards</p>
       </div>
 
@@ -1313,7 +1360,7 @@ function renderPace() {
 
 /* Keeping the words from a round -----------------------------------------
    The results screen already knows which seven were wrong and already offers to
-   practise them — as a round that evaporates. This keeps them.
+   practice them — as a round that evaporates. This keeps them.
 
    It is the moment the need actually arises. Nobody opens a set builder
    thinking "I should curate a word list"; they finish a round, miss the same
@@ -1356,7 +1403,7 @@ function keepMissed(missed) {
   rebuildMembership()
   /* Deliberately NOT selected. "Practice the N you missed" is the button for
      doing them now; this one is for having them tomorrow, and changing what
-     they are practising mid-results would be answering a question nobody
+     they are practicing mid-results would be answering a question nobody
      asked. */
   state.keeping = { naming: false, name: '', status: `Saved to My sets as “${label}”.` }
   render()
@@ -1846,12 +1893,36 @@ function syncSheet() {
     done.disabled = state.firstRun && !count
   }
 
+  syncTray()
+
   // The summary row is visible through the scrim, so it must not lag behind.
   const name = app.querySelector('.selection__name')
-  if (name) name.textContent = describeSelection()
+  if (name) name.innerHTML = selectionSummary()
   const shown = app.querySelector('.selection__count')
   if (shown) shown.textContent = `${count} cards`
 }
+
+/* The tray is replaced rather than diffed — it is a handful of spans, and the
+   alternative is tracking which chip belongs to which row. Like everything
+   else inside the picker it must not call render(), which would restart the
+   panel's entry animation and read as a flash. */
+function syncTray() {
+  const tray = app.querySelector('.sheet__tray')
+  if (!tray) return
+  const tab = state.firstRun ? 'practice' : state.sheetTab
+  tray.outerHTML = sheetTray(tab)
+}
+
+/* Two names, then a counter. Two is what fits beside the chevron at 360px
+   without wrapping to a third line. */
+/* Every name, joined. "3 sets" is no use to someone trying to work out what
+   they are in the middle of; the CSS truncates with an ellipsis and the title
+   attribute carries the whole thing. */
+const selectionNames = () => selectedSets().map((s) => s.label).join(' · ')
+
+const SUMMARY_CHIPS = 2
+const selectionSummary = () =>
+  state.selection.size ? selectionChips(SUMMARY_CHIPS) : escapeHtml(describeSelection())
 
 /* Opening and closing are the only re-renders, so the entry animation runs
    once. Focus goes into the sheet on open and back to the row that opened it on
@@ -1995,6 +2066,16 @@ function progress() {
   const position = state.index + 1
   return `
     <div class="progress">
+      ${
+        /* What you are in the middle of. Nothing on this screen said so, which
+           leaves a child handed the tablet mid-session — or coming back after
+           lunch — with no way to tell. Hidden from the accessibility tree
+           because the screen is already announced on the way in and this would
+           repeat it on every card. */
+        `<span class="progress__who" aria-hidden="true" title="${escapeHtml(
+          selectionNames()
+        )}">${escapeHtml(selectionNames())}</span>`
+      }
       <div class="progress__bar" role="progressbar"
            aria-valuemin="1" aria-valuemax="${total}" aria-valuenow="${position}"
            aria-valuetext="Card ${position} of ${total}">
@@ -2043,7 +2124,7 @@ function renderHome() {
       <button class="selection" id="selection" aria-haspopup="dialog"
               aria-expanded="${state.sheet ? 'true' : 'false'}">
         <span class="selection__text">
-          <span class="selection__name">${escapeHtml(describeSelection())}</span>
+          <span class="selection__name">${selectionSummary()}</span>
           <span class="selection__count">${activeCards().length} cards</span>
         </span>
         ${icon('chevron', 'icon--chevron')}
