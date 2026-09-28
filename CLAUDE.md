@@ -83,6 +83,10 @@ write endpoint is a Vite plugin marked `apply: 'serve'`, so neither reaches the 
   truncated link must fail loudly — deflate catches it — never save a short word list.
   Sharing does NOT work for an iOS app installed to the Home Screen: storage there is
   partitioned from Safari, which is where the link opens. Documented, not solved.
+- Nothing inside the picker calls `render()` — that rebuilds the panel and restarts its
+  entry animation, which reads as a flash. Swap the rows with `refreshSheet()` and re-bind
+  with `bindSheetList()`. The one exception is a change to the panel's SHAPE, like deleting
+  the last selected set and falling back to the first run.
 - The picker has two tabs: Practice chooses, My sets manages. Nothing that edits or deletes
   belongs on a Practice row — that is the row people tap every day.
 - Sets the user makes live in `localStorage` and are merged with the generated `SETS` at

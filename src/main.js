@@ -918,6 +918,69 @@ function libraryCard(set) {
     </div>`
 }
 
+const sheetTitle = (tab) =>
+  state.firstRun
+    ? 'What would you like to practice?'
+    : tab === 'practice'
+      ? 'What to practice'
+      : 'My sets'
+
+const sheetFootLabel = (tab, count) =>
+  state.firstRun
+    ? `Confirm${count ? ` · ${count} cards` : ''}`
+    : tab === 'practice'
+      ? `Done · ${count} cards`
+      : 'Done'
+
+/* Just the rows. Kept separate from the panel around it so switching tabs can
+   replace this and nothing else — rebuilding the panel restarts its entry
+   animation, which reads as the whole thing flashing. */
+function sheetList(tab) {
+  if (tab === 'practice') {
+    return sections()
+      .map(
+        (section) => `
+          <p class="menu__heading">${escapeHtml(section)}</p>
+          ${setsIn(section).map(setRow).join('')}`
+      )
+      .join('')
+  }
+  return `
+    ${
+      state.userSets.length
+        ? state.userSets.map(libraryCard).join('')
+        : `<p class="sheet__empty">
+             Nothing here yet. A set is any words you want to practise together —
+             the ones on this week's test, or the ones you keep getting wrong.
+           </p>`
+    }
+    <button class="libnew" id="new-set">
+      ${icon('plus', 'icon--act')}
+      <span><b>New set</b><small>Pick words and give it a name</small></span>
+    </button>`
+}
+
+/* Swap the rows and everything that describes them, leaving the panel element
+   itself alone. Used by every interaction inside the panel: changing tab,
+   arming a delete, changing your mind about one. */
+function refreshSheet() {
+  const sheet = app.querySelector('.sheet')
+  if (!sheet) return
+  const tab = state.firstRun ? 'practice' : state.sheetTab
+
+  sheet.querySelector('.sheet__title').textContent = sheetTitle(tab)
+  const panel = sheet.querySelector('.sheet__list')
+  panel.innerHTML = sheetList(tab)
+  panel.setAttribute('aria-labelledby', state.firstRun ? 'sheet-title' : `tab-${tab}`)
+  panel.scrollTop = 0
+  for (const btn of sheet.querySelectorAll('[role="tab"]')) {
+    btn.setAttribute('aria-selected', String(btn.dataset.tab === tab))
+  }
+  sheet.querySelector('.sheet__note').textContent = ''
+  bindSheetList()
+  syncSheet()
+}
+
 function renderSheet() {
   if (!state.sheet) return ''
   const first = state.firstRun
@@ -925,7 +988,6 @@ function renderSheet() {
   /* No tabs during the first run. Someone who has chosen nothing yet has one
      job, and a second tab holding an empty library is a detour away from it. */
   const tab = first ? 'practice' : state.sheetTab
-  const mine = state.userSets
 
   return `
     <div class="sheet-scrim" ${first ? '' : 'data-close'}></div>
@@ -947,50 +1009,21 @@ function renderSheet() {
              </div>`
       }
       <div class="sheet__list" id="sheet-panel" role="tabpanel"
-           aria-labelledby="${first ? 'sheet-title' : `tab-${tab}`}">
-        ${
-          tab === 'practice'
-            ? sections()
-                .map(
-                  (section) => `
-            <p class="menu__heading">${escapeHtml(section)}</p>
-            ${setsIn(section).map(setRow).join('')}`
-                )
-                .join('')
-            : `${
-                mine.length
-                  ? mine.map(libraryCard).join('')
-                  : `<p class="sheet__empty">
-                       Nothing here yet. A set is any words you want to practise
-                       together — the ones on this week's test, or the ones you
-                       keep getting wrong.
-                     </p>`
-              }
-               <button class="libnew" id="new-set">
-                 ${icon('plus', 'icon--act')}
-                 <span><b>New set</b><small>Pick words and give it a name</small></span>
-               </button>`
-        }
-      </div>
+           aria-labelledby="${first ? 'sheet-title' : `tab-${tab}`}">${sheetList(tab)}</div>
       <p class="sheet__note" role="status" aria-live="polite"></p>
       <div class="sheet__foot">
         <button class="btn" data-close ${first && !count ? 'disabled' : ''}>
           ${
             /* The count belongs to the practice selection, so it is only shown
-               where you are choosing one. On My sets it would be reporting a
-               number you did not just change.
+               where you are choosing one — on My sets it would report a number
+               you did not just change. And it says Confirm rather than Start on
+               a first run, because it closes the picker rather than beginning
+               anything.
 
                The button itself stays: Escape and the scrim also close this,
                but neither is discoverable on a phone, and a panel with no
                visible way out is a dead end. */
-            /* Not "Start": this closes the picker and lands on the home
-               screen, where a mode still has to be chosen. It confirms a
-               choice; it does not begin anything. */
-            first
-              ? `Confirm${count ? ` · ${count} cards` : ''}`
-              : tab === 'practice'
-                ? `Done · ${count} cards`
-                : 'Done'
+            sheetFootLabel(tab, count)
           }
         </button>
       </div>
@@ -1776,12 +1809,17 @@ function deleteSet(id) {
   /* Deleting the only thing selected leaves the state the app reads as "has
      never chosen", which already has an answer: ask again. Picking something on
      their behalf would be the guess this app stopped making. */
+  state.confirmDelete = null
   if (!state.selection.size) {
+    /* The panel itself changes shape here — the tabs go away and the title and
+       button change — so this one is a real re-render rather than a swap of the
+       rows. */
     state.firstRun = true
     state.sheetTab = 'practice'
+    render()
+    return
   }
-  state.confirmDelete = null
-  render()
+  refreshSheet()
 }
 
 /* Ticking a box updates the controls in place rather than re-rendering.
@@ -1804,11 +1842,7 @@ function syncSheet() {
   const count = activeCards().length
   const done = app.querySelector('.sheet__foot .btn')
   if (done) {
-    done.textContent = state.firstRun
-      ? `Confirm${count ? ` · ${count} cards` : ''}`
-      : state.sheetTab === 'practice'
-        ? `Done · ${count} cards`
-        : 'Done'
+    done.textContent = sheetFootLabel(state.firstRun ? 'practice' : state.sheetTab, count)
     done.disabled = state.firstRun && !count
   }
 
@@ -1841,61 +1875,36 @@ function closeSheet() {
   document.getElementById('selection')?.focus()
 }
 
-function bindSheet() {
+function showTab(tab) {
+  state.sheetTab = tab
+  state.confirmDelete = null
+  refreshSheet()
+  document.getElementById(`tab-${tab}`)?.focus()
+}
+
+/* The controls that live inside the swappable list. Re-attached every time the
+   rows are replaced, which is the cost of not rebuilding the panel — and a much
+   smaller cost than the panel flashing on every tab change. */
+function bindSheetList() {
   const sheet = app.querySelector('.sheet')
   if (!sheet) return
-
-  for (const el of app.querySelectorAll('[data-close]')) {
-    el.addEventListener('click', closeSheet)
-  }
-
   const note = sheet.querySelector('.sheet__note')
-  const refused = () => {
-    note.textContent = 'Keep at least one selected — a round needs cards.'
-  }
-
-  const change = (ok) => {
-    if (ok) {
-      note.textContent = ''
-      syncSheet()
-    } else {
-      refused()
-    }
-  }
 
   for (const btn of sheet.querySelectorAll('[data-set]')) {
     btn.addEventListener('click', () => {
       const id = btn.dataset.set
-      change(setSelected(id, !state.selection.has(id)))
-    })
-  }
-
-  for (const btn of sheet.querySelectorAll('[data-tab]')) {
-    btn.addEventListener('click', () => {
-      state.sheetTab = btn.dataset.tab
-      state.confirmDelete = null
-      render()
-      document.getElementById(`tab-${state.sheetTab}`)?.focus()
-    })
-  }
-
-  /* Left and right move between tabs, which is what a tablist is expected to
-     do and what a keyboard user will try. */
-  for (const btn of sheet.querySelectorAll('[role="tab"]')) {
-    btn.addEventListener('keydown', (event) => {
-      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
-      event.preventDefault()
-      state.sheetTab = state.sheetTab === 'practice' ? 'mine' : 'practice'
-      state.confirmDelete = null
-      render()
-      document.getElementById(`tab-${state.sheetTab}`)?.focus()
+      if (setSelected(id, !state.selection.has(id))) {
+        note.textContent = ''
+        syncSheet()
+      } else {
+        note.textContent = 'Keep at least one selected — a round needs cards.'
+      }
     })
   }
 
   for (const btn of sheet.querySelectorAll('[data-edit]')) {
     btn.addEventListener('click', () => openBuilder(btn.dataset.edit))
   }
-
   for (const btn of sheet.querySelectorAll('[data-share]')) {
     btn.addEventListener('click', () => openShare(btn.dataset.share))
   }
@@ -1905,21 +1914,48 @@ function bindSheet() {
   for (const btn of sheet.querySelectorAll('[data-delete]')) {
     btn.addEventListener('click', () => {
       state.confirmDelete = btn.dataset.delete
-      render()
+      refreshSheet()
       document.querySelector(`[data-reallydelete="${state.confirmDelete}"]`)?.focus()
     })
   }
   for (const btn of sheet.querySelectorAll('[data-keepset]')) {
     btn.addEventListener('click', () => {
       state.confirmDelete = null
-      render()
+      refreshSheet()
     })
   }
   for (const btn of sheet.querySelectorAll('[data-reallydelete]')) {
     btn.addEventListener('click', () => deleteSet(btn.dataset.reallydelete))
   }
 
-  document.getElementById('new-set')?.addEventListener('click', () => openBuilder(null))
+  sheet.querySelector('#new-set')?.addEventListener('click', () => openBuilder(null))
+}
+
+function bindSheet() {
+  const sheet = app.querySelector('.sheet')
+  if (!sheet) return
+
+  for (const el of app.querySelectorAll('[data-close]')) {
+    el.addEventListener('click', closeSheet)
+  }
+
+  for (const btn of sheet.querySelectorAll('[data-tab]')) {
+    btn.addEventListener('click', () => {
+      showTab(btn.dataset.tab)
+    })
+  }
+
+  /* Left and right move between tabs, which is what a tablist is expected to
+     do and what a keyboard user will try. */
+  for (const btn of sheet.querySelectorAll('[role="tab"]')) {
+    btn.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+      event.preventDefault()
+      showTab(state.sheetTab === 'practice' ? 'mine' : 'practice')
+    })
+  }
+
+  bindSheetList()
 
   /* Escape closes, and Tab is kept inside — an aria-modal dialog that lets
      focus wander behind the scrim is lying about being modal. */
