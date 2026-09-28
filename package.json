@@ -21,5 +21,8 @@
   },
   "allowScripts": {
     "workerd@1.20260908.1": true
+  },
+  "dependencies": {
+    "qrcode-generator": "^2.0.4"
   }
 }

@@ -1589,3 +1589,50 @@ html, body {
 .libnew b { display: block; font-weight: 600; }
 .libnew small { display: block; color: var(--muted); font-size: 0.78rem; }
 .libnew .icon--act { flex: none; color: var(--muted); }
+
+/* Share screen ------------------------------------------------------------ */
+.share {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-align: center;
+  overflow-y: auto;
+}
+.share__head { display: flex; flex-direction: column; gap: 0.1rem; }
+.share__name { margin: 0; font-weight: 600; font-size: clamp(1.05rem, 4vw, 1.25rem); overflow-wrap: anywhere; }
+.share__count { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.share__hint { margin: 0; color: var(--muted); font-size: 0.85rem; }
+
+/* Always on white. A QR inverted for dark mode does not scan, so this is one
+   of the two places in the app that is not a palette token — and it is a
+   picture of data, not part of the interface. */
+.qr {
+  background: #ffffff;
+  padding: 0.6rem;
+  border-radius: 0.6rem;
+  width: min(15rem, 62vmin);
+  max-width: 100%;
+}
+.qr__img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.qr__fail { margin: 0; padding: 1.5rem 0.5rem; color: #333; font-size: 0.85rem; }
+
+.share__link {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.62rem;
+  line-height: 1.4;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 0.45rem;
+  padding: 0.4rem 0.5rem;
+  max-width: 22rem;
+  word-break: break-all;
+  user-select: all;
+}
+.share__actions { display: flex; flex-direction: column; gap: 0.4rem; }
+.share__status { margin: 0; min-height: 1.2rem; font-size: 0.85rem; text-align: center; color: var(--good); }

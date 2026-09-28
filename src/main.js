@@ -3,6 +3,7 @@ import { shuffle, facesOf, buildChoices } from './choices.js'
 import { confetti } from './confetti.js'
 import { mountTrace } from './trace.js'
 import { isUpdateReady, onUpdateReady, checkForUpdate, applyUpdate } from './update.js'
+import { shareUrl } from './share.js'
 import './style.css'
 
 /* A card's id is its written form, not its position in the array.
@@ -171,6 +172,9 @@ const ICONS = {
     '<path d="M17 24l5 5 9-11" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
   plus:
     '<path d="M24 12v24M12 24h24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>',
+  share:
+    '<path d="M24 32V8M24 8l-8 8M24 8l8 8" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path d="M12 28v10a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2V28" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>',
   trash:
     '<path d="M12 14h24M19 14v-3h10v3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' +
     '<path d="M15 14l2 24h14l2-24" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>',
@@ -241,7 +245,7 @@ const DIRECTIONS = [
 const KANA_SECTION = 'Kana'
 
 const state = {
-  screen: 'home', // 'home' | 'practice' | 'results' | 'builder'
+  screen: 'home', // 'home' | 'practice' | 'results' | 'builder' | 'share'
   mode: 'flashcards', // 'flashcards' | 'choice'
   direction: 'reading-first',
   // id -> 'correct' | 'incorrect'. The source of truth for the score: a card
@@ -267,6 +271,8 @@ const state = {
   /* The set being built or edited, while the builder screen is up. Never
      persisted — nothing is written until Save. */
   builder: null,
+  /* The set being shared, while the share screen is up. */
+  share: null,
   // Ephemeral, never persisted: true while the picker is open.
   sheet: false,
   // Which half of the picker is showing: choosing, or managing.
@@ -797,7 +803,11 @@ function libraryCard(set) {
         confirming
           ? `<button class="libcard__confirm" data-reallydelete="${set.id}">Delete</button>
              <button class="libcard__keep" data-keepset="${set.id}">Keep</button>`
-          : `<button class="libcard__act" data-edit="${set.id}">
+          : `<button class="libcard__act" data-share="${set.id}">
+               ${icon('share', 'icon--act')}
+               <span class="visually-hidden">Share ${escapeHtml(set.label)}</span>
+             </button>
+             <button class="libcard__act" data-edit="${set.id}">
                ${icon('pencil', 'icon--act')}
                <span class="visually-hidden">Edit ${escapeHtml(set.label)}</span>
              </button>
@@ -883,6 +893,145 @@ function renderSheet() {
         </button>
       </div>
     </section>`
+}
+
+/* Sharing a set ----------------------------------------------------------
+   A link carrying the written forms, and a QR code of that link. The QR is the
+   point: a teacher sending a link to thirty students needs thirty addresses,
+   and children this age mostly do not have email. A teacher putting a QR code
+   on the smartboard needs nothing at all.
+   ------------------------------------------------------------------------- */
+
+/* The QR encoder is 50 KB, and it is needed by one screen that most people will
+   never open. Loaded on demand so it is its own chunk rather than part of the
+   app's first parse — still precached, because a teacher standing in front of a
+   class on bad school wifi is exactly who needs it to work offline. */
+let qrcode = null
+const loadQr = () =>
+  qrcode
+    ? Promise.resolve(qrcode)
+    : import('qrcode-generator').then((m) => (qrcode = m.default))
+
+function openShare(id) {
+  const set = state.userSets.find((s) => s.id === id)
+  if (!set) return
+  state.share = { set, url: '', status: '' }
+  state.sheet = false
+  state.screen = 'share'
+  render()
+
+  // Both are async — compression, and fetching the encoder — so the screen
+  // draws first and fills in.
+  Promise.all([shareUrl({ label: set.label, forms: set.forms }), loadQr()])
+    .then(([url]) => {
+      if (state.share?.set.id !== id) return
+      state.share.url = url
+      render()
+    })
+    .catch(() => {
+      if (state.share?.set.id !== id) return
+      state.share.status = 'This set could not be turned into a link.'
+      render()
+    })
+}
+
+function closeShare() {
+  state.share = null
+  state.screen = 'home'
+  state.sheet = true
+  state.sheetTab = 'mine'
+  render()
+}
+
+/* Drawn as an <img> from a data URL rather than a canvas: it prints, it can be
+   long-pressed and saved like any other image, and it needs no redraw on
+   resize. Always on white — a QR inverted for dark mode does not scan. */
+function qrTag(url) {
+  try {
+    const code = qrcode(0, 'M')
+    code.addData(url)
+    code.make()
+    return `<img class="qr__img" src="${code.createDataURL(4, 8)}"
+                 alt="QR code containing the link to this set" />`
+  } catch {
+    return `<p class="qr__fail">This set is too long to fit in a QR code. The link still works.</p>`
+  }
+}
+
+function renderShare() {
+  const { set, url, status } = state.share
+  const canSend = typeof navigator.share === 'function'
+
+  app.innerHTML = `
+    <header class="topbar">
+      <button class="menu__trigger" id="share-back">
+        ${icon('home', 'icon--menu')}
+        <span class="visually-hidden">Back to my sets</span>
+      </button>
+      <h1 class="builder__title">Share this set</h1>
+      ${settingsMenu()}
+    </header>
+
+    <div class="share">
+      <div class="share__head">
+        <p class="share__name">${escapeHtml(set.label)}</p>
+        <p class="share__count">${set.cards} word${set.cards === 1 ? '' : 's'}</p>
+      </div>
+
+      ${
+        url
+          ? `<div class="qr">${qrTag(url)}</div>
+             <p class="share__hint">Point a camera at it, or use the link below.</p>
+             <p class="share__link" id="share-link">${escapeHtml(url)}</p>`
+          : `<p class="share__hint">${escapeHtml(status || 'Making the link…')}</p>`
+      }
+    </div>
+
+    <div class="actions share__actions">
+      <p class="share__status" role="status" aria-live="polite">${escapeHtml(status && url ? status : '')}</p>
+      <button class="btn" id="share-copy" ${url ? '' : 'disabled'}>Copy link</button>
+      ${canSend ? `<button class="btn btn--secondary" id="share-send" ${url ? '' : 'disabled'}>Send…</button>` : ''}
+    </div>`
+
+  document.getElementById('share-back').addEventListener('click', closeShare)
+
+  /* Updated in place, not re-rendered. The fallback below selects the link so
+     it can be copied by hand, and a re-render replaces the DOM and throws that
+     selection away — the message would be telling the truth about something
+     that had just been undone. */
+  document.getElementById('share-copy')?.addEventListener('click', async () => {
+    const say = (text) => {
+      state.share.status = text
+      const node = document.querySelector('.share__status')
+      if (node) node.textContent = text
+    }
+    try {
+      await navigator.clipboard.writeText(state.share.url)
+      say('Link copied.')
+    } catch {
+      // Blocked in some embedded browsers. Selecting the text is the honest
+      // fallback — saying "copied" when nothing was is worse.
+      const el = document.getElementById('share-link')
+      if (el) {
+        const range = document.createRange()
+        range.selectNodeContents(el)
+        getSelection().removeAllRanges()
+        getSelection().addRange(range)
+      }
+      say('Could not copy it — the link is selected, copy it by hand.')
+    }
+  })
+
+  document.getElementById('share-send')?.addEventListener('click', () => {
+    navigator
+      .share({ title: set.label, text: `${set.label} — kanji practice`, url: state.share.url })
+      .catch(() => {
+        /* Cancelling rejects, and so does a failure. Either way nothing was
+           sent, and the screen should not claim otherwise. */
+      })
+  })
+
+  bindMenus()
 }
 
 /* The set builder ---------------------------------------------------------
@@ -1278,6 +1427,10 @@ function bindSheet() {
 
   for (const btn of sheet.querySelectorAll('[data-edit]')) {
     btn.addEventListener('click', () => openBuilder(btn.dataset.edit))
+  }
+
+  for (const btn of sheet.querySelectorAll('[data-share]')) {
+    btn.addEventListener('click', () => openShare(btn.dataset.share))
   }
 
   /* Two presses, not a confirm dialog: this panel is already a dialog, and a
@@ -1734,6 +1887,7 @@ function render() {
   teardownTrace = null
   if (state.screen === 'home') return renderHome()
   if (state.screen === 'builder') return renderBuilder()
+  if (state.screen === 'share') return renderShare()
   if (state.screen === 'results') return renderResults()
   if (state.mode === 'trace') return renderTrace()
   return state.mode === 'choice' ? renderChoice() : renderFlashcard()

@@ -111,7 +111,21 @@ Every Practice row is a single control, including the user's own. Editing and de
 
 **A set edited down to no words cannot be saved.** Otherwise `isPlayable` starts returning false for a set that is currently selected, and the summary row and the round quietly disagree. **Deleting the only selected set** leaves the state the app reads as "has never chosen", which already has an answer: it asks again.
 
-Not yet: sharing a set as a URL. The set shape — a name and a list of written forms — is exactly what a link would carry.
+### Sharing a set
+
+The share icon on a set's card opens a screen with a **QR code**, the link as selectable text, Copy, and Send where `navigator.share` exists.
+
+The QR is the point rather than a flourish. A teacher sending a link to thirty students needs thirty addresses, and children this age mostly do not have email; a teacher putting a QR code on the smartboard needs nothing at all. It is always drawn on white — a QR inverted for dark mode does not scan — which makes it one of two places in the app that is not a palette token, and it is a picture of data rather than part of the interface.
+
+The link carries **references, not cards**: every copy of the app already has the words, so a link only says which ones. A thirty-word test list is 267 characters including the address. It lives in the fragment, so the payload never reaches the server or its logs.
+
+`src/share.js` encodes it as `<version>.<name>.<words>`, both halves base64url, the words deflated where `CompressionStream` exists and plain where it does not. The version leads so a link made by a later format is recognised and refused rather than mis-read into the wrong words.
+
+**A truncated link is the failure mode worth designing for.** Messaging apps wrap long URLs, and a half payload that still inflated would save a silently short word list — the worst outcome available. Deflate fails on truncation, so it is caught; exercised against a cut link, a mangled one, a missing part and a future version.
+
+The QR encoder is loaded on demand, so it is its own 21 KB chunk rather than part of the app's first parse. It is still precached, because a teacher on bad school wifi is exactly who needs it to work offline.
+
+> **Known gap: iOS Home Screen.** iOS partitions storage between Safari and an installed home-screen web app — session, cookies, `localStorage` and the service worker are all separate. A link tapped in Messages opens in Safari, saves there, and the installed app cannot see it. This works everywhere else: any desktop browser, Android installed, and iOS in Safari. There is an undocumented Cache Storage bridge that may work around it; it is not built, because it cannot be tested without an HTTPS deploy and an iPad.
 
 ### One card per written form
 
