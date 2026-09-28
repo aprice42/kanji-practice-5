@@ -1805,9 +1805,15 @@ html, body {
 .pick__text { display: flex; flex-direction: column; gap: 0.1rem; }
 .pick b { font-size: 1.05rem; font-weight: 600; }
 .pick small { color: var(--muted); font-size: 0.82rem; }
-/* Chosen is a tick AND an edge, never colour on its own. */
-.pick[aria-checked='true'] { border-color: var(--primary-text); }
+/* Chosen is a tick AND an edge AND a tint, never colour on its own — the same
+   four signals the picker rows carry, because it is the same question being
+   asked one screen later. */
+.pick[aria-checked='true'] {
+  border-color: var(--primary-text);
+  background: var(--tint);
+}
 .pick[aria-checked='true'] .pick__mark { color: var(--primary-text); }
+.pick[aria-checked='true'] b { font-weight: 700; }
 
 .pace .seg { width: 100%; }
 .seg {
@@ -1828,11 +1834,19 @@ html, body {
   border-radius: 0.4rem;
   cursor: pointer;
 }
+/* A filled pill, exactly like the direction control directly above it — this
+   is the app's one way of saying "this option, not the others".
+
+   It used to be --bg with a shadow, which works on paper and inverts in the
+   dark themes: --bg is darker than the --rule track, so the chosen size read
+   as a hole punched in the control rather than the one that was picked. A
+   shadow cannot carry a state on a dark ground either. */
 .seg button[aria-pressed='true'] {
-  background: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   font-weight: 600;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
 }
+.seg button:not([aria-pressed='true']):hover { background: var(--surface); }
 
 /* Where the session has got to, under the score on a checkpoint. */
 .session { display: flex; flex-direction: column; gap: 0.2rem; width: min(20rem, 100%); margin-top: 0.5rem; }
