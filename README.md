@@ -32,7 +32,7 @@ start page would be inert for whichever mode you were about to pick.
 
 It used to sit above the card and could be flipped mid-round, which rebuilt the
 multiple-choice options underneath the question being asked. Setting it once is both
-steadier for the person practising and one control less between the top bar and the card.
+steadier for the person practicing and one control less between the top bar and the card.
 
 ### What a round draws from
 
@@ -102,11 +102,11 @@ hard.
 
 ### Keeping the ones you missed
 
-The results screen already knows which words were wrong and already offers to practise them, as a round that evaporates. **Keep these 7 as a set** keeps them.
+The results screen already knows which words were wrong and already offers to practice them, as a round that evaporates. **Keep these 7 as a set** keeps them.
 
 It is the moment the need actually arises — nobody opens a set builder thinking "I should curate a word list"; they finish a round, miss the same seven again, and want those seven tomorrow. So the naming happens inline, on the results screen: the builder exists to *find* words, and these are already in hand.
 
-The new set is **not** selected. "Practice the N you missed" is the button for doing them now; this one is for having them tomorrow, and changing what someone is practising mid-results would answer a question nobody asked.
+The new set is **not** selected. "Practice the N you missed" is the button for doing them now; this one is for having them tomorrow, and changing what someone is practicing mid-results would answer a question nobody asked.
 
 ### Making a set
 
