@@ -1476,6 +1476,8 @@ function renderSettings() {
             : ''
         }
 
+        ${MODES[mode].directional && long ? `<div class="pace__gap"></div>` : ''}
+
         ${
           long
             ? `<div class="pace__group">

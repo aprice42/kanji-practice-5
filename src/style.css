@@ -1955,11 +1955,24 @@ html, body {
   gap: 0.35rem;
   width: 100%;
 }
+/* Left, and full width so the alignment has something to bite on — the group
+   centres its children, which was shrink-wrapping the label to its text. It
+   labels the control below it rather than heading the screen, so it starts
+   where that control starts. */
 .pace__label {
   margin: 0;
+  width: 100%;
   color: var(--muted);
   font-size: 0.85rem;
-  text-align: center;
+  text-align: start;
+}
+
+/* Between the two questions, when both are asked. A flex item rather than a
+   margin, for the same reason the space under the pill is: it can then give
+   way on a short phone instead of pushing the pane into scrolling. */
+.pace__gap {
+  flex: 0 1 clamp(0.25rem, 3vh, 1.5rem);
+  min-height: 0;
 }
 
 .pace__choices {
