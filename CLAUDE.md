@@ -102,14 +102,19 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   `card.sets` alone cannot see them.
 - There is no default selection. A stored selection that no longer resolves sends someone
   back to step one rather than falling back to a guess.
-- Direction and round size are set on the setup screen before the first card and hold for
+- Direction and round size are set on the settings pane before the first card and hold for
   the session. Nothing about how a round works may be changeable during it — direction used
   to be, and flipping it rebuilt the multiple-choice options under the live question.
 - A session is one pass through the selection, SHUFFLED ONCE and dealt in rounds, so a few
   short rounds cover it exactly once. That is the difference from the cap that was tried and
   removed, which re-sampled at random and guaranteed nothing. Above `ASK_ABOVE` cards the
-  app asks all-at-once-or-in-rounds before the first card, every time — pace belongs to the
-  sitting, not the selection, so it is never remembered.
+  settings pane asks all-at-once-or-in-rounds before the first card.
+- Mode, direction and pace ARE remembered, in `kanji-practice:prefs`, and Home offers to
+  repeat the last session in one tap. This reverses an earlier rule that said pace belongs
+  to the sitting and must be asked every time: correct in principle, and wrong for a child
+  opening this on the fourth school night in a row. Written in `beginSession`, when a
+  session actually starts — not when a radio is tapped, because this describes what someone
+  practiced rather than what they were considering on the way there.
 - Every count — tally, progress, score ring — follows `state.round`, since a retry and
   "practice the N you missed" both play a subset. `state.session.firstTry` is written once
   per card and never overwritten, so a retry cannot turn a miss into a win.

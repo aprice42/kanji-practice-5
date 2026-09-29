@@ -192,6 +192,9 @@ const ICONS = {
     '<path d="M29 14l5 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
   chevron:
     '<path d="M18 14l10 10-10 10" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  again:
+    '<path d="M39 24a15 15 0 1 1-4.4-10.6" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>' +
+    '<path d="M39 7v11H28" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
   menu:
     '<path d="M9 15h30M9 24h30M9 33h30" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>',
   home:
@@ -260,6 +263,15 @@ const state = {
   screen: 'home',
   mode: 'flashcards', // 'flashcards' | 'choice'
   direction: 'reading-first',
+  /* How the last session was paced. These used to be module-level bindings
+     that survived navigation and nothing else; they are settings like any
+     other now, and they are remembered — see PREFS_KEY. */
+  paceMode: 'rounds', // 'rounds' | 'all'
+  paceSize: 20,
+  /* True once a session has actually been started, which is what lets Home
+     offer to repeat it. Not the same as "has a selection": someone can tick a
+     set and walk away without ever choosing a mode. */
+  hasLast: false,
   // id -> 'correct' | 'incorrect'. The source of truth for the score: a card
   // answered wrong in round 1 and right in round 2 simply flips to 'correct'.
   status: new Map(),
@@ -304,6 +316,10 @@ const THEME_KEY = 'kanji-practice:theme'
 const PALETTE_KEY = 'kanji-practice:palette'
 const SELECTION_KEY = 'kanji-practice:selection'
 const USER_SETS_KEY = 'kanji-practice:sets'
+/* How the last session was set up. Written when a session actually starts, not
+   when a radio is tapped: this describes what someone practiced, not what they
+   were considering on the way there. */
+const PREFS_KEY = 'kanji-practice:prefs'
 
 /* Caps. Not storage pressure — 200 written forms is about 2 KB — but because
    the app pages nothing anywhere, and a 500-word round is not a round. */
@@ -346,6 +362,20 @@ function loadPrefs() {
     if (Array.isArray(saved)) {
       const known = saved.map(migrateSetId).filter((id) => playableSets().some((s) => s.id === id))
       if (known.length) state.selection = new Set(known)
+    }
+
+    /* Validated field by field rather than spread in. A mode that no longer
+       exists, or a round size that is no longer offered, would otherwise sit
+       in state describing a session the app cannot deal. */
+    const prefs = JSON.parse(localStorage.getItem(PREFS_KEY) ?? 'null')
+    if (prefs && typeof prefs === 'object') {
+      if (MODES[prefs.mode]) state.mode = prefs.mode
+      if (DIRECTIONS.some((d) => d.id === prefs.direction)) state.direction = prefs.direction
+      if (prefs.paceMode === 'rounds' || prefs.paceMode === 'all') state.paceMode = prefs.paceMode
+      if (ROUND_SIZES.includes(prefs.paceSize)) state.paceSize = prefs.paceSize
+      /* Only worth offering to repeat if there is still something to repeat it
+         with — every set may have been deleted since. */
+      state.hasLast = Boolean(MODES[prefs.mode]) && state.selection.size > 0
     }
   } catch {
     // Private browsing or blocked storage — stay on the defaults.
@@ -699,7 +729,38 @@ function beginSession() {
     return
   }
   const long = activeCards().length > ASK_ABOVE
-  startSession(long && paceMode === 'rounds' ? paceSize : null)
+  savePrefs()
+  startSession(long && state.paceMode === 'rounds' ? state.paceSize : null)
+}
+
+/* Swallows its own failure, like saveSelection: a blocked storage should cost
+   someone the shortcut, not the round they were about to start. */
+function savePrefs() {
+  state.hasLast = true
+  try {
+    localStorage.setItem(
+      PREFS_KEY,
+      JSON.stringify({
+        mode: state.mode,
+        direction: state.direction,
+        paceMode: state.paceMode,
+        paceSize: state.paceSize,
+      })
+    )
+  } catch {
+    // Private browsing or a full quota. Nothing to do about it here.
+  }
+}
+
+/* What Home offers to repeat. Named in full, because "Practice again" alone
+   asks someone to remember what they did last time — which is the thing they
+   opened the app instead of doing. */
+function lastSessionLine() {
+  const bits = [describeSelection(), MODES[state.mode].label]
+  if (activeCards().length > ASK_ABOVE) {
+    bits.push(state.paceMode === 'rounds' ? `rounds of ${state.paceSize}` : 'all at once')
+  }
+  return bits.join(' \u00b7 ')
 }
 
 /* Reached from the nav menu mid-round: the answer is to set the session up
@@ -1185,14 +1246,11 @@ function sessionLine() {
    shows you.
    ------------------------------------------------------------------------- */
 
-let paceSize = 20
-let paceMode = 'rounds'
-
 function renderSettings() {
   const mode = state.pendingMode ?? state.mode
   const total = activeCards().length
-  const plan = roundPlan(total, paceSize)
-  const rounds = paceMode === 'rounds'
+  const plan = roundPlan(total, state.paceSize)
+  const rounds = state.paceMode === 'rounds'
   const long = total > ASK_ABOVE
   const kind = selectionIsKana() ? 'kana' : 'word'
 
@@ -1225,7 +1283,7 @@ function renderSettings() {
                    <button class="pick" type="button" role="radio" aria-checked="${rounds}" data-pace-mode="rounds">
                      <span class="pick__mark">${icon(rounds ? 'boxCheck' : 'box', 'icon--box')}</span>
                      <span class="pick__text">
-                       <b>In rounds of ${paceSize}</b>
+                       <b>In rounds of ${state.paceSize}</b>
                        <small>${plan.length} round${plan.length === 1 ? '' : 's'}, with a break after each one</small>
                      </span>
                    </button>
@@ -1237,7 +1295,7 @@ function renderSettings() {
                      rounds
                        ? `<div class="seg" role="group" aria-label="How many cards in a round">
                             ${ROUND_SIZES.map(
-                              (n) => `<button type="button" data-pace="${n}" aria-pressed="${paceSize === n}">${n}</button>`
+                              (n) => `<button type="button" data-pace="${n}" aria-pressed="${state.paceSize === n}">${n}</button>`
                             ).join('')}
                           </div>`
                        : ''
@@ -1270,14 +1328,14 @@ function renderSettings() {
   }
   for (const btn of app.querySelectorAll('[data-pace-mode]')) {
     btn.addEventListener('click', () => {
-      paceMode = btn.dataset.paceMode
-      again('data-pace-mode', paceMode)
+      state.paceMode = btn.dataset.paceMode
+      again('data-pace-mode', state.paceMode)
     })
   }
   for (const btn of app.querySelectorAll('[data-pace]')) {
     btn.addEventListener('click', () => {
-      paceSize = Number(btn.dataset.pace)
-      again('data-pace', paceSize)
+      state.paceSize = Number(btn.dataset.pace)
+      again('data-pace', state.paceSize)
     })
   }
   bindFlow({ next: beginSession, back: () => goScreen('format') })
@@ -2016,16 +2074,33 @@ function renderHome() {
              </div>`
           : ''
       }
+      ${
+        /* One tap back to last night's homework. The flow is right for a first
+           session and for changing what you study, and far too long for the
+           fourth school night in a row. */
+        state.hasLast
+          ? `<button class="bigcard bigcard--go" id="practice-again">
+               <span class="bigcard__glyph">${icon('again', 'icon--big')}</span>
+               <span class="bigcard__text">
+                 <b>Practice again</b>
+                 <small>${escapeHtml(lastSessionLine())}</small>
+               </span>
+             </button>`
+          : ''
+      }
       <button class="bigcard" id="get-started">
         <span class="bigcard__glyph" lang="ja">\u5b57</span>
         <span class="bigcard__text">
-          <b>Get started</b>
-          <small>Choose what you want to study</small>
+          <b>${state.hasLast ? 'Choose something else' : 'Get started'}</b>
+          <small>${
+            state.hasLast ? 'Pick different sets, or a different way' : 'Choose what you want to study'
+          }</small>
         </span>
       </button>
     </div>`
 
   document.getElementById('get-started').addEventListener('click', () => goScreen('sets'))
+  document.getElementById('practice-again')?.addEventListener('click', beginSession)
   bindMenus()
 
   const update = document.getElementById('update')

@@ -2052,3 +2052,11 @@ html, body {
   font-weight: 500;
 }
 .btn--quiet:hover:not(:disabled) { color: var(--ink); background: var(--surface); }
+
+/* Practice again sits above Choose something else, and is the one most people
+   want on a school night — so it carries the accent while the other stays
+   quiet. Both are the same shape: this is a choice between two things, not a
+   button and its footnote. */
+.bigcard--go { border-color: var(--primary-text); background: var(--tint); }
+.bigcard--go .bigcard__glyph { background: var(--primary); color: var(--on-primary); }
+.icon--big { width: 1.6rem; height: 1.6rem; }
