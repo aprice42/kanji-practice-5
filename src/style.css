@@ -1361,8 +1361,11 @@ html, body {
   max-width: var(--col);
   margin-inline: auto;
 }
+/* Also the set builder's heading, which is the same thing: the one line of
+   text at the top of a screen that is otherwise all controls. */
 .pane__title {
-  margin: 0;
+  flex: none;
+  margin: 0 0 0.6rem;
   font-size: clamp(1rem, 4vw, 1.15rem);
   font-weight: 600;
   text-align: center;

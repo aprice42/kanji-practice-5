@@ -1845,14 +1845,14 @@ function renderBuilder() {
   const canSave = Boolean(b.label.trim()) && b.forms.size > 0
 
   app.innerHTML = `
-    <header class="topbar">
-      <button class="menu__trigger" id="builder-back">
-        ${icon('home', 'icon--menu')}
-        <span class="visually-hidden">Back without saving</span>
-      </button>
-      <h1 class="builder__title">${b.id ? 'Edit set' : 'New set'}</h1>
-      ${settingsMenu()}
-    </header>
+    ${
+      /* Title only. No home button, because Cancel and Save are the way out
+         and a third exit that discards without saying so is a mis-tap; no
+         gear, because nothing about this screen is a setting and it is the
+         one piece of chrome that never applied here. */
+      ''
+    }
+    <h1 class="pane__title">${b.id ? 'Edit this set' : 'Build a new set'}</h1>
 
     <div class="builder">
       <div class="builder__field">
@@ -2014,7 +2014,6 @@ function bindBuilder() {
 
   bindChips()
 
-  document.getElementById('builder-back').addEventListener('click', closeBuilder)
   document.getElementById('builder-cancel').addEventListener('click', closeBuilder)
   document.getElementById('save-set')?.addEventListener('click', saveBuilder)
 
