@@ -66,6 +66,10 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   "Practice sets" section: a set that needs a commit and a deploy is not one a teacher can
   make. Sets are built in the app and handed over as a link. Do not reintroduce a
   build-time set format — the app-side path is the whole feature.
+- Class names are shared across screens, so CHECK BEFORE ADDING ONE. `.pill` already
+  belonged to the set builder's grade filters; reusing it for the flow's summary pill made
+  every filter a full-width 44px row and collapsed the word grid to nothing on a phone. The
+  flow's is `.summary`. `grep -n '^\.name' src/style.css` before naming anything.
 - Everything in the flow shares ONE column, `--col` on `#app`. Four different widths were
   on screen at once before that rule existed — a 372px list over a 352px pace block over a
   256px button — and the panes read as a pile of unrelated boxes rather than one column of

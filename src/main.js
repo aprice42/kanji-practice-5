@@ -2221,15 +2221,15 @@ function summaryPill(withMode) {
   const mode = state.pendingMode ?? state.mode
   const total = activeCards().length
   return `
-    <button class="pill" type="button" data-goto="${withMode ? 'format' : 'sets'}">
-      ${withMode ? `<span class="pill__ico">${icon(MODES[mode].icon, 'icon--act')}</span>` : ''}
-      <span class="pill__text">
-        <span class="pill__name">${withMode ? escapeHtml(MODES[mode].label) : selectionSummary()}</span>
-        <span class="pill__count">${
+    <button class="summary" type="button" data-goto="${withMode ? 'format' : 'sets'}">
+      ${withMode ? `<span class="summary__ico">${icon(MODES[mode].icon, 'icon--act')}</span>` : ''}
+      <span class="summary__text">
+        <span class="summary__name">${withMode ? escapeHtml(MODES[mode].label) : selectionSummary()}</span>
+        <span class="summary__count">${
           withMode ? `${escapeHtml(describeSelection())} \u00b7 ${total} cards` : `${total} cards`
         }</span>
       </span>
-      <span class="pill__edit">Change</span>
+      <span class="summary__edit">Change</span>
     </button>`
 }
 
