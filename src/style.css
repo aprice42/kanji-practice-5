@@ -1561,7 +1561,23 @@ html, body {
 .chip:hover .chip__x { color: var(--bad); }
 
 .builder__find { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.pills { display: flex; flex-wrap: wrap; gap: 0.55rem 0.3rem; }
+/* One scrolling row, not three wrapped ones. Eight filters wrapped to 120px
+   of a 667px phone, against 64px for the word grid they filter — the chrome
+   was nearly twice the content. The right edge fades so there is something to
+   say the row continues. */
+.pills {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.3rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  /* Room for the 44px hit areas, which overhang the 34px boxes. */
+  padding-block: 0.3rem;
+  mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent 100%);
+}
+.pills::-webkit-scrollbar { display: none; }
+.pills .pill { flex: none; }
 .pill {
   border: 1px solid var(--edge);
   background: transparent;
@@ -1658,7 +1674,10 @@ html, body {
   max-width: var(--col);
   margin-inline: auto;
 }
-.builder__buttons .btn { flex: 1 1 12rem; min-width: 0; }
+/* 8.5rem, not 12: two fit side by side in a 375px phone's column and only
+   stack below about 340px, where they should. CANCEL and SAVE are short
+   words — 12rem was sized for the longest label in the app, not these. */
+.builder__buttons .btn { flex: 1 1 8.5rem; min-width: 0; }
 
 
 /* Picker tabs -------------------------------------------------------------

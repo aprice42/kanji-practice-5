@@ -1856,7 +1856,7 @@ function renderBuilder() {
 
     <div class="builder">
       <div class="builder__field">
-        <label for="set-name">Name</label>
+        <label class="visually-hidden" for="set-name">Name</label>
         <input type="text" id="set-name" value="${escapeHtml(b.label)}" maxlength="${MAX_NAME}"
                placeholder="Week 3 test" autocomplete="off" />
       </div>
@@ -1865,7 +1865,7 @@ function renderBuilder() {
 
       <div class="builder__find">
         <div class="builder__field">
-          <label for="set-search">Find words</label>
+          <label class="visually-hidden" for="set-search">Find words</label>
           <input type="search" id="set-search" value="${escapeHtml(b.query)}"
                  placeholder="A word, a reading, or a meaning" autocomplete="off" />
         </div>
