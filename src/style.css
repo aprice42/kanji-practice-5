@@ -603,7 +603,10 @@ html, body {
      also stand any Latin character up and look like a mistake. */
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  font-weight: 600;
+  /* Light, because at this size the title is a picture rather than a heading
+     and 600 reads as shouting. See the note below on what actually renders:
+     this face comes from the system, not from the bundled subset. */
+  font-weight: 200;
   color: var(--primary-text);
   line-height: 1.05;
   /* `palt` is the horizontal proportional feature and does nothing here; vpal
