@@ -96,9 +96,12 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   header is the one thing that does not move, which is what makes four panes read as one
   place asking four questions. `flowSteps()` decides how many steps this session has, so
   the rail and the Next/Let's go! label cannot disagree.
-- Nothing inside a pane's list calls `render()` — that rebuilds the pane and resets the
-  scroll position of the list being worked down. Swap the rows with `syncSets()` or
-  `refreshLibrary()` and re-bind with `bindSetList()` / `bindLibrary()`.
+- Nothing inside a scrolling list calls `render()` — that rebuilds the list and resets its
+  scroll, sending someone who scrolled down back to the top on every tap. Swap the rows
+  with `syncSets()`, `refreshLibrary()` or `syncChosen()` and re-bind with `bindSetList()`,
+  `bindLibrary()` or `bindChips()`. The builder's search box is the one deliberate
+  exception: it changes which words the grid holds, so the grid has to be rebuilt and the
+  scroll position no longer means anything.
 - Nothing that edits or deletes belongs on a step-one row — that is the row people tap
   every day. Those live on the manage pane.
 - There is no first-run mode any more. No stored selection means Home offers Get started

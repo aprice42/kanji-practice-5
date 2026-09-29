@@ -1861,25 +1861,7 @@ function renderBuilder() {
                placeholder="Week 3 test" autocomplete="off" />
       </div>
 
-      <div class="builder__chosen">
-        <p class="builder__chosenhead">
-          <span>Chosen</span>
-          <span class="builder__count">${b.forms.size}${full ? ` · full` : ''}</span>
-        </p>
-        ${
-          chosen.length
-            ? `<div class="chips">${chosen
-                .map(
-                  (c) => `<button class="chip" type="button" data-drop="${escapeHtml(c.written)}">
-                            <span${ja(c.written)}>${escapeHtml(c.written)}</span>
-                            <span class="chip__x" aria-hidden="true">×</span>
-                            <span class="visually-hidden">Remove</span>
-                          </button>`
-                )
-                .join('')}</div>`
-            : `<p class="builder__hint">Nothing chosen yet.</p>`
-        }
-      </div>
+      <div class="builder__chosen">${chosenBlock()}</div>
 
       <div class="builder__find">
         <div class="builder__field">
@@ -1923,6 +1905,65 @@ function renderBuilder() {
   bindBuilder()
 }
 
+/* The running list of picked words, on its own so it can be swapped without
+   touching the grid above it. */
+function chosenBlock() {
+  const b = state.builder
+  const chosen = cards.filter((c) => b.forms.has(c.written))
+  const full = b.forms.size >= MAX_FORMS
+  return `
+    <p class="builder__chosenhead">
+      <span>Chosen</span>
+      <span class="builder__count">${b.forms.size}${full ? ` \u00b7 full` : ''}</span>
+    </p>
+    ${
+      chosen.length
+        ? `<div class="chips">${chosen
+            .map(
+              (c) => `<button class="chip" type="button" data-drop="${escapeHtml(c.written)}">
+                        <span${ja(c.written)}>${escapeHtml(c.written)}</span>
+                        <span class="chip__x" aria-hidden="true">\u00d7</span>
+                        <span class="visually-hidden">Remove</span>
+                      </button>`
+            )
+            .join('')}</div>`
+        : `<p class="builder__hint">Nothing chosen yet.</p>`
+    }`
+}
+
+/* Picking a word must NOT re-render. The word grid scrolls, and rebuilding it
+   sends someone who scrolled to 数学 back to 一本 on every tap — which makes
+   choosing more than the first screenful of words impossible. Only the chosen
+   list, the error line and the Save button depend on the pick, so only those
+   are swapped. */
+function syncChosen() {
+  const b = state.builder
+  const box = app.querySelector('.builder__chosen')
+  if (!box) return
+  box.innerHTML = chosenBlock()
+  bindChips()
+
+  const save = document.getElementById('save-set')
+  if (save) save.disabled = !(b.label.trim() && b.forms.size)
+  const error = app.querySelector('.builder__error')
+  if (error) error.textContent = b.error
+}
+
+function bindChips() {
+  for (const chip of app.querySelectorAll('[data-drop]')) {
+    chip.addEventListener('click', () => {
+      const form = chip.dataset.drop
+      state.builder.forms.delete(form)
+      // The grid may be showing this word; un-press it where it stands.
+      for (const tile of app.querySelectorAll('[data-form]')) {
+        if (tile.dataset.form === form) tile.setAttribute('aria-pressed', 'false')
+      }
+      state.builder.error = ''
+      syncChosen()
+    })
+  }
+}
+
 function bindBuilder() {
   const b = state.builder
   const name = document.getElementById('set-name')
@@ -1962,20 +2003,16 @@ function bindBuilder() {
       if (b.forms.has(form)) b.forms.delete(form)
       else if (b.forms.size >= MAX_FORMS) {
         b.error = `A set holds ${MAX_FORMS} words at most.`
-        render()
+        syncChosen()
         return
       } else b.forms.add(form)
       b.error = ''
-      render()
+      tile.setAttribute('aria-pressed', String(b.forms.has(form)))
+      syncChosen()
     })
   }
 
-  for (const chip of app.querySelectorAll('[data-drop]')) {
-    chip.addEventListener('click', () => {
-      b.forms.delete(chip.dataset.drop)
-      render()
-    })
-  }
+  bindChips()
 
   document.getElementById('builder-back').addEventListener('click', closeBuilder)
   document.getElementById('builder-cancel').addEventListener('click', closeBuilder)
