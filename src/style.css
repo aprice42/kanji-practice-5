@@ -640,6 +640,36 @@ html, body {
   text-align: left;
 }
 .card-btn:hover { border-color: var(--primary-text); }
+/* Chosen, on the format pane. These are radios now — tapping picks and Next
+   moves on — so "which one did I pick" has to be answerable at a glance. Four
+   signals, the same four the picker rows and the pace options carry: tint, a
+   bar down the leading edge, a heavier label, and a tick. The border is
+   already 2px, so nothing moves when one is chosen. */
+.card-btn[aria-checked='true'] {
+  background: var(--tint);
+  border-color: var(--primary-text);
+  position: relative;
+  padding-inline-start: calc(clamp(1rem, 3.5vw, 1.4rem) + 0.35rem);
+}
+.card-btn[aria-checked='true']::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block: 0.6rem;
+  width: 5px;
+  border-radius: 3px;
+  background: var(--primary-text);
+}
+.card-btn[aria-checked='true'] .card-btn__label { font-weight: 700; }
+.card-btn[aria-checked='true']::after {
+  content: '\2713';
+  position: absolute;
+  inset-block-start: 0.5rem;
+  inset-inline-end: 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary-text);
+}
 .card-btn__icon {
   grid-row: 1 / 3;
   font-size: clamp(1.6rem, min(7vw, 4vh), 2.25rem);
@@ -1237,14 +1267,26 @@ html, body {
   text-align: center;
 }
 /* The only thing on the screen allowed to scroll. */
+/* A visible edge, because this scrolls and nothing else on the pane does.
+   Without it the rows simply run out at the bottom of the screen and there is
+   no telling whether that is the end of the list. */
 .pane__body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  border: 1px solid var(--rule);
+  border-radius: 0.7rem;
+  background: var(--surface);
+  padding: 0.35rem 0.4rem;
 }
-/* The format pane has three cards rather than a long list, so it centres
-   instead of starting at the top. */
+/* The format pane holds three cards, not a list — it is not a scroll region
+   and a box around it would be a box for its own sake. */
+/* The format and settings panes hold a few controls, not a list. They do not
+   scroll, so a box around them would be a box for its own sake. */
 .pane__body--center {
+  border: 0;
+  background: transparent;
+  padding: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1724,22 +1766,24 @@ html, body {
 .keep__row { display: flex; gap: 0.5rem; }
 .keep__row .btn { flex: 1; }
 
-/* Choosing the pace ------------------------------------------------------- */
-.pace {
-  flex: 1;
-  min-height: 0;
+/* Choosing the pace -------------------------------------------------------
+   One question and its answers. The label was a bare <p> with no rule at all,
+   which meant each one spent 32px of default paragraph margin — two of them
+   was most of the reason "All N at once" kept falling below the fold.
+   ------------------------------------------------------------------------- */
+.pace__group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  text-align: center;
-  overflow-y: auto;
+  gap: 0.35rem;
+  width: 100%;
 }
-.pace__head { display: flex; flex-direction: column; gap: 0.05rem; }
-.pace__mode { margin: 0; color: var(--muted); font-size: 0.85rem; }
-.pace__name { margin: 0; font-weight: 600; font-size: clamp(1.05rem, 4.5vw, 1.25rem); overflow-wrap: anywhere; }
-.pace__count { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.pace__label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
 
 .pace__choices {
   display: flex;
@@ -1937,11 +1981,19 @@ html, body {
   text-align: center;
   padding-bottom: 0.5rem;
 }
-.apphead--big { padding-block: clamp(1rem, 6vh, 3rem) 1.5rem; }
-.apphead--sm {
-  padding-bottom: 0.6rem;
+.apphead--big {
+  padding: clamp(1rem, 6vh, 3rem) 1.25rem 1.5rem;
+  margin: calc(-1 * max(0.625rem, env(safe-area-inset-top))) -1.25rem clamp(1rem, 4vh, 2rem);
+  background: var(--surface);
   border-bottom: 1px solid var(--rule);
-  margin-bottom: 0.6rem;
+}
+.apphead--sm {
+  padding: 0.7rem 1.25rem 0.6rem;
+  /* Bled to the edges of #app's own padding, so it reads as a band the panes
+     sit under rather than a heading that happens to be first. */
+  margin: calc(-1 * max(0.625rem, env(safe-area-inset-top))) -1.25rem 0.6rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
 }
 .apphead--big .apphead__title { font-size: clamp(2rem, min(11vw, 8vh), 4.5rem); }
 .apphead--sm .apphead__title { font-size: clamp(1.35rem, min(6vw, 4.5vh), 2.25rem); }

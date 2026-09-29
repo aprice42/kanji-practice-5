@@ -2370,7 +2370,7 @@ function renderFormat() {
     <div class="pane">
       <p class="pane__title">How do you want to practice?</p>
       ${summaryPill(false)}
-      <div class="pane__body" role="radiogroup" aria-label="How do you want to practice?">
+      <div class="pane__body pane__body--center" role="radiogroup" aria-label="How do you want to practice?">
         ${Object.entries(MODES)
           .map(
             ([id, m]) => `
