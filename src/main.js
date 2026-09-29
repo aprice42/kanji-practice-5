@@ -2693,9 +2693,13 @@ function renderResults() {
             <span class="score__total">of ${total}</span>
           </p>
         </div>
-        <p class="results__label ${missed.length ? '' : 'is-good'}">
-          ${icon('spark', 'icon--spark')} ${celebration.message}
-        </p>
+        ${
+          /* No cheer line. The confetti says it, and on a small phone that
+             sentence cost 30px and its margins out of a screen where the list
+             of missed words had 53. `celebration` is still read below, for how
+             much confetti to throw. */
+          ''
+        }
         <span class="visually-hidden">${correct.length} of ${total} correct</span>
         ${sessionLine()}
       </div>
@@ -2728,29 +2732,31 @@ function renderResults() {
                </div>
              </div>`
           : `${
+              /* Both act on the same nine words, so they are one row rather
+                 than two full-width buttons. The count is already in the
+                 Missed heading above, in bigger type — repeating it in both
+                 labels is what made them too long to sit side by side. */
               missed.length
-                ? `<button class="btn btn--secondary" id="retry">
-                     ${more ? `Try the ${missed.length} just missed` : `Practice the ${missed.length} you missed`}
-                   </button>
-                   <button class="btn btn--secondary" id="keep-start">
-                     Keep ${missed.length === 1 ? 'it' : `these ${missed.length}`} as a set
-                   </button>`
+                ? `<div class="results__pair">
+                     <button class="btn btn--secondary" id="retry">Try again</button>
+                     <button class="btn btn--secondary" id="keep-start">Keep as a set</button>
+                   </div>`
                 : ''
             }
-            <button class="btn ${more || missed.length ? 'btn--secondary' : ''}" id="restart">
-              ${more ? 'Back to home' : 'Start over'}
-            </button>
             ${
-              /* Last, and deliberately. During a round the ✓ and ✗ buttons sit
-                 in this same strip, so whatever lands at the bottom is where a
-                 thumb already is — and answering three cards in a rhythm should
-                 not be able to quit the session. The harmless action takes that
-                 spot; leaving is one row up. */
+              /* Mid-session there is no Back to home here: the menu in the top
+                 left carries Home on every round screen, and it was the only
+                 one of these that was duplicated elsewhere.
+
+                 Whatever is last is where a thumb already is — during a round
+                 the ✓ and ✗ buttons sit in this same strip, so answering three
+                 cards in a rhythm must not be able to quit the session. The
+                 harmless action takes that spot. */
               more
                 ? `<button class="btn" id="next-round">
                      Next round · ${state.session.plan[state.session.roundIndex + 1]} cards
                    </button>`
-                : ''
+                : `<button class="btn" id="restart">Start over</button>`
             }`
       }
     </div>`

@@ -1959,6 +1959,29 @@ html, body {
 }
 .keep input:focus { border-color: var(--primary-text); }
 /* Same reasoning as .builder__buttons above. */
+/* The two things you can do with the words you just missed. One row, because
+   they share a subject; wrapping rather than a breakpoint, so they stack on a
+   phone too narrow to hold both. */
+.results__pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: var(--col);
+  margin-inline: auto;
+}
+.results__pair .btn {
+  flex: 1 1 8rem;
+  min-width: 0;
+  /* .btn is sized for a full-width button and carries 2.5rem of horizontal
+     padding — 80px of a 163px half-width button, which left "Keep as a set"
+     wrapping onto three lines. These two are secondary, so they take a smaller
+     step of the same scale and only the padding they need. */
+  padding-inline: 0.75rem;
+  font-size: clamp(0.9rem, 2.6vw, 1.1rem);
+  letter-spacing: 0.05em;
+}
+
 .keep__row {
   display: flex;
   flex-wrap: wrap;
