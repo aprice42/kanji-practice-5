@@ -3,10 +3,10 @@
   "name": "kanji-practice-5",
   "compatibility_date": "2026-09-12",
   // The app's address. `custom_domain` (rather than a bare route) is what makes
-  // Cloudflare create the proxied DNS record for `jdli` and issue the cert; the
+  // Cloudflare create the proxied DNS record for `kanji` and issue the cert; the
   // zone de516n.com has to be in this same account. Applied on deploy, which
   // here means a push to main.
-  "routes": [{ "pattern": "jdli.de516n.com", "custom_domain": true }],
+  "routes": [{ "pattern": "kanji.de516n.com", "custom_domain": true }],
   "assets": {
     // Vite's build output. `npm run build` produces this, then
     // `npx wrangler deploy` uploads it as static assets.
