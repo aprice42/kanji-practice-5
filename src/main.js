@@ -1408,7 +1408,7 @@ function renderShare() {
 
   document.getElementById('share-send')?.addEventListener('click', () => {
     navigator
-      .share({ title: set.label, text: `${set.label} — JDLI Kanji Practice`, url: state.share.url })
+      .share({ title: set.label, text: `${set.label} — Japanese Kanji Practice`, url: state.share.url })
       .catch(() => {
         /* Cancelling rejects, and so does a failure. Either way nothing was
            sent, and the screen should not claim otherwise. */
@@ -2222,7 +2222,7 @@ function appHeader(big) {
     <header class="apphead ${big ? 'apphead--big' : 'apphead--sm'}">
       <hgroup class="apphead__group">
         <h1 class="apphead__title" lang="ja">\u6f22\u5b57\u306e\u7df4\u7fd2</h1>
-        <p class="apphead__tag">JDLI Kanji Practice</p>
+        <p class="apphead__tag">Japanese Kanji Practice</p>
       </hgroup>
       ${settingsMenu()}
     </header>`
@@ -2310,7 +2310,7 @@ function renderHome() {
     <div class="home">
       <div class="hero">
         <h1 class="hero__title" lang="ja">\u6f22\u5b57\u306e\u7df4\u7fd2</h1>
-        <p class="hero__tag">JDLI Kanji Practice</p>
+        <p class="hero__tag">Japanese Kanji Practice</p>
       </div>
       <div class="home__panel">
       ${

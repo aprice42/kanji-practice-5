@@ -1,4 +1,4 @@
-# JDLI Kanji Practice
+# Japanese Kanji Practice
 
 A flashcard PWA for kanji practice. It started as one 5th-grader's homework, built from
 worksheets his teacher sends home; it now ships the school's Grade 1-5 curriculum and the
