@@ -83,19 +83,25 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   truncated link must fail loudly — deflate catches it — never save a short word list.
   Sharing does NOT work for an iOS app installed to the Home Screen: storage there is
   partitioned from Safari, which is where the link opens. Documented, not solved.
-- Nothing inside the picker calls `render()` — that rebuilds the panel and restarts its
-  entry animation, which reads as a flash. Swap the rows with `refreshSheet()` and re-bind
-  with `bindSheetList()`. The one exception is a change to the panel's SHAPE, like deleting
-  the last selected set and falling back to the first run.
-- The picker has two tabs: Practice chooses, My sets manages. Nothing that edits or deletes
-  belongs on a Practice row — that is the row people tap every day.
+- Setting a session up is a FLOW OF PANES, not a dialog and not a screen swap: Home → sets
+  → format → settings → the first card, with manage-my-sets as a detour off step one. The
+  header is the one thing that does not move, which is what makes four panes read as one
+  place asking four questions. `flowSteps()` decides how many steps this session has, so
+  the rail and the Next/Let's go! label cannot disagree.
+- Nothing inside a pane's list calls `render()` — that rebuilds the pane and resets the
+  scroll position of the list being worked down. Swap the rows with `syncSets()` or
+  `refreshLibrary()` and re-bind with `bindSetList()` / `bindLibrary()`.
+- Nothing that edits or deletes belongs on a step-one row — that is the row people tap
+  every day. Those live on the manage pane.
+- There is no first-run mode any more. No stored selection means Home offers Get started
+  and step one's Next stays disabled until something is ticked; unticking the last set is
+  allowed, because that is where everyone starts.
 - Sets the user makes live in `localStorage` and are merged with the generated `SETS` at
   runtime, so anything reading the set list must be a function, not a module-level constant
   — they load after this file does. Membership goes through the one index in `main.js`;
   `card.sets` alone cannot see them.
-- There is no default selection. A student who has never chosen gets a non-dismissible
-  picker; after that it is remembered. A stored selection that no longer resolves asks
-  again rather than falling back to a guess.
+- There is no default selection. A stored selection that no longer resolves sends someone
+  back to step one rather than falling back to a guess.
 - Direction and round size are set on the setup screen before the first card and hold for
   the session. Nothing about how a round works may be changeable during it — direction used
   to be, and flipping it rebuilt the multiple-choice options under the live question.

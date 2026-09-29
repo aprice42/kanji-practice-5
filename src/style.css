@@ -550,9 +550,8 @@ html, body {
   gap: clamp(0.7rem, 2vh, 1.25rem);
   text-align: center;
 }
-.home__title {
+.apphead__title {
   margin: 0;
-  font-size: clamp(2rem, min(11vw, 8vh), 4.5rem);
   /* Klee One sets CJK on a full-width grid, which leaves airy gaps either side
      of narrow kana like の and makes a short title read as disconnected
      characters. "palt" switches to each glyph's own width; the small positive
@@ -568,13 +567,13 @@ html, body {
 
    Specificity: `:root :lang(ja)` is (0,2,0) and would otherwise win over a bare
    class, which is why it is written this way rather than as `.home__title`. */
-:root .home__title:lang(ja) {
+:root .apphead__title:lang(ja) {
   font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
 }
 /* The title and its translation are one unit, so they are grouped and spaced
    tightly against each other rather than being two children of .home competing
    with its much larger gap. */
-.home__heading {
+.apphead__group {
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -587,9 +586,8 @@ html, body {
    section containing the mode buttons into the document outline and every
    screen reader's heading list. The text is in the DOM either way, which is all
    a crawler cares about. */
-.home__tagline {
-  margin: 0 0 3rem;
-  font-size: clamp(1rem, min(4.2vw, 3vh), 1.6rem);
+.apphead__tag {
+  margin: 0;
   letter-spacing: 0.01em;
   color: var(--muted);
 }
@@ -1216,71 +1214,67 @@ html, body {
 }
 .selection .icon--chevron { flex: none; }
 
-/* The selection sheet -----------------------------------------------------
-   Fixed, so it escapes #app's `overflow: hidden` and its 1080px cap. Above the
-   confetti canvas (10) and the menu panels (20).
-
-   Centred rather than anchored to the bottom edge. It holds seven rows when
-   collapsed, so a bottom sheet left a tall band of dead space above it and put
-   the panel off-centre on every screen; centring also stops the Done button
-   sitting on the home indicator.
+/* A pane of the flow ------------------------------------------------------
+   This used to be a modal dialog — fixed, centred, over a scrim, with a focus
+   trap, an Escape handler and a first-run mode that refused to close. It is a
+   screen now, which deletes all of that: choosing what to practice is not an
+   interruption of something else, it IS the thing.
    ------------------------------------------------------------------------- */
-.sheet-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  /* No shadow or overlay token exists, and adding one would mean editing all
-     eight palette blocks. Mixing from --ink derives the scrim from whichever
-     palette and theme is active instead. */
-  background: color-mix(in srgb, var(--ink) 55%, transparent);
-  border: 0;
-}
-.sheet {
-  position: fixed;
-  z-index: 31;
-  /* inset + auto margins + a content height is what actually centres a fixed
-     element on both axes. `height: max-content` is load-bearing: without it the
-     element stretches to the inset box and the vertical centring does nothing. */
-  inset: 0;
-  margin: auto;
-  height: max-content;
-  width: calc(100% - 1.75rem);
-  max-width: 34rem;
+.pane {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  /* Leaves a gutter top and bottom at every height, so the panel never runs
-     under the status bar or the home indicator. */
-  max-height: calc(100dvh - 3rem);
-  background: var(--bg);
-  border: 1px solid var(--edge);
-  border-radius: 1rem;
-  box-shadow: 0 8px 28px rgb(0 0 0 / 0.18);
-  padding: 0.875rem;
   gap: 0.5rem;
+  width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
 }
-.sheet__lede {
-  margin: 0;
-  text-align: center;
-  font-size: 0.9rem;
-  color: var(--muted);
-  text-wrap: pretty;
-}
-.sheet__title {
+.pane__title {
   margin: 0;
   font-size: clamp(1rem, 4vw, 1.15rem);
   font-weight: 600;
   text-align: center;
 }
-/* The only thing on the page allowed to scroll. */
-.sheet__list {
+/* The only thing on the screen allowed to scroll. */
+.pane__body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
 }
-/* Scoped to the sheet rather than set as a blanket `button` rule: the Done
-   button lives in here too, and a blanket rule has stripped a nested control of
-   its shape twice in this project already. */
-.sheet__check {
+/* The format pane has three cards rather than a long list, so it centres
+   instead of starting at the top. */
+.pane__body--center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(0.4rem, 1.2vh, 0.8rem);
+}
+.pane__actions {
+  width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
+}
+.pane__empty {
+  margin: 0.5rem 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+/* Reserved height, so the refusal appearing does not shift the list under a
+   finger that is already moving. */
+.pane__note {
+  margin: 0;
+  min-height: 1.25rem;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--bad);
+}
+
+/* Scoped rather than set as a blanket `button` rule: a blanket rule has
+   stripped a nested control of its shape twice in this project already. */
+.setrow {
   display: flex;
   align-items: center;
   gap: 0.625rem;
@@ -1297,24 +1291,24 @@ html, body {
   border-radius: 0.625rem;
   cursor: pointer;
 }
-.sheet__check:hover:not([disabled]) { background: var(--surface); }
-.sheet__check[disabled] { cursor: default; color: var(--muted); }
+.setrow:hover:not([disabled]) { background: var(--surface); }
+.setrow[disabled] { cursor: default; color: var(--muted); }
 /* Chosen is FOUR signals at once — tint, an edge bar, a heavier label and the
    tick — because one of them is always failing somebody: colour for a
    colourblind reader, weight on a washed-out school screen, the 1.35rem tick
    for a seven-year-old scanning a list of nine at arm's length. The border is
    transparent when off so switching one on does not move the row. */
-.sheet__check {
+.setrow {
   position: relative;
   border: 2px solid transparent;
 }
-.sheet__check[aria-checked='true'] {
+.setrow[aria-checked='true'] {
   background: var(--tint);
   border-color: var(--primary-text);
   font-weight: 600;
   padding-left: 0.85rem;
 }
-.sheet__check[aria-checked='true']::before {
+.setrow[aria-checked='true']::before {
   content: '';
   position: absolute;
   inset-inline-start: 0;
@@ -1323,49 +1317,21 @@ html, body {
   border-radius: 3px;
   background: var(--primary-text);
 }
-.sheet__check[aria-checked='true']:hover { background: var(--tint); }
-.sheet__check[aria-checked='true'] .sheet__count { color: var(--primary-text); }
-.sheet__box { display: flex; flex: none; }
+.setrow[aria-checked='true']:hover { background: var(--tint); }
+.setrow[aria-checked='true'] .setrow__count { color: var(--primary-text); }
+.setrow__box { display: flex; flex: none; }
 .icon--box { width: 1.35rem; height: 1.35rem; }
-.sheet__check[aria-checked='false'] .sheet__box { color: var(--muted); }
-.sheet__check[aria-checked='true'] .sheet__box { color: var(--primary-text); }
-.sheet__label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.sheet__count {
+.setrow[aria-checked='false'] .setrow__box { color: var(--muted); }
+.setrow[aria-checked='true'] .setrow__box { color: var(--primary-text); }
+.setrow__label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.setrow__count {
   flex: none;
   font-variant-numeric: tabular-nums;
   font-size: 0.875rem;
   color: var(--muted);
 }
-.sheet__count.is-muted { font-style: italic; }
+.setrow__count.is-muted { font-style: italic; }
 .icon--chevron { width: 1.1rem; height: 1.1rem; }
-.sheet__note {
-  margin: 0;
-  min-height: 1.25rem;
-  font-size: 0.85rem;
-  text-align: center;
-  color: var(--bad);
-}
-.sheet__foot { display: flex; }
-.sheet__foot .btn { flex: 1; }
-
-/* House style adds motion on request; it never removes it in a reduce block.
-
-   The panel runs this once, when it opens. Ticking a box updates the controls
-   in place rather than re-rendering — see syncSheet — because rebuilding the
-   screen restarted this animation on every click and read as a flash. */
-@media (prefers-reduced-motion: no-preference) {
-  .sheet { animation: sheet-in 160ms ease; }
-  .sheet-scrim { animation: scrim-in 160ms ease; }
-}
-@keyframes sheet-in {
-  from { transform: scale(0.98); opacity: 0; }
-  to   { transform: none; opacity: 1; }
-}
-@keyframes scrim-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
 /* The set builder ---------------------------------------------------------
    A screen, so it gets the app's column layout rather than the panel's. Only
    the results list scrolls; the name, the chosen words and the search stay put,
@@ -1553,7 +1519,7 @@ html, body {
 }
 .tabs button:hover:not([aria-selected='true']) { color: var(--primary-text); }
 
-.sheet__empty {
+.pane__empty {
   margin: 0.4rem 0.35rem 0.6rem;
   color: var(--muted);
   font-size: 0.88rem;
@@ -1873,7 +1839,7 @@ html, body {
    gesture and also a destructive tap sitting directly on a scroll surface —
    the rows below are where you change your mind.
    ------------------------------------------------------------------------- */
-.sheet__tray {
+.tray {
   flex: none;
   background: var(--surface);
   border: 1px solid var(--rule);
@@ -1881,7 +1847,7 @@ html, body {
   padding: 0.5rem 0.6rem;
   margin-bottom: 0.6rem;
 }
-.sheet__trayhead {
+.tray__head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -1893,7 +1859,7 @@ html, body {
   font-weight: 600;
   margin-bottom: 0.4rem;
 }
-.sheet__traycount { font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+.tray__count { font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
 /* Capped and scrollable: every grade plus both kana is nine chips, which would
    otherwise push the rows it describes off the screen. */
 .chiplist { display: flex; flex-wrap: wrap; gap: 0.3rem; max-height: 4.5rem; overflow-y: auto; }
@@ -1912,7 +1878,7 @@ html, body {
   color: var(--muted);
   border: 1px solid var(--edge);
 }
-.sheet__trayempty { font-size: 0.82rem; color: var(--muted); }
+.tray__empty { font-size: 0.82rem; color: var(--muted); }
 
 /* The summary row names what is chosen instead of collapsing to "3 sets" —
    three is exactly the point where a child stops being able to hold it. */
@@ -1954,3 +1920,135 @@ html, body {
   border-radius: 999px;
   padding: 0.15rem 0.45rem;
 }
+
+
+/* The header every pane wears --------------------------------------------
+   It is the one thing that does not move as the flow advances, which is what
+   makes four panes read as one place asking four questions. Full size on Home,
+   a size down once the flow starts: at full size it is about 140px of a 650px
+   phone, which is the point on Home and is in the way everywhere else.
+   ------------------------------------------------------------------------- */
+.apphead {
+  flex: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 0.5rem;
+}
+.apphead--big { padding-block: clamp(1rem, 6vh, 3rem) 1.5rem; }
+.apphead--sm {
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 0.6rem;
+}
+.apphead--big .apphead__title { font-size: clamp(2rem, min(11vw, 8vh), 4.5rem); }
+.apphead--sm .apphead__title { font-size: clamp(1.35rem, min(6vw, 4.5vh), 2.25rem); }
+.apphead--big .apphead__tag { font-size: clamp(1rem, min(4.2vw, 3vh), 1.6rem); }
+.apphead--sm .apphead__tag { font-size: clamp(0.78rem, 2.8vw, 0.95rem); }
+/* The gear is chrome, not part of the flow, so it sits out of the column. */
+.apphead .menu {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+}
+
+/* How much more of this ---------------------------------------------------
+   The question a child asks at step one. Nothing answered it before, and an
+   unanswered "how long is this" is what makes someone give up on step one.
+   ------------------------------------------------------------------------- */
+.rail {
+  flex: none;
+  display: flex;
+  gap: 0.3rem;
+  width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
+}
+.rail__seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--rule);
+}
+.rail__seg.is-done { background: var(--primary-text); }
+.rail__txt {
+  flex: none;
+  margin: 0.3rem 0 0.5rem;
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+/* What has been chosen so far, carried forward. A button, not a caption. */
+.pill {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  appearance: none;
+  border: 1px solid var(--rule);
+  border-radius: 0.7rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.pill:hover { border-color: var(--primary-text); }
+.pill__ico { flex: none; display: flex; color: var(--primary-text); }
+.pill__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.pill__name { font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
+.pill__count { font-size: 0.78rem; color: var(--muted); }
+.pill__edit { flex: none; font-size: 0.78rem; font-weight: 600; color: var(--primary-text); }
+
+/* The way in. One card on Home, because a screen whose first element starts
+   the thing gives you no moment to read the second element. */
+.bigcard {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  max-width: 22rem;
+  appearance: none;
+  border: 2px solid var(--edge);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  padding: 0.85rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.bigcard:hover { border-color: var(--primary-text); }
+.bigcard__glyph {
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.65rem;
+  background: var(--tint);
+  color: var(--primary-text);
+  font-size: 1.75rem;
+  font-weight: 600;
+  font-feature-settings: "palt" 1;
+}
+.bigcard__text b { display: block; font-size: 1.05rem; font-weight: 600; }
+.bigcard__text small { display: block; font-size: 0.82rem; color: var(--muted); margin-top: 0.1rem; }
+
+/* Back, and the detour. Quiet because neither is the thing most people want,
+   and Back is last because the harmless action belongs at the bottom. */
+.btn--quiet {
+  background: transparent;
+  color: var(--muted);
+  border: 2px solid transparent;
+  font-weight: 500;
+}
+.btn--quiet:hover:not(:disabled) { color: var(--ink); background: var(--surface); }

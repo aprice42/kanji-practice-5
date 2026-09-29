@@ -254,7 +254,10 @@ const DIRECTIONS = [
 const KANA_SECTION = 'Kana'
 
 const state = {
-  screen: 'home', // 'home' | 'pace' | 'practice' | 'results' | 'builder' | 'share' | 'receive'
+  /* 'home' | 'sets' | 'manage' | 'format' | 'settings' | 'practice' |
+     'results' | 'builder' | 'share' | 'receive'. The three flow panes are
+     screens like any other: choosing what to practice is not a dialog. */
+  screen: 'home',
   mode: 'flashcards', // 'flashcards' | 'choice'
   direction: 'reading-first',
   // id -> 'correct' | 'incorrect'. The source of truth for the score: a card
@@ -291,16 +294,8 @@ const state = {
   session: null,
   /* The mode waiting on an answer to "how do you want to do this?" */
   pendingMode: null,
-  // Ephemeral, never persisted: true while the picker is open.
-  sheet: false,
-  // Which half of the picker is showing: choosing, or managing.
-  sheetTab: 'practice',
   // Which set, if any, is showing its inline "really?" in the library.
   confirmDelete: null,
-  /* True until a selection has been chosen for the first time. The picker then
-     opens by itself, cannot be dismissed, and will not let go until something
-     is picked — there is nothing behind it to do. */
-  firstRun: false,
 }
 
 /* Theme ------------------------------------------------------------------ */
@@ -358,11 +353,8 @@ function loadPrefs() {
   applyTheme()
 
   /* Nothing stored, or nothing in it still resolves: this person has never
-     chosen. Ask, rather than guessing on their behalf. */
-  if (!state.selection.size) {
-    state.firstRun = true
-    state.sheet = true
-  }
+     chosen, and there is no special mode for that any more. Home offers Get
+     started, and step one's Next stays disabled until something is ticked. */
 }
 
 /* Grades used to be four decks each — `g4:1` … `g4:4` — and are now one set.
@@ -457,11 +449,10 @@ function setSelected(id, on) {
   if (on) {
     state.selection.add(id)
   } else {
-    /* Empty is normally unreachable, because a round with no cards is not a
-       state worth designing. During the first run it is where everyone starts,
-       and Confirm stays disabled instead — refusing to untick something a moment
-       after ticking it would be nonsense. */
-    if (!state.firstRun && state.selection.size <= 1) return false
+    /* Unticking the last one is allowed: step one is where everyone starts
+       with nothing, and Next is disabled instead. Refusing to untick something
+       a moment after ticking it would be nonsense. */
+    if (!state.selection.size) return false
     state.selection.delete(id)
   }
   saveSelection()
@@ -485,6 +476,16 @@ function describeSelection() {
 
    `max` is how many names are shown before the rest become a counter. The
    counter is honest about hiding something; the old string was not. */
+/* Every name, joined. "3 sets" is no use to someone trying to work out what
+   they are in the middle of; the CSS truncates with an ellipsis and the title
+   attribute carries the whole thing. */
+const selectionNames = () => selectedSets().map((s) => s.label).join(' \u00b7 ')
+
+/* Two names, then a counter. Two is what fits on one line at 360px. */
+const SUMMARY_CHIPS = 2
+const selectionSummary = () =>
+  state.selection.size ? selectionChips(SUMMARY_CHIPS) : escapeHtml(describeSelection())
+
 function selectionChips(max = Infinity) {
   const chosen = selectedSets()
   if (!chosen.length) return ''
@@ -682,18 +683,31 @@ function nextRound() {
    Trace on a short set has neither, and starts straight away. */
 const needsSetup = (mode) => MODES[mode].directional || activeCards().length > ASK_ABOVE
 
-function askPace(mode) {
-  if (!state.selection.size) return
-  state.mode = mode
+/* The end of the flow: everything has been answered, so deal the cards. */
+function beginSession() {
+  if (!state.selection.size) {
+    state.screen = 'sets'
+    render()
+    return
+  }
+  state.mode = state.pendingMode ?? state.mode
   state.keeping = null
-  if (!needsSetup(mode)) {
+  if (!needsSetup(state.mode)) {
     state.session = null
     state.status.clear()
     startRound(activeCards())
     return
   }
+  const long = activeCards().length > ASK_ABOVE
+  startSession(long && paceMode === 'rounds' ? paceSize : null)
+}
+
+/* Reached from the nav menu mid-round: the answer is to set the session up
+   again rather than swap the mode underneath a live card. */
+function askPace(mode) {
+  if (!state.selection.size) return
   state.pendingMode = mode
-  state.screen = 'pace'
+  state.screen = 'format'
   render()
 }
 
@@ -711,6 +725,7 @@ function practiceMissed() {
 
 function goHome() {
   state.screen = 'home'
+  state.confirmDelete = null
   render()
 }
 
@@ -880,10 +895,9 @@ function bindMenus() {
   }
 }
 
-/* The selection sheet -----------------------------------------------------
-   A dialog rather than a screen: choosing what to practice is a detour from
-   starting a round, not a step in it, and a panel keeps the home screen visible
-   behind it.
+/* The rows of the flow ----------------------------------------------------
+   Step one lists every set; the manage detour lists the ones this person made.
+   Both used to live in a modal; they are panes now.
    ------------------------------------------------------------------------- */
 
 const BOX = { true: 'boxCheck', false: 'box' }
@@ -892,11 +906,11 @@ function setRow(set) {
   const ready = isPlayable(set)
   const checked = String(state.selection.has(set.id))
   const check = `
-    <button class="sheet__check" role="checkbox" aria-checked="${checked}"
+    <button class="setrow" role="checkbox" aria-checked="${checked}"
             ${ready ? '' : 'disabled'} data-set="${set.id}">
-      <span class="sheet__box">${icon(BOX[checked], 'icon--box')}</span>
-      <span class="sheet__label">${escapeHtml(set.label)}</span>
-      <span class="sheet__count ${ready ? '' : 'is-muted'}">${ready ? set.cards : 'not ready'}</span>
+      <span class="setrow__box">${icon(BOX[checked], 'icon--box')}</span>
+      <span class="setrow__label">${escapeHtml(set.label)}</span>
+      <span class="setrow__count ${ready ? '' : 'is-muted'}">${ready ? set.cards : 'not ready'}</span>
       <span class="visually-hidden">${ready ? `${set.cards} cards` : 'no cards yet'}</span>
     </button>`
 
@@ -939,63 +953,53 @@ function libraryCard(set) {
     </div>`
 }
 
-/* What is chosen, above the rows that change it. Practice tab only: My sets is
-   a managing job, and a tray there would describe a selection you did not come
-   to that tab to change. */
-function sheetTray(tab) {
+/* What is chosen, above the rows that change it. The pane holds nine rows and
+   a phone shows about six, so the moment a child scrolls to the kana their
+   choices leave the screen.
+
+   The chips are spans, not buttons. Tapping one to remove it is the obvious
+   gesture and also a destructive tap sitting directly on a scroll surface —
+   the rows below are where you change your mind. */
+function selectionTray() {
   const chosen = selectedSets()
   const cards = activeCards().length
-  /* Rendered even on My sets, just hidden. Returning '' there would leave
-     nothing for syncTray to find when you come back. */
   return `
-    <div class="sheet__tray" ${tab === 'practice' ? '' : 'hidden'}>
-      <p class="sheet__trayhead">
+    <div class="tray">
+      <p class="tray__head">
         <span>Practicing</span>
-        <span class="sheet__traycount">${
-          chosen.length ? `${chosen.length} set${chosen.length === 1 ? '' : 's'} · ${cards} cards` : ''
+        <span class="tray__count">${
+          chosen.length ? `${chosen.length} set${chosen.length === 1 ? '' : 's'} \u00b7 ${cards} cards` : ''
         }</span>
       </p>
       ${
         chosen.length
           ? selectionChips()
-          : `<p class="sheet__trayempty">Nothing picked yet — tap a list below.</p>`
+          : `<p class="tray__empty">Nothing picked yet \u2014 tap a list below.</p>`
       }
     </div>`
 }
 
-const sheetTitle = (tab) =>
-  state.firstRun
-    ? 'What would you like to practice?'
-    : tab === 'practice'
-      ? 'What to practice'
-      : 'My sets'
+/* The rows of step one, grouped by where each set came from. */
+function setList() {
+  return sections()
+    .map(
+      (section) => `
+        <p class="menu__heading">${escapeHtml(section)}</p>
+        ${setsIn(section).map(setRow).join('')}`
+    )
+    .join('')
+}
 
-const sheetFootLabel = (tab, count) =>
-  state.firstRun
-    ? `Confirm${count ? ` · ${count} cards` : ''}`
-    : tab === 'practice'
-      ? `Done · ${count} cards`
-      : 'Done'
-
-/* Just the rows. Kept separate from the panel around it so switching tabs can
-   replace this and nothing else — rebuilding the panel restarts its entry
-   animation, which reads as the whole thing flashing. */
-function sheetList(tab) {
-  if (tab === 'practice') {
-    return sections()
-      .map(
-        (section) => `
-          <p class="menu__heading">${escapeHtml(section)}</p>
-          ${setsIn(section).map(setRow).join('')}`
-      )
-      .join('')
-  }
+/* The rows of the manage detour: the sets this person made, and a way to make
+   another. Nothing that edits or deletes belongs on a step-one row \u2014 that is
+   the row they tap every day. */
+function libraryList() {
   return `
     ${
       state.userSets.length
         ? state.userSets.map(libraryCard).join('')
-        : `<p class="sheet__empty">
-             Nothing here yet. A set is any words you want to practice together —
+        : `<p class="pane__empty">
+             Nothing here yet. A set is any words you want to practice together \u2014
              the ones on this week's test, or the ones you keep getting wrong.
            </p>`
     }
@@ -1005,76 +1009,14 @@ function sheetList(tab) {
     </button>`
 }
 
-/* Swap the rows and everything that describes them, leaving the panel element
-   itself alone. Used by every interaction inside the panel: changing tab,
-   arming a delete, changing your mind about one. */
-function refreshSheet() {
-  const sheet = app.querySelector('.sheet')
-  if (!sheet) return
-  const tab = state.firstRun ? 'practice' : state.sheetTab
-
-  sheet.querySelector('.sheet__title').textContent = sheetTitle(tab)
-  syncTray()
-  const panel = sheet.querySelector('.sheet__list')
-  panel.innerHTML = sheetList(tab)
-  panel.setAttribute('aria-labelledby', state.firstRun ? 'sheet-title' : `tab-${tab}`)
-  panel.scrollTop = 0
-  for (const btn of sheet.querySelectorAll('[role="tab"]')) {
-    btn.setAttribute('aria-selected', String(btn.dataset.tab === tab))
-  }
-  sheet.querySelector('.sheet__note').textContent = ''
-  bindSheetList()
-  syncSheet()
-}
-
-function renderSheet() {
-  if (!state.sheet) return ''
-  const first = state.firstRun
-  const count = activeCards().length
-  /* No tabs during the first run. Someone who has chosen nothing yet has one
-     job, and a second tab holding an empty library is a detour away from it. */
-  const tab = first ? 'practice' : state.sheetTab
-
-  return `
-    <div class="sheet-scrim" ${first ? '' : 'data-close'}></div>
-    <section class="sheet" role="dialog" aria-modal="true"
-             aria-labelledby="sheet-title" ${first ? 'aria-describedby="sheet-lede"' : ''}>
-      <h2 class="sheet__title" id="sheet-title">
-        ${first ? 'What would you like to practice?' : tab === 'practice' ? 'What to practice' : 'My sets'}
-      </h2>
-      ${
-        first
-          ? `<p class="sheet__lede" id="sheet-lede">
-               Pick as many as you like. You can change this whenever you want.
-             </p>`
-          : `<div class="tabs" role="tablist" aria-label="Choosing or managing">
-               <button role="tab" id="tab-practice" data-tab="practice"
-                       aria-selected="${tab === 'practice'}" aria-controls="sheet-panel">Practice</button>
-               <button role="tab" id="tab-mine" data-tab="mine"
-                       aria-selected="${tab === 'mine'}" aria-controls="sheet-panel">My sets</button>
-             </div>`
-      }
-      ${sheetTray(tab)}
-      <div class="sheet__list" id="sheet-panel" role="tabpanel"
-           aria-labelledby="${first ? 'sheet-title' : `tab-${tab}`}">${sheetList(tab)}</div>
-      <p class="sheet__note" role="status" aria-live="polite"></p>
-      <div class="sheet__foot">
-        <button class="btn" data-close ${first && !count ? 'disabled' : ''}>
-          ${
-            /* The count belongs to the practice selection, so it is only shown
-               where you are choosing one — on My sets it would report a number
-               you did not just change. And it says Confirm rather than Start on
-               a first run, because it closes the picker rather than beginning
-               anything.
-
-               The button itself stays: Escape and the scrim also close this,
-               but neither is discoverable on a phone, and a panel with no
-               visible way out is a dead end. */
-            sheetFootLabel(tab, count)
-          }
-        </button>
-      </div>
-    </section>`
+/* Swap the rows in place. Re-rendering the whole pane would restart its entry
+   animation and reset the scroll position, which reads as a flash on a screen
+   whose whole job is a list you are working down. */
+function refreshLibrary() {
+  const body = app.querySelector('.pane__body')
+  if (!body) return
+  body.innerHTML = libraryList()
+  bindLibrary()
 }
 
 /* Sharing a set ----------------------------------------------------------
@@ -1098,7 +1040,6 @@ function openShare(id) {
   const set = state.userSets.find((s) => s.id === id)
   if (!set) return
   state.share = { set, url: '', status: '' }
-  state.sheet = false
   state.screen = 'share'
   render()
 
@@ -1120,8 +1061,7 @@ function openShare(id) {
 function closeShare() {
   state.share = null
   state.screen = 'home'
-  state.sheet = true
-  state.sheetTab = 'mine'
+  state.screen = 'manage'
   render()
 }
 
@@ -1248,7 +1188,8 @@ function sessionLine() {
 let paceSize = 20
 let paceMode = 'rounds'
 
-function renderPace() {
+function renderSettings() {
+  const mode = state.pendingMode ?? state.mode
   const total = activeCards().length
   const plan = roundPlan(total, paceSize)
   const rounds = paceMode === 'rounds'
@@ -1256,106 +1197,90 @@ function renderPace() {
   const kind = selectionIsKana() ? 'kana' : 'word'
 
   app.innerHTML = `
-    <header class="topbar">
-      <button class="menu__trigger" id="pace-back">
-        ${icon('home', 'icon--menu')}
-        <span class="visually-hidden">Back without starting</span>
-      </button>
-      <span class="topbar__spacer"></span>
-      ${settingsMenu()}
-    </header>
-
-    <div class="pace">
-      <div class="pace__head">
-        <p class="pace__mode">${escapeHtml(MODES[state.pendingMode].label)}</p>
-        <p class="pace__name">${selectionSummary()}</p>
-        <p class="pace__count">${total} cards</p>
-      </div>
-
-      ${
-        MODES[state.pendingMode].directional
-          ? `<div class="pace__group">
-               <p class="pace__label" id="pace-direction-label">Which way round</p>
-               <div class="mode" role="radiogroup" aria-labelledby="pace-direction-label">
-                 ${DIRECTIONS.map(
-                   (d) => `<button class="mode__btn ${state.direction === d.id ? 'is-active' : ''}"
-                             type="button" role="radio" aria-checked="${state.direction === d.id}"
-                             data-direction="${d.id}" title="${d.hint}">${d[kind]}</button>`
-                 ).join('')}
-               </div>
-             </div>`
-          : ''
-      }
-
-      ${
-        long
-          ? `<div class="pace__group">
-               <p class="pace__label" id="pace-length-label">How much at a time</p>
-               <div class="pace__choices" role="radiogroup" aria-labelledby="pace-length-label">
-        <button class="pick" type="button" role="radio" aria-checked="${rounds}" data-mode="rounds">
-          <span class="pick__mark">${icon(rounds ? 'boxCheck' : 'box', 'icon--box')}</span>
-          <span class="pick__text">
-            <b>In rounds of ${paceSize}</b>
-            <small>${plan.length} round${plan.length === 1 ? '' : 's'}, with a break after each one</small>
-          </span>
-        </button>
-
+    ${appHeader(false)}
+    ${stepRail('settings')}
+    <div class="pane">
+      ${summaryPill(true)}
+      <div class="pane__body pane__body--center">
         ${
-          /* Only while it applies. An inert size control under an unselected
-             option is a thing to wonder about rather than a thing to use. */
-          rounds
-            ? `<div class="seg" role="group" aria-label="How many cards in a round">
-                 ${ROUND_SIZES.map(
-                   (n) => `<button type="button" data-pace="${n}" aria-pressed="${paceSize === n}">${n}</button>`
-                 ).join('')}
+          MODES[mode].directional
+            ? `<div class="pace__group">
+                 <p class="pace__label" id="pace-direction-label">Which way round</p>
+                 <div class="mode" role="radiogroup" aria-labelledby="pace-direction-label">
+                   ${DIRECTIONS.map(
+                     (d) => `<button class="mode__btn ${state.direction === d.id ? 'is-active' : ''}"
+                               type="button" role="radio" aria-checked="${state.direction === d.id}"
+                               data-direction="${d.id}" title="${d.hint}">${d[kind]}</button>`
+                   ).join('')}
+                 </div>
                </div>`
             : ''
         }
 
-        <button class="pick" type="button" role="radio" aria-checked="${!rounds}" data-mode="all">
-          <span class="pick__mark">${icon(rounds ? 'box' : 'boxCheck', 'icon--box')}</span>
-          <span class="pick__text">
-            <b>All ${total} at once</b>
-            <small>One long round, no breaks</small>
-          </span>
-        </button>
-               </div>
-             </div>`
-          : ''
-      }
+        ${
+          long
+            ? `<div class="pace__group">
+                 <p class="pace__label" id="pace-length-label">How much at a time</p>
+                 <div class="pace__choices" role="radiogroup" aria-labelledby="pace-length-label">
+                   <button class="pick" type="button" role="radio" aria-checked="${rounds}" data-pace-mode="rounds">
+                     <span class="pick__mark">${icon(rounds ? 'boxCheck' : 'box', 'icon--box')}</span>
+                     <span class="pick__text">
+                       <b>In rounds of ${paceSize}</b>
+                       <small>${plan.length} round${plan.length === 1 ? '' : 's'}, with a break after each one</small>
+                     </span>
+                   </button>
+
+                   ${
+                     /* Only while it applies. An inert size control under an
+                        unselected option is a thing to wonder about rather
+                        than a thing to use. */
+                     rounds
+                       ? `<div class="seg" role="group" aria-label="How many cards in a round">
+                            ${ROUND_SIZES.map(
+                              (n) => `<button type="button" data-pace="${n}" aria-pressed="${paceSize === n}">${n}</button>`
+                            ).join('')}
+                          </div>`
+                       : ''
+                   }
+
+                   <button class="pick" type="button" role="radio" aria-checked="${!rounds}" data-pace-mode="all">
+                     <span class="pick__mark">${icon(rounds ? 'box' : 'boxCheck', 'icon--box')}</span>
+                     <span class="pick__text">
+                       <b>All ${total} at once</b>
+                       <small>One long round, no breaks</small>
+                     </span>
+                   </button>
+                 </div>
+               </div>`
+            : ''
+        }
+      </div>
     </div>
+    ${paneFoot("Let's go!")}`
 
-    <div class="actions">
-      <button class="btn" id="pace-go">Let's go!</button>
-    </div>`
-
-  document.getElementById('pace-back').addEventListener('click', goHome)
-  document.getElementById('pace-go').addEventListener('click', () =>
-    // A selection too short to split is one round whatever the control says.
-    startSession(long && paceMode === 'rounds' ? paceSize : null)
-  )
+  const again = (attr, value) => {
+    render()
+    document.querySelector(`[${attr}="${value}"]`)?.focus()
+  }
   for (const btn of app.querySelectorAll('[data-direction]')) {
     btn.addEventListener('click', () => {
       state.direction = btn.dataset.direction
-      render()
-      document.querySelector(`[data-direction="${state.direction}"]`)?.focus()
+      again('data-direction', state.direction)
     })
   }
-  for (const btn of app.querySelectorAll('[data-mode]')) {
+  for (const btn of app.querySelectorAll('[data-pace-mode]')) {
     btn.addEventListener('click', () => {
-      paceMode = btn.dataset.mode
-      render()
-      document.querySelector(`[data-mode="${paceMode}"]`)?.focus()
+      paceMode = btn.dataset.paceMode
+      again('data-pace-mode', paceMode)
     })
   }
   for (const btn of app.querySelectorAll('[data-pace]')) {
     btn.addEventListener('click', () => {
       paceSize = Number(btn.dataset.pace)
-      render()
-      document.querySelector(`[data-pace="${paceSize}"]`)?.focus()
+      again('data-pace', paceSize)
     })
   }
-  bindMenus()
+  bindFlow({ next: beginSession, back: () => goScreen('format') })
 }
 
 /* Keeping the words from a round -----------------------------------------
@@ -1564,20 +1489,19 @@ function saveIncoming() {
   rebuildMembership()
   state.selection.add(set.id)
   saveSelection()
-  dismissIncoming()
+  /* Step one, not Home: the set is already ticked, so they can see it landed
+     and carry straight on into the flow. */
+  state.incoming = null
+  state.screen = 'sets'
+  render()
 }
 
-/* Declining still has to leave them somewhere sensible. Someone who has never
-   chosen anything came here from a link and has chosen nothing — which is
-   exactly the state the first-run picker exists for. */
+/* Declining still has to leave them somewhere sensible. */
 function dismissIncoming() {
   state.incoming = null
+  /* Declining a shared set with nothing chosen leaves someone on a Home whose
+     only button is Get started, which is the right place to be. */
   state.screen = 'home'
-  if (!state.selection.size) {
-    state.firstRun = true
-    state.sheet = true
-    state.sheetTab = 'practice'
-  }
   render()
 }
 
@@ -1605,17 +1529,14 @@ function openBuilder(id) {
     filter: null,
     error: '',
   }
-  state.sheet = false
   state.screen = 'builder'
   render()
 }
 
 function closeBuilder() {
   state.builder = null
-  state.screen = 'home'
-  state.sheet = true
-  // Back to the tab the builder was opened from, which is always My sets.
-  state.sheetTab = 'mine'
+  // Back where the builder was opened from, which is always the manage pane.
+  state.screen = 'manage'
   render()
 }
 
@@ -1857,195 +1778,91 @@ function deleteSet(id) {
      never chosen", which already has an answer: ask again. Picking something on
      their behalf would be the guess this app stopped making. */
   state.confirmDelete = null
+  /* Deleting the only thing selected sends them back to step one rather than
+     leaving a manage pane whose Done button leads to a round of nothing. */
   if (!state.selection.size) {
-    /* The panel itself changes shape here — the tabs go away and the title and
-       button change — so this one is a real re-render rather than a swap of the
-       rows. */
-    state.firstRun = true
-    state.sheetTab = 'practice'
+    state.screen = 'sets'
     render()
     return
   }
-  refreshSheet()
+  refreshLibrary()
 }
 
 /* Ticking a box updates the controls in place rather than re-rendering.
 
    Re-rendering was the obvious thing and it was wrong: render() replaces the
-   home screen wholesale, so every tick built a new .sheet, which restarted its
-   entry animation and repainted the screen behind it. It read as a flash on
-   every click. The theme and palette switches already avoid this for the same
-   reason — see setTheme — so this follows them.
+   pane wholesale, restarting its entry animation and resetting the scroll
+   position of the very list being worked down. The theme and palette switches
+   already avoid this for the same reason \u2014 see setTheme \u2014 so this follows them.
 
-   Everything that can disagree is updated here: each box, the Done count, and
-   the summary row behind the scrim. */
-function syncSheet() {
-  for (const btn of app.querySelectorAll('.sheet [data-set]')) {
+   Everything that can disagree is updated here: each box, the tray, and the
+   Next button, which is disabled while nothing is chosen. */
+function syncSets() {
+  for (const btn of app.querySelectorAll('.pane [data-set]')) {
     const checked = String(state.selection.has(btn.dataset.set))
     btn.setAttribute('aria-checked', checked)
-    btn.querySelector('.sheet__box').innerHTML = icon(BOX[checked], 'icon--box')
+    btn.querySelector('.setrow__box').innerHTML = icon(BOX[checked], 'icon--box')
   }
 
-  const count = activeCards().length
-  const done = app.querySelector('.sheet__foot .btn')
-  if (done) {
-    done.textContent = sheetFootLabel(state.firstRun ? 'practice' : state.sheetTab, count)
-    done.disabled = state.firstRun && !count
-  }
+  const tray = app.querySelector('.tray')
+  if (tray) tray.outerHTML = selectionTray()
 
-  syncTray()
-
-  // The summary row is visible through the scrim, so it must not lag behind.
-  const name = app.querySelector('.selection__name')
-  if (name) name.innerHTML = selectionSummary()
-  const shown = app.querySelector('.selection__count')
-  if (shown) shown.textContent = `${count} cards`
+  const next = document.getElementById('flow-next')
+  if (next) next.disabled = !state.selection.size
 }
 
-/* The tray is replaced rather than diffed — it is a handful of spans, and the
-   alternative is tracking which chip belongs to which row. Like everything
-   else inside the picker it must not call render(), which would restart the
-   panel's entry animation and read as a flash. */
-function syncTray() {
-  const tray = app.querySelector('.sheet__tray')
-  if (!tray) return
-  const tab = state.firstRun ? 'practice' : state.sheetTab
-  tray.outerHTML = sheetTray(tab)
-}
+/* The controls inside the step-one list. Re-attached whenever the rows are
+   replaced, which is the cost of not rebuilding the pane. */
+function bindSetList() {
+  const pane = app.querySelector('.pane')
+  if (!pane) return
+  const note = pane.querySelector('.pane__note')
 
-/* Two names, then a counter. Two is what fits beside the chevron at 360px
-   without wrapping to a third line. */
-/* Every name, joined. "3 sets" is no use to someone trying to work out what
-   they are in the middle of; the CSS truncates with an ellipsis and the title
-   attribute carries the whole thing. */
-const selectionNames = () => selectedSets().map((s) => s.label).join(' · ')
-
-const SUMMARY_CHIPS = 2
-const selectionSummary = () =>
-  state.selection.size ? selectionChips(SUMMARY_CHIPS) : escapeHtml(describeSelection())
-
-/* Opening and closing are the only re-renders, so the entry animation runs
-   once. Focus goes into the sheet on open and back to the row that opened it on
-   close — a dialog that drops focus to the top of the document is unusable by
-   keyboard. */
-function openSheet() {
-  state.sheet = true
-  state.sheetTab = 'practice'
-  state.confirmDelete = null
-  render()
-  document.querySelector('.sheet__list .sheet__check')?.focus()
-}
-
-function closeSheet() {
-  // Nothing picked and nothing stored: there is no screen behind this worth
-  // showing, so the dialog simply stays.
-  if (state.firstRun && !state.selection.size) return
-  state.sheet = false
-  state.firstRun = false
-  render()
-  document.getElementById('selection')?.focus()
-}
-
-function showTab(tab) {
-  state.sheetTab = tab
-  state.confirmDelete = null
-  refreshSheet()
-  document.getElementById(`tab-${tab}`)?.focus()
-}
-
-/* The controls that live inside the swappable list. Re-attached every time the
-   rows are replaced, which is the cost of not rebuilding the panel — and a much
-   smaller cost than the panel flashing on every tab change. */
-function bindSheetList() {
-  const sheet = app.querySelector('.sheet')
-  if (!sheet) return
-  const note = sheet.querySelector('.sheet__note')
-
-  for (const btn of sheet.querySelectorAll('[data-set]')) {
+  for (const btn of pane.querySelectorAll('[data-set]')) {
     btn.addEventListener('click', () => {
       const id = btn.dataset.set
       if (setSelected(id, !state.selection.has(id))) {
         note.textContent = ''
-        syncSheet()
+        syncSets()
       } else {
-        note.textContent = 'Keep at least one selected — a round needs cards.'
+        note.textContent = 'Keep at least one selected \u2014 a round needs cards.'
       }
     })
   }
+}
 
-  for (const btn of sheet.querySelectorAll('[data-edit]')) {
+/* The controls inside the manage detour. */
+function bindLibrary() {
+  const pane = app.querySelector('.pane')
+  if (!pane) return
+
+  for (const btn of pane.querySelectorAll('[data-edit]')) {
     btn.addEventListener('click', () => openBuilder(btn.dataset.edit))
   }
-  for (const btn of sheet.querySelectorAll('[data-share]')) {
+  for (const btn of pane.querySelectorAll('[data-share]')) {
     btn.addEventListener('click', () => openShare(btn.dataset.share))
   }
 
-  /* Two presses, not a confirm dialog: this panel is already a dialog, and a
-     browser confirm is the kind of thing that gets clicked through. */
-  for (const btn of sheet.querySelectorAll('[data-delete]')) {
+  /* Two presses, not a confirm dialog: a browser confirm is the kind of thing
+     that gets clicked through. */
+  for (const btn of pane.querySelectorAll('[data-delete]')) {
     btn.addEventListener('click', () => {
       state.confirmDelete = btn.dataset.delete
-      refreshSheet()
+      refreshLibrary()
       document.querySelector(`[data-reallydelete="${state.confirmDelete}"]`)?.focus()
     })
   }
-  for (const btn of sheet.querySelectorAll('[data-keepset]')) {
+  for (const btn of pane.querySelectorAll('[data-keepset]')) {
     btn.addEventListener('click', () => {
       state.confirmDelete = null
-      refreshSheet()
+      refreshLibrary()
     })
   }
-  for (const btn of sheet.querySelectorAll('[data-reallydelete]')) {
+  for (const btn of pane.querySelectorAll('[data-reallydelete]')) {
     btn.addEventListener('click', () => deleteSet(btn.dataset.reallydelete))
   }
 
-  sheet.querySelector('#new-set')?.addEventListener('click', () => openBuilder(null))
-}
-
-function bindSheet() {
-  const sheet = app.querySelector('.sheet')
-  if (!sheet) return
-
-  for (const el of app.querySelectorAll('[data-close]')) {
-    el.addEventListener('click', closeSheet)
-  }
-
-  for (const btn of sheet.querySelectorAll('[data-tab]')) {
-    btn.addEventListener('click', () => {
-      showTab(btn.dataset.tab)
-    })
-  }
-
-  /* Left and right move between tabs, which is what a tablist is expected to
-     do and what a keyboard user will try. */
-  for (const btn of sheet.querySelectorAll('[role="tab"]')) {
-    btn.addEventListener('keydown', (event) => {
-      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
-      event.preventDefault()
-      showTab(state.sheetTab === 'practice' ? 'mine' : 'practice')
-    })
-  }
-
-  bindSheetList()
-
-  /* Escape closes, and Tab is kept inside — an aria-modal dialog that lets
-     focus wander behind the scrim is lying about being modal. */
-  sheet.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      event.stopPropagation()
-      // Escape is a way out, and on the first run there is nothing to go out to.
-      if (!state.firstRun) closeSheet()
-      return
-    }
-    if (event.key !== 'Tab') return
-    const stops = [...sheet.querySelectorAll('button:not([disabled])')]
-    if (!stops.length) return
-    const edge = event.shiftKey ? stops[0] : stops[stops.length - 1]
-    if (document.activeElement === edge) {
-      event.preventDefault()
-      ;(event.shiftKey ? stops[stops.length - 1] : stops[0]).focus()
-    }
-  })
+  pane.querySelector('#new-set')?.addEventListener('click', () => openBuilder(null))
 }
 
 /* Kana labels only when the whole selection is kana. A mixed selection is
@@ -2101,18 +1918,96 @@ function bindChrome() {
 
 /* Screens ---------------------------------------------------------------- */
 
+/* The header every pane wears. Full size on Home, where it is the point; a
+   size down once the flow starts, where 140px of a 650px phone is the
+   difference between seeing the last option and hunting for it. */
+function appHeader(big) {
+  return `
+    <header class="apphead ${big ? 'apphead--big' : 'apphead--sm'}">
+      <hgroup class="apphead__group">
+        <h1 class="apphead__title" lang="ja">\u6f22\u5b57\u306e\u7df4\u7fd2</h1>
+        <p class="apphead__tag">JDLI Kanji Practice</p>
+      </hgroup>
+      ${settingsMenu()}
+    </header>`
+}
+
+/* The steps this session actually has. Trace has no direction, and a small
+   selection has no rounds to choose, so a short trace session is two steps and
+   its Next reads Let's go!. One function so the rail and the button cannot
+   disagree about how many there are. */
+function flowSteps() {
+  const mode = state.pendingMode ?? state.mode
+  const steps = ['sets', 'format']
+  if (MODES[mode]?.directional || activeCards().length > ASK_ABOVE) steps.push('settings')
+  return steps
+}
+
+/* How much more of this. The question a child asks at step one, and the reason
+   they give up when nothing answers it. */
+function stepRail(screen) {
+  const steps = flowSteps()
+  const at = steps.indexOf(screen)
+  if (at < 0) return ''
+  return `
+    <div class="rail" aria-hidden="true">
+      ${steps.map((_, i) => `<span class="rail__seg ${i <= at ? 'is-done' : ''}"></span>`).join('')}
+    </div>
+    <p class="rail__txt">Step ${at + 1} of ${steps.length}</p>`
+}
+
+/* What has been chosen so far, carried forward. A button, not a caption:
+   fixing a mistake is one touch rather than Back, Back, fix, Next, Next. */
+function summaryPill(withMode) {
+  const mode = state.pendingMode ?? state.mode
+  const total = activeCards().length
+  return `
+    <button class="pill" type="button" data-goto="${withMode ? 'format' : 'sets'}">
+      ${withMode ? `<span class="pill__ico">${icon(MODES[mode].icon, 'icon--act')}</span>` : ''}
+      <span class="pill__text">
+        <span class="pill__name">${withMode ? escapeHtml(MODES[mode].label) : selectionSummary()}</span>
+        <span class="pill__count">${
+          withMode ? `${escapeHtml(describeSelection())} \u00b7 ${total} cards` : `${total} cards`
+        }</span>
+      </span>
+      <span class="pill__edit">Change</span>
+    </button>`
+}
+
+/* Every pane's buttons, in the same order and the same place. Back is last
+   because the harmless action belongs at the bottom — the same reason the
+   round's checkpoint puts it there. */
+function paneFoot(primary, { secondary = '', disabled = false } = {}) {
+  return `
+    <div class="actions pane__actions">
+      <button class="btn" id="flow-next" ${disabled ? 'disabled' : ''}>${primary}</button>
+      ${secondary ? `<button class="btn btn--secondary" id="flow-aside">${secondary}</button>` : ''}
+      <button class="btn btn--quiet" id="flow-back">Back</button>
+    </div>`
+}
+
+/* Shared by every pane: the pill jumps back, Back goes back, Next goes on. */
+function bindFlow({ next, back }) {
+  document.getElementById('flow-next')?.addEventListener('click', next)
+  document.getElementById('flow-back')?.addEventListener('click', back)
+  for (const btn of app.querySelectorAll('[data-goto]')) {
+    btn.addEventListener('click', () => goScreen(btn.dataset.goto))
+  }
+  bindMenus()
+}
+
+function goScreen(screen) {
+  state.screen = screen
+  state.confirmDelete = null
+  render()
+}
+
+/* Screens ---------------------------------------------------------------- */
+
 function renderHome() {
   app.innerHTML = `
-    <header class="topbar topbar--home">
-      <span class="topbar__spacer"></span>
-      <span class="topbar__spacer"></span>
-      ${settingsMenu()}
-    </header>
+    ${appHeader(true)}
     <div class="home">
-      <hgroup class="home__heading">
-        <h1 class="home__title" lang="ja">漢字の練習</h1>
-        <p class="home__tagline">JDLI Kanji Practice</p>
-      </hgroup>
       ${
         isUpdateReady()
           ? `<div class="home__update" role="status">
@@ -2121,19 +2016,73 @@ function renderHome() {
              </div>`
           : ''
       }
-      <button class="selection" id="selection" aria-haspopup="dialog"
-              aria-expanded="${state.sheet ? 'true' : 'false'}">
-        <span class="selection__text">
-          <span class="selection__name">${selectionSummary()}</span>
-          <span class="selection__count">${activeCards().length} cards</span>
+      <button class="bigcard" id="get-started">
+        <span class="bigcard__glyph" lang="ja">\u5b57</span>
+        <span class="bigcard__text">
+          <b>Get started</b>
+          <small>Choose what you want to study</small>
         </span>
-        ${icon('chevron', 'icon--chevron')}
       </button>
-      <div class="home__modes">
+    </div>`
+
+  document.getElementById('get-started').addEventListener('click', () => goScreen('sets'))
+  bindMenus()
+
+  const update = document.getElementById('update')
+  if (update) update.addEventListener('click', applyUpdate)
+
+  // Every visit to the home screen is a chance to notice a new version.
+  checkForUpdate()
+}
+
+function renderSets() {
+  app.innerHTML = `
+    ${appHeader(false)}
+    ${stepRail('sets')}
+    <div class="pane">
+      <p class="pane__title">Select your practice sets</p>
+      ${selectionTray()}
+      <div class="pane__body">${setList()}</div>
+      <p class="pane__note" role="status" aria-live="polite"></p>
+    </div>
+    ${paneFoot('Next', { secondary: 'Manage my sets', disabled: !state.selection.size })}`
+
+  bindSetList()
+  document.getElementById('flow-aside').addEventListener('click', () => goScreen('manage'))
+  bindFlow({ next: () => goScreen('format'), back: goHome })
+}
+
+function renderManage() {
+  app.innerHTML = `
+    ${appHeader(false)}
+    <div class="pane">
+      <p class="pane__title">Manage your sets</p>
+      <div class="pane__body">${libraryList()}</div>
+      <p class="pane__note" role="status" aria-live="polite"></p>
+    </div>
+    ${paneFoot('Done')}`
+
+  bindLibrary()
+  /* Done, not Save: every edit in here has already written itself, and a Save
+     button would imply that Back loses work. */
+  bindFlow({ next: () => goScreen('sets'), back: () => goScreen('sets') })
+}
+
+function renderFormat() {
+  const chosen = state.pendingMode ?? state.mode
+  const last = flowSteps().at(-1) === 'format'
+
+  app.innerHTML = `
+    ${appHeader(false)}
+    ${stepRail('format')}
+    <div class="pane">
+      <p class="pane__title">How do you want to practice?</p>
+      ${summaryPill(false)}
+      <div class="pane__body" role="radiogroup" aria-label="How do you want to practice?">
         ${Object.entries(MODES)
           .map(
             ([id, m]) => `
-              <button class="card-btn" data-start="${id}">
+              <button class="card-btn" role="radio" aria-checked="${id === chosen}" data-mode="${id}">
                 <span class="card-btn__icon">${icon(m.icon)}</span>
                 <span class="card-btn__label">${m.label}</span>
                 <span class="card-btn__hint">${m.hint}</span>
@@ -2142,26 +2091,22 @@ function renderHome() {
           .join('')}
       </div>
     </div>
-    ${renderSheet()}`
+    ${paneFoot(last ? "Let's go!" : 'Next')}`
 
-  for (const btn of app.querySelectorAll('[data-start]')) {
-    btn.addEventListener('click', () => setMode(btn.dataset.start))
+  /* Tapping picks; Next moves on. The mode cards used to start a round on the
+     first tap, which left no room to change your mind and made this the one
+     pane that behaved differently from the rest. */
+  for (const btn of app.querySelectorAll('[data-mode]')) {
+    btn.addEventListener('click', () => {
+      state.pendingMode = btn.dataset.mode
+      render()
+      document.querySelector(`[data-mode="${state.pendingMode}"]`)?.focus()
+    })
   }
-  document.getElementById('selection').addEventListener('click', openSheet)
-  bindSheet()
-
-  // Binds the gear, and the theme and palette switches inside it.
-  bindMenus()
-
-  const update = document.getElementById('update')
-  if (update) update.addEventListener('click', applyUpdate)
-
-  /* Every visit to the home screen is a chance to notice a new version. The
-     answer arrives asynchronously, hence onUpdateReady below.
-
-     Not while the sheet is open: every tick of a checkbox re-renders this
-     screen, and each one would otherwise fire a service-worker update check. */
-  if (!state.sheet) checkForUpdate()
+  bindFlow({
+    next: () => (last ? beginSession() : goScreen('settings')),
+    back: () => goScreen('sets'),
+  })
 }
 
 function renderFlashcard() {
@@ -2513,8 +2458,11 @@ function render() {
   teardownTrace?.()
   teardownTrace = null
   if (state.screen === 'home') return renderHome()
+  if (state.screen === 'sets') return renderSets()
+  if (state.screen === 'manage') return renderManage()
+  if (state.screen === 'format') return renderFormat()
+  if (state.screen === 'settings') return renderSettings()
   if (state.screen === 'builder') return renderBuilder()
-  if (state.screen === 'pace') return renderPace()
   if (state.screen === 'share') return renderShare()
   if (state.screen === 'receive') return renderReceive()
   if (state.screen === 'results') return renderResults()
@@ -2537,18 +2485,16 @@ const sharedPayload = takeSharedFromUrl()
 /* Order matters. The sets the user made have to exist before loadPrefs
    validates a stored selection against them, or a selection naming one is
    dropped as unknown — and if it was the only entry, the app decides this
-   person has never chosen and shows them the first-run picker. */
+   person has never chosen. */
 loadUserSets()
 rebuildMembership()
 loadPrefs()
 
 if (sharedPayload) {
-  /* A shared link beats the first-run picker. It is why they opened the app,
-     and saving the set satisfies the same requirement the picker exists to
-     enforce. `firstRun` is left set, so declining still lands them there. */
+  /* A shared link wins over anything else at boot. It is why they opened the
+     app. */
   state.incoming = { state: 'loading' }
   state.screen = 'receive'
-  state.sheet = false
 }
 
 render()
@@ -2563,7 +2509,6 @@ addEventListener('hashchange', () => {
   if (!payload) return
   state.incoming = { state: 'loading' }
   state.screen = 'receive'
-  state.sheet = false
   render()
   receiveShared(payload)
 })
