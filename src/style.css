@@ -565,7 +565,11 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  /* Packed to the foot rather than spread. With two children, space-between
+     gives every spare pixel to the gap between them — on a 1366px iPad that
+     was 282px of nothing between the name and the only button. The surplus
+     belongs above the title, where it reads as a margin. */
+  justify-content: flex-end;
   gap: clamp(0.6rem, 2vh, 1.25rem);
   text-align: center;
 }
@@ -579,6 +583,9 @@ html, body {
      cards wrap differently on every phone — both got it wrong, and the title
      silently wrapped into two columns at 412x560. */
   container-type: size;
+  /* Stops growing once the title has all the room it can use — the type caps
+     at 7rem, so a taller box only buys empty space inside itself. */
+  max-height: 44rem;
   /* Size containment means the contents cannot set the box, so a width that
      came from the text collapsed to zero — and with it every cqw. Stated
      explicitly, the container has both axes and the title can size itself. */
