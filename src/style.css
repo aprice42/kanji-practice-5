@@ -2077,10 +2077,16 @@ html, body {
 .session { display: flex; flex-direction: column; gap: 0.2rem; width: min(20rem, 100%); margin-top: 0.5rem; }
 .session__track { height: 0.25rem; border-radius: 999px; background: var(--rule); overflow: hidden; }
 .session__fill { height: 100%; background: var(--edge); border-radius: 999px; }
+/* space-between has nothing to distribute once the two labels fill the track,
+   so on a narrow phone "Round 1 of 5" and "10 of 46 cards" ran together into
+   "Round 1 of 510 of 46 cards". A gap they cannot fall below, and wrapping
+   when even that will not fit. */
 .session__row {
   margin: 0;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
+  gap: 0.15rem 0.75rem;
   font-size: 0.72rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
