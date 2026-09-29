@@ -1542,10 +1542,27 @@ html, body {
 }
 .wordtile { position: relative; }
 
-.builder__actions { display: flex; flex-direction: column; gap: 0.4rem; }
+/* .actions centres its children, which left this row shrink-wrapped to its
+   content — so the two buttons stacked even on a desktop, where they had room
+   to spare. It takes the same column as everything else instead. */
+.builder__actions { display: flex; flex-direction: column; align-items: stretch; gap: 0.4rem; }
 .builder__error { margin: 0; min-height: 1.2rem; font-size: 0.85rem; color: var(--bad); text-align: center; }
-.builder__buttons { display: flex; gap: 0.5rem; }
-.builder__buttons .btn { flex: 1; }
+/* Wrap, not a media query. `.btn` carries min-width: min(16rem, 80vw), so two
+   of them side by side need about 520px and simply overflowed a phone — and
+   #app's `overflow: hidden` clipped the result rather than letting a scrollbar
+   admit it, which is why they were sliced off at both edges instead of being
+   obviously broken. A flex-basis that two cannot share makes them stack on a
+   narrow column and sit side by side on a wide one, with no breakpoint to
+   pick and nothing to keep in step with the type scale. */
+.builder__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: var(--col);
+  margin-inline: auto;
+}
+.builder__buttons .btn { flex: 1 1 12rem; min-width: 0; }
 
 
 /* Picker tabs -------------------------------------------------------------
@@ -1781,8 +1798,16 @@ html, body {
   width: 100%;
 }
 .keep input:focus { border-color: var(--primary-text); }
-.keep__row { display: flex; gap: 0.5rem; }
-.keep__row .btn { flex: 1; }
+/* Same reasoning as .builder__buttons above. */
+.keep__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: var(--col);
+  margin-inline: auto;
+}
+.keep__row .btn { flex: 1 1 12rem; min-width: 0; }
 
 /* Choosing the pace -------------------------------------------------------
    One question and its answers. The label was a bare <p> with no rule at all,
