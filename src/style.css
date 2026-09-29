@@ -611,10 +611,11 @@ html, body {
      above and below the narrow の. */
   font-feature-settings: "vpal" 1;
   /* Five glyphs plus their leading is the whole constraint, so the height of
-     the container is what sets the size: 17cqh x 5 x 1.05 leaves the title at
-     about 89% of the room it has. The width term stops it becoming absurd on a
-     wide desktop. */
-  font-size: clamp(1.25rem, min(30cqw, 17cqh), 5rem);
+     the container is what sets the size: 16cqh x 5 x 1.05 leaves the title at
+     about 84% of the room it has, and the remaining sixth is the tagline and
+     the gap. The width term stops it becoming absurd on a wide desktop, and
+     7rem is where it stops growing on a tall one. */
+  font-size: clamp(1.25rem, min(30cqw, 16cqh), 7rem);
   /* Vertical text wraps into a SECOND COLUMN when it runs out of height, which
      is how a five-glyph title turned into two. */
   white-space: nowrap;
@@ -627,8 +628,11 @@ html, body {
 .hero__tag {
   margin: 0;
   color: var(--muted);
-  font-size: clamp(0.9rem, min(4vw, 2.6vh), 1.35rem);
+  /* From the container too, so it shrinks with the title rather than crowding
+     it out of a short hero. */
+  font-size: clamp(0.9rem, min(9cqw, 4.5cqh), 2rem);
   letter-spacing: 0.01em;
+  text-wrap: balance;
 }
 /* Just the grouping for the cards at the foot — no ground of its own. The
    cards already carry their own edge and fill, and a band behind them was a
