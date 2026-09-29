@@ -76,6 +76,15 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   means the contents cannot set the box, so the container needs an explicit width and a
   definite flex basis or every `cq` unit resolves to zero. Also `palt` is horizontal-only;
   the vertical counterpart is `vpal`.
+- `getBoundingClientRect()` REPORTS THE LAYOUT BOX AND IGNORES CLIPPING. An element can be
+  1600px wide and painted at 1080 because an ancestor clips it, and every rect-based check
+  will call that a pass. `#app` clips, so anything meant to reach the window edge has to be
+  verified with `document.elementFromPoint()`, which respects the clip — or by looking.
+- `#app` uses `overflow: clip` with `overflow-clip-margin` so the header band can paint past
+  the container's cap. `hidden` cannot do that, and a bigger negative margin cannot either:
+  the clip is what wins. The `overflow: hidden` line above it is the fallback for Safari
+  before 16, which drops `clip` and would otherwise compute `visible` and give the document
+  a horizontal scrollbar.
 - Everything in the flow shares ONE column, `--col` on `#app`. Four different widths were
   on screen at once before that rule existed — a 372px list over a 352px pace block over a
   256px button — and the panes read as a pile of unrelated boxes rather than one column of

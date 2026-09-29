@@ -298,7 +298,22 @@ html, body {
   /* Vertical rhythm tracks the viewport height so short phones compress
      instead of overflowing. */
   gap: clamp(0.5rem, 1.6vh, 1rem);
+  /* `clip`, not `hidden`, with a margin. The container is capped and centred,
+     so a header band bled out with negative margins was still being CUT at
+     the container's edge — the box was full width and only the paint stopped.
+     overflow-clip-margin lets it paint past the edge while everything else
+     still cannot scroll or spill.
+
+     `hidden` cannot do this, and neither can a bigger negative margin: the
+     clip is what wins. */
+  /* `hidden` first as the fallback: Safari before 16 does not know `clip` and
+     drops the line, and without a fallback it would compute to `visible` and
+     give the document a horizontal scrollbar the width of the bleed. Older
+     browsers get a band that stops at the container, which is the look this
+     replaced rather than a broken one. */
   overflow: hidden;
+  overflow: clip;
+  overflow-clip-margin: 100vw;
 }
 
 .visually-hidden {
