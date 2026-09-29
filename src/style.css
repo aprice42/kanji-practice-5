@@ -32,6 +32,7 @@
 :root[data-palette='indigo'] {
   --bg: #faf7f1;
   --surface: #f2ede3;
+  --tint: #dce4f2;
   --ink: #1f2430;
   /* Dark enough to clear 4.5:1 on --rule, the segmented-control track that
      inactive labels sit on. */
@@ -51,6 +52,7 @@
 :root[data-palette='ink'] {
   --bg: #f7f5f0;
   --surface: #edeae3;
+  --tint: #e0dcd1;
   --ink: #20201e;
   --muted: #5c5b56;
   --rule: #d8d4ca;
@@ -68,6 +70,7 @@
 :root[data-palette='matcha'] {
   --bg: #f6f8f7;
   --surface: #e9efec;
+  --tint: #d3e4de;
   --ink: #16211e;
   --muted: #54615c;
   --rule: #cfdad5;
@@ -85,6 +88,7 @@
 :root[data-palette='plum'] {
   --bg: #faf6f7;
   --surface: #f1e9ec;
+  --tint: #e9d9e6;
   --ink: #241d26;
   --muted: #5e5362;
   --rule: #ddd0d6;
@@ -105,6 +109,7 @@
   :root[data-palette='indigo']:not([data-theme='light']) {
     --bg: #141824;
     --surface: #1e2433;
+    --tint: #2b3856;
     --ink: #eae6dd;
     --muted: #a6adc0;
     --rule: #333b4f;
@@ -121,6 +126,7 @@
   :root[data-palette='ink']:not([data-theme='light']) {
     --bg: #1a1a18;
     --surface: #252522;
+    --tint: #353530;
     --ink: #efece5;
     --muted: #a9a69d;
     --rule: #3a3a36;
@@ -137,6 +143,7 @@
   :root[data-palette='matcha']:not([data-theme='light']) {
     --bg: #101816;
     --surface: #1a2421;
+    --tint: #223b35;
     --ink: #e6ece9;
     --muted: #a0aeaa;
     --rule: #2e3c38;
@@ -155,6 +162,7 @@
   :root[data-palette='plum']:not([data-theme='light']) {
     --bg: #181320;
     --surface: #221b2c;
+    --tint: #382942;
     --ink: #ece6ef;
     --muted: #ab9fb4;
     --rule: #372d44;
@@ -175,6 +183,7 @@
 :root[data-palette='indigo'][data-theme='dark'] {
   --bg: #141824;
   --surface: #1e2433;
+  --tint: #2b3856;
   --ink: #eae6dd;
   --muted: #a6adc0;
   --rule: #333b4f;
@@ -191,6 +200,7 @@
 :root[data-palette='ink'][data-theme='dark'] {
   --bg: #1a1a18;
   --surface: #252522;
+  --tint: #353530;
   --ink: #efece5;
   --muted: #a9a69d;
   --rule: #3a3a36;
@@ -207,6 +217,7 @@
 :root[data-palette='matcha'][data-theme='dark'] {
   --bg: #101816;
   --surface: #1a2421;
+  --tint: #223b35;
   --ink: #e6ece9;
   --muted: #a0aeaa;
   --rule: #2e3c38;
@@ -225,6 +236,7 @@
 :root[data-palette='plum'][data-theme='dark'] {
   --bg: #181320;
   --surface: #221b2c;
+  --tint: #382942;
   --ink: #ece6ef;
   --muted: #ab9fb4;
   --rule: #372d44;
@@ -261,6 +273,11 @@ html, body {
 }
 
 #app {
+  /* The width everything in the flow shares. Four different widths were on
+     screen at once before this — a 372px list over a 352px pace block over a
+     256px button — and the panes read as a pile of unrelated boxes rather
+     than one column of questions. */
+  --col: 34rem;
   display: flex;
   flex-direction: column;
   height: 100dvh;
@@ -340,6 +357,11 @@ html, body {
   background: var(--rule);
   margin: 0 auto;
 }
+/* In the flow it is one of a stack of full-width controls, so it fills the
+   column like the rest of them. In the settings menu it stays hugging. */
+.pane .mode { width: 100%; }
+.pane .mode__btn { flex: 1; }
+
 .mode__btn,
 .theme__btn {
   appearance: none;
@@ -538,9 +560,8 @@ html, body {
   gap: clamp(0.7rem, 2vh, 1.25rem);
   text-align: center;
 }
-.home__title {
+.apphead__title {
   margin: 0;
-  font-size: clamp(2rem, min(11vw, 8vh), 4.5rem);
   /* Klee One sets CJK on a full-width grid, which leaves airy gaps either side
      of narrow kana like の and makes a short title read as disconnected
      characters. "palt" switches to each glyph's own width; the small positive
@@ -556,13 +577,13 @@ html, body {
 
    Specificity: `:root :lang(ja)` is (0,2,0) and would otherwise win over a bare
    class, which is why it is written this way rather than as `.home__title`. */
-:root .home__title:lang(ja) {
+:root .apphead__title:lang(ja) {
   font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
 }
 /* The title and its translation are one unit, so they are grouped and spaced
    tightly against each other rather than being two children of .home competing
    with its much larger gap. */
-.home__heading {
+.apphead__group {
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -571,13 +592,12 @@ html, body {
 }
 
 /* A <p> in an <hgroup>, not an <h2>. It is a translation of the heading above
-   it, not the title of a section — an h2 would put a phantom "Kanji Practice"
+   it, not the title of a section — an h2 would put a phantom "JDLI Kanji Practice"
    section containing the mode buttons into the document outline and every
    screen reader's heading list. The text is in the DOM either way, which is all
    a crawler cares about. */
-.home__tagline {
-  margin: 0 0 3rem;
-  font-size: clamp(1rem, min(4.2vw, 3vh), 1.6rem);
+.apphead__tag {
+  margin: 0;
   letter-spacing: 0.01em;
   color: var(--muted);
 }
@@ -630,6 +650,36 @@ html, body {
   text-align: left;
 }
 .card-btn:hover { border-color: var(--primary-text); }
+/* Chosen, on the format pane. These are radios now — tapping picks and Next
+   moves on — so "which one did I pick" has to be answerable at a glance. Four
+   signals, the same four the picker rows and the pace options carry: tint, a
+   bar down the leading edge, a heavier label, and a tick. The border is
+   already 2px, so nothing moves when one is chosen. */
+.card-btn[aria-checked='true'] {
+  background: var(--tint);
+  border-color: var(--primary-text);
+  position: relative;
+  padding-inline-start: calc(clamp(1rem, 3.5vw, 1.4rem) + 0.35rem);
+}
+.card-btn[aria-checked='true']::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block: 0.6rem;
+  width: 5px;
+  border-radius: 3px;
+  background: var(--primary-text);
+}
+.card-btn[aria-checked='true'] .card-btn__label { font-weight: 700; }
+.card-btn[aria-checked='true']::after {
+  content: '\2713';
+  position: absolute;
+  inset-block-start: 0.5rem;
+  inset-inline-end: 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary-text);
+}
 .card-btn__icon {
   grid-row: 1 / 3;
   font-size: clamp(1.6rem, min(7vw, 4vh), 2.25rem);
@@ -1162,3 +1212,948 @@ html, body {
 }
 .trace__credit a { color: var(--muted); }
 .trace__credit a:hover { color: var(--primary-text); }
+
+/* Selection summary row --------------------------------------------------
+   Follows .card-btn — same ground, same 2px edge, same hover — because it sits
+   directly above the mode cards and anything else would read as a different
+   kind of control.
+   ------------------------------------------------------------------------- */
+.selection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 34rem;
+  appearance: none;
+  border: 2px solid var(--edge);
+  border-radius: 0.875rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  padding: 0.75rem 0.875rem;
+  min-height: 44px;
+  cursor: pointer;
+  text-align: left;
+}
+.selection:hover { border-color: var(--primary-text); }
+.selection__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.selection__name {
+  font-weight: 600;
+  font-size: clamp(0.95rem, 3.6vw, 1.05rem);
+  overflow-wrap: anywhere;
+}
+.selection__count {
+  font-size: clamp(0.78rem, 3vw, 0.875rem);
+  color: var(--muted);
+}
+.selection .icon--chevron { flex: none; }
+
+/* A pane of the flow ------------------------------------------------------
+   This used to be a modal dialog — fixed, centred, over a scrim, with a focus
+   trap, an Escape handler and a first-run mode that refused to close. It is a
+   screen now, which deletes all of that: choosing what to practice is not an
+   interruption of something else, it IS the thing.
+   ------------------------------------------------------------------------- */
+.pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: var(--col);
+  margin-inline: auto;
+}
+.pane__title {
+  margin: 0;
+  font-size: clamp(1rem, 4vw, 1.15rem);
+  font-weight: 600;
+  text-align: center;
+}
+/* The only thing on the screen allowed to scroll. */
+/* A visible edge, because this scrolls and nothing else on the pane does.
+   Without it the rows simply run out at the bottom of the screen and there is
+   no telling whether that is the end of the list. */
+.pane__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--rule);
+  border-radius: 0.7rem;
+  background: var(--surface);
+  padding: 0.35rem 0.4rem;
+}
+/* The format pane holds three cards, not a list — it is not a scroll region
+   and a box around it would be a box for its own sake. */
+/* The format and settings panes hold a few controls, not a list. They do not
+   scroll, so a box around them would be a box for its own sake. */
+.pane__body--center {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(0.4rem, 1.2vh, 0.8rem);
+}
+/* Stretch, not centre: .actions centres its children and .btn carries a
+   min-width, which left the biggest element on the pane 116px narrower than
+   the list above it. */
+.pane__actions {
+  width: 100%;
+  max-width: var(--col);
+  margin-inline: auto;
+  align-items: stretch;
+}
+.pane__actions .btn {
+  min-width: 0;
+  width: 100%;
+}
+.pane__empty {
+  margin: 0.5rem 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+/* Reserved height, so the refusal appearing does not shift the list under a
+   finger that is already moving. */
+.pane__note {
+  margin: 0;
+  min-height: 1.25rem;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--bad);
+}
+
+/* Scoped rather than set as a blanket `button` rule: a blanket rule has
+   stripped a nested control of its shape twice in this project already. */
+.setrow {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+  padding: 0.625rem 0.5rem;
+  min-height: 44px;
+  border-radius: 0.625rem;
+  cursor: pointer;
+}
+.setrow:hover:not([disabled]) { background: var(--surface); }
+.setrow[disabled] { cursor: default; color: var(--muted); }
+/* Chosen is FOUR signals at once — tint, an edge bar, a heavier label and the
+   tick — because one of them is always failing somebody: colour for a
+   colourblind reader, weight on a washed-out school screen, the 1.35rem tick
+   for a seven-year-old scanning a list of nine at arm's length. The border is
+   transparent when off so switching one on does not move the row. */
+.setrow {
+  position: relative;
+  border: 2px solid transparent;
+}
+.setrow[aria-checked='true'] {
+  background: var(--tint);
+  border-color: var(--primary-text);
+  font-weight: 600;
+  padding-left: 0.85rem;
+}
+.setrow[aria-checked='true']::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block: 0.35rem;
+  width: 5px;
+  border-radius: 3px;
+  background: var(--primary-text);
+}
+.setrow[aria-checked='true']:hover { background: var(--tint); }
+.setrow[aria-checked='true'] .setrow__count { color: var(--primary-text); }
+.setrow__box { display: flex; flex: none; }
+.icon--box { width: 1.35rem; height: 1.35rem; }
+.setrow[aria-checked='false'] .setrow__box { color: var(--muted); }
+.setrow[aria-checked='true'] .setrow__box { color: var(--primary-text); }
+.setrow__label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.setrow__count {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.setrow__count.is-muted { font-style: italic; }
+.icon--chevron { width: 1.1rem; height: 1.1rem; }
+/* The set builder ---------------------------------------------------------
+   A screen, so it gets the app's column layout rather than the panel's. Only
+   the results list scrolls; the name, the chosen words and the search stay put,
+   because losing sight of what you have chosen is how you add a word twice.
+   ------------------------------------------------------------------------- */
+.builder__title {
+  margin: 0;
+  font-size: clamp(1rem, 4vw, 1.15rem);
+  font-weight: 600;
+}
+.builder {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.builder__field { display: flex; flex-direction: column; gap: 0.2rem; }
+.builder__field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.builder input[type='text'],
+.builder input[type='search'] {
+  font: inherit;
+  font-size: 1rem;
+  padding: 0.55rem 0.7rem;
+  min-height: 44px;
+  border-radius: 0.6rem;
+  border: 2px solid var(--edge);
+  background: var(--bg);
+  color: var(--ink);
+  width: 100%;
+}
+.builder input:focus { border-color: var(--primary-text); }
+
+.builder__chosenhead {
+  margin: 0 0 0.35rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.builder__count { font-variant-numeric: tabular-nums; }
+.builder__hint { margin: 0; color: var(--muted); font-size: 0.88rem; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.55rem 0.3rem; max-height: 6rem; overflow-y: auto; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--edge);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.25rem 0.5rem;
+  min-height: 34px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--bad); }
+.chip__x { color: var(--muted); font-size: 1.05rem; line-height: 1; }
+.chip:hover .chip__x { color: var(--bad); }
+
+.builder__find { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.pills { display: flex; flex-wrap: wrap; gap: 0.55rem 0.3rem; }
+.pill {
+  border: 1px solid var(--edge);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.7rem;
+  min-height: 34px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.pill:hover { background: var(--surface); }
+/* A pill reads better at 34px than at 44, but a 34px touch target does not.
+   The hit area is grown to 44 with a pseudo-element instead of the box, so the
+   filter row stays one or two lines on a phone rather than three or four. The
+   row gap carries the extra height so neighbours do not overlap. */
+.pill, .chip { position: relative; }
+.pill::after, .chip::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  height: 44px;
+}
+.pill[aria-pressed='true'] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+
+/* The one thing on this screen allowed to scroll. */
+.builder__results { flex: 1; min-height: 0; overflow-y: auto; }
+.wordgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.35rem;
+  padding: 0.1rem;
+}
+.wordtile {
+  border: 2px solid var(--edge);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 0.6rem;
+  padding: 0.4rem 0.3rem;
+  min-height: 48px;
+  cursor: pointer;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.wordtile:hover { border-color: var(--primary-text); }
+.wordtile__w { font-size: 1.05rem; line-height: 1.2; }
+.wordtile__r { font-size: 0.72rem; color: var(--muted); }
+.wordtile[aria-pressed='true'] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+/* The chosen state is a fill AND a tick, because colour alone is not a state. */
+.wordtile[aria-pressed='true'] .wordtile__r { color: var(--on-primary); opacity: 0.85; }
+.wordtile[aria-pressed='true']::after {
+  content: '✓';
+  position: absolute;
+  inset-block-start: 0.15rem;
+  inset-inline-end: 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+.wordtile { position: relative; }
+
+/* .actions centres its children, which left this row shrink-wrapped to its
+   content — so the two buttons stacked even on a desktop, where they had room
+   to spare. It takes the same column as everything else instead. */
+.builder__actions { display: flex; flex-direction: column; align-items: stretch; gap: 0.4rem; }
+.builder__error { margin: 0; min-height: 1.2rem; font-size: 0.85rem; color: var(--bad); text-align: center; }
+/* Wrap, not a media query. `.btn` carries min-width: min(16rem, 80vw), so two
+   of them side by side need about 520px and simply overflowed a phone — and
+   #app's `overflow: hidden` clipped the result rather than letting a scrollbar
+   admit it, which is why they were sliced off at both edges instead of being
+   obviously broken. A flex-basis that two cannot share makes them stack on a
+   narrow column and sit side by side on a wide one, with no breakpoint to
+   pick and nothing to keep in step with the type scale. */
+.builder__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: var(--col);
+  margin-inline: auto;
+}
+.builder__buttons .btn { flex: 1 1 12rem; min-width: 0; }
+
+
+/* Picker tabs -------------------------------------------------------------
+   Choosing what to practice and managing a library of sets are two jobs on two
+   rhythms — one happens every time the app opens and wants two taps, the other
+   happens rarely and is destructive at the edges. They share a panel, not a
+   list.
+   ------------------------------------------------------------------------- */
+.tabs {
+  display: flex;
+  gap: 0.2rem;
+  background: var(--rule);
+  border-radius: 0.6rem;
+  padding: 0.2rem;
+}
+.tabs button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  min-height: 44px;
+  border-radius: 0.45rem;
+  cursor: pointer;
+}
+.tabs button[aria-selected='true'] {
+  background: var(--bg);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+.tabs button:hover:not([aria-selected='true']) { color: var(--primary-text); }
+
+.pane__empty {
+  margin: 0.4rem 0.35rem 0.6rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-wrap: pretty;
+}
+
+/* A set the user made, in the library. A card rather than a row: it carries a
+   name, a count and two actions, and none of them is a checkbox. */
+.libcard {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  padding: 0.45rem 0.5rem 0.45rem 0.7rem;
+  margin-bottom: 0.35rem;
+}
+.libcard__name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.libcard__name small { display: block; color: var(--muted); font-size: 0.78rem; }
+.libcard__act {
+  flex: none;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.libcard__act:hover { background: var(--bg); color: var(--primary-text); }
+.libcard__act--danger:hover { color: var(--bad); }
+.icon--act { width: 1.15rem; height: 1.15rem; }
+
+.libcard__confirm, .libcard__keep {
+  flex: none;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 0 0.7rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.libcard__confirm { border: 2px solid var(--bad); background: transparent; color: var(--bad); }
+.libcard__confirm:hover { background: var(--bg); }
+.libcard__keep { border: 0; background: transparent; color: var(--ink); }
+.libcard__keep:hover { background: var(--bg); }
+
+/* The way into the builder. Dashed, because it makes something rather than
+   being something. */
+.libnew {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  border: 2px dashed var(--edge);
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.libnew:hover { border-color: var(--primary-text); background: var(--surface); }
+.libnew b { display: block; font-weight: 600; }
+.libnew small { display: block; color: var(--muted); font-size: 0.78rem; }
+.libnew .icon--act { flex: none; color: var(--muted); }
+
+/* Share screen ------------------------------------------------------------ */
+.share {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-align: center;
+  overflow-y: auto;
+}
+.share__head { display: flex; flex-direction: column; gap: 0.1rem; }
+.share__name { margin: 0; font-weight: 600; font-size: clamp(1.05rem, 4vw, 1.25rem); overflow-wrap: anywhere; }
+.share__count { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.share__hint { margin: 0; color: var(--muted); font-size: 0.85rem; }
+
+/* Always on white. A QR inverted for dark mode does not scan, so this is one
+   of the two places in the app that is not a palette token — and it is a
+   picture of data, not part of the interface. */
+.qr {
+  background: #ffffff;
+  padding: 0.6rem;
+  border-radius: 0.6rem;
+  width: min(15rem, 62vmin);
+  max-width: 100%;
+}
+.qr__img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.qr__fail { margin: 0; padding: 1.5rem 0.5rem; color: #333; font-size: 0.85rem; }
+
+.share__link {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.62rem;
+  line-height: 1.4;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 0.45rem;
+  padding: 0.4rem 0.5rem;
+  max-width: 22rem;
+  word-break: break-all;
+  user-select: all;
+}
+.share__actions { display: flex; flex-direction: column; gap: 0.4rem; }
+.share__status { margin: 0; min-height: 1.2rem; font-size: 0.85rem; text-align: center; color: var(--good); }
+
+/* Receiving a shared set -------------------------------------------------- */
+.receive {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  text-align: center;
+  overflow-y: auto;
+}
+.receive__head { display: flex; flex-direction: column; gap: 0.1rem; }
+.receive__from { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.receive__name { margin: 0; font-weight: 600; font-size: clamp(1.15rem, 5vw, 1.4rem); overflow-wrap: anywhere; }
+.receive__count { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.receive__note { margin: 0; color: var(--muted); }
+.receive__trouble { margin: 0; max-width: 24rem; text-wrap: pretty; }
+
+.receive__banner {
+  margin: 0;
+  max-width: 24rem;
+  font-size: 0.85rem;
+  text-align: left;
+  text-wrap: pretty;
+  border: 1px solid var(--edge);
+  border-left-width: 4px;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--surface);
+}
+.receive__banner--ok { border-left-color: var(--good); }
+.receive__banner--warn { border-left-color: var(--bad); }
+
+.receive__words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  justify-content: center;
+  max-width: 26rem;
+}
+.word {
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.95rem;
+}
+/* Struck through AND dashed AND muted: a word being left out is not something
+   to signal with colour alone. */
+.word--gone {
+  color: var(--muted);
+  border-style: dashed;
+  text-decoration: line-through;
+}
+
+.receive__actions { display: flex; flex-direction: column; gap: 0.4rem; }
+.receive__status { margin: 0; min-height: 1.2rem; font-size: 0.85rem; text-align: center; color: var(--bad); }
+
+/* Keeping the missed words as a set --------------------------------------- */
+.results__saved { margin: 0; min-height: 1.2rem; font-size: 0.85rem; text-align: center; color: var(--good); }
+.keep { display: flex; flex-direction: column; gap: 0.4rem; }
+.keep__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.keep input[type='text'] {
+  font: inherit;
+  font-size: 1rem;
+  padding: 0.55rem 0.7rem;
+  min-height: 44px;
+  border-radius: 0.6rem;
+  border: 2px solid var(--edge);
+  background: var(--bg);
+  color: var(--ink);
+  width: 100%;
+}
+.keep input:focus { border-color: var(--primary-text); }
+/* Same reasoning as .builder__buttons above. */
+.keep__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: var(--col);
+  margin-inline: auto;
+}
+.keep__row .btn { flex: 1 1 12rem; min-width: 0; }
+
+/* Choosing the pace -------------------------------------------------------
+   One question and its answers. The label was a bare <p> with no rule at all,
+   which meant each one spent 32px of default paragraph margin — two of them
+   was most of the reason "All N at once" kept falling below the fold.
+   ------------------------------------------------------------------------- */
+.pace__group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+}
+.pace__label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.pace__choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+/* These choose; they do not start. Starting is the button at the foot of the
+   screen, because a screen whose first element begins the thing gives you no
+   moment to read the second element. */
+.pick {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  border: 2px solid var(--edge);
+  border-radius: 0.8rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  padding: 0.7rem 0.85rem;
+  min-height: 44px;
+  text-align: left;
+  cursor: pointer;
+}
+.pick:hover { border-color: var(--primary-text); }
+.pick__mark { flex: none; display: flex; color: var(--muted); }
+.pick__text { display: flex; flex-direction: column; gap: 0.1rem; }
+.pick b { font-size: 1.05rem; font-weight: 600; }
+.pick small { color: var(--muted); font-size: 0.82rem; }
+/* Chosen is a tick AND an edge AND a tint, never colour on its own — the same
+   four signals the picker rows carry, because it is the same question being
+   asked one screen later. */
+.pick[aria-checked='true'] {
+  border-color: var(--primary-text);
+  background: var(--tint);
+}
+.pick[aria-checked='true'] .pick__mark { color: var(--primary-text); }
+.pick[aria-checked='true'] b { font-weight: 700; }
+
+.pace .seg { width: 100%; }
+.seg {
+  display: flex;
+  gap: 0.2rem;
+  background: var(--rule);
+  border-radius: 0.55rem;
+  padding: 0.18rem;
+}
+.seg button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  min-height: 44px;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+/* A filled pill, exactly like the direction control directly above it — this
+   is the app's one way of saying "this option, not the others".
+
+   It used to be --bg with a shadow, which works on paper and inverts in the
+   dark themes: --bg is darker than the --rule track, so the chosen size read
+   as a hole punched in the control rather than the one that was picked. A
+   shadow cannot carry a state on a dark ground either. */
+.seg button[aria-pressed='true'] {
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 600;
+}
+.seg button:not([aria-pressed='true']):hover { background: var(--surface); }
+
+/* Where the session has got to, under the score on a checkpoint. */
+.session { display: flex; flex-direction: column; gap: 0.2rem; width: min(20rem, 100%); margin-top: 0.5rem; }
+.session__track { height: 0.25rem; border-radius: 999px; background: var(--rule); overflow: hidden; }
+.session__fill { height: 100%; background: var(--edge); border-radius: 999px; }
+.session__row {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.session__first { margin: 0; font-size: 0.72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+
+/* What you have chosen, kept in sight ------------------------------------
+   The picker holds nine rows and a phone shows about six, so the moment a
+   child scrolls to the kana their choices leave the screen. The tray is the
+   answer, and it is the same idea as the builder's "Chosen" list one screen
+   further in.
+
+   The chips are spans, not buttons. Tapping one to remove it is the obvious
+   gesture and also a destructive tap sitting directly on a scroll surface —
+   the rows below are where you change your mind.
+   ------------------------------------------------------------------------- */
+.tray {
+  flex: none;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 0.7rem;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.tray__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+.tray__count { font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+/* Capped and scrollable: every grade plus both kana is nine chips, which would
+   otherwise push the rows it describes off the screen. */
+.chiplist { display: flex; flex-wrap: wrap; gap: 0.3rem; max-height: 4.5rem; overflow-y: auto; }
+.selchip {
+  font-size: 0.8rem;
+  line-height: 1.3;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  background: var(--primary);
+  color: var(--on-primary);
+  white-space: nowrap;
+}
+/* The overflow counter is not a set, so it does not look like one. */
+.selchip--more {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--edge);
+}
+.tray__empty { font-size: 0.82rem; color: var(--muted); }
+
+/* The summary row names what is chosen instead of collapsing to "3 sets" —
+   three is exactly the point where a child stops being able to hold it. */
+.selection .chiplist { max-height: none; margin-bottom: 0.15rem; }
+
+/* In a round. Goes in the progress row rather than on a line of its own: the
+   app is sized to fit a phone without scrolling, and this costs no height. */
+.progress__who {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 11rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* My sets: a set in play looked identical to one that was not, which makes
+   deleting the wrong one easy. The word is there because the colour is not
+   allowed to be the only signal. */
+/* 2px, with the padding giving back the pixel, so switching a set on does not
+   nudge the card. */
+.libcard--on {
+  border-color: var(--primary-text);
+  border-width: 2px;
+  background: var(--tint);
+  padding: 0.4rem 0.45rem 0.4rem 0.65rem;
+}
+.libcard__tag {
+  flex: none;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--on-primary);
+  background: var(--primary);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+}
+
+
+/* The header every pane wears --------------------------------------------
+   It is the one thing that does not move as the flow advances, which is what
+   makes four panes read as one place asking four questions. Full size on Home,
+   a size down once the flow starts: at full size it is about 140px of a 650px
+   phone, which is the point on Home and is in the way everywhere else.
+   ------------------------------------------------------------------------- */
+.apphead {
+  flex: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 0.5rem;
+}
+.apphead--big {
+  padding: clamp(1rem, 6vh, 3rem) 1.25rem 1.5rem;
+  margin: calc(-1 * max(0.625rem, env(safe-area-inset-top))) -1.25rem clamp(1rem, 4vh, 2rem);
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+}
+.apphead--sm {
+  padding: 0.7rem 1.25rem 0.6rem;
+  /* Bled to the edges of #app's own padding, so it reads as a band the panes
+     sit under rather than a heading that happens to be first. */
+  margin: calc(-1 * max(0.625rem, env(safe-area-inset-top))) -1.25rem 0.6rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+}
+.apphead--big .apphead__title { font-size: clamp(2rem, min(11vw, 8vh), 4.5rem); }
+.apphead--sm .apphead__title { font-size: clamp(1.35rem, min(6vw, 4.5vh), 2.25rem); }
+.apphead--big .apphead__tag { font-size: clamp(1rem, min(4.2vw, 3vh), 1.6rem); }
+.apphead--sm .apphead__tag { font-size: clamp(0.78rem, 2.8vw, 0.95rem); }
+/* The gear is chrome, not part of the flow, so it sits out of the column. */
+.apphead .menu {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+}
+
+/* How much more of this ---------------------------------------------------
+   The question a child asks at step one. Nothing answered it before, and an
+   unanswered "how long is this" is what makes someone give up on step one.
+   ------------------------------------------------------------------------- */
+.rail {
+  flex: none;
+  display: flex;
+  gap: 0.3rem;
+  width: 100%;
+  max-width: var(--col);
+  margin-inline: auto;
+}
+.rail__seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--rule);
+}
+.rail__seg.is-done { background: var(--primary-text); }
+.rail__txt {
+  flex: none;
+  margin: 0.3rem 0 0.5rem;
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+/* What has been chosen so far, carried forward. A button, not a caption. */
+/* NOT .pill — the set builder has owned that name since long before this, for
+   its grade-filter chips. Calling this one .pill too turned every filter into
+   a full-width 44px row, seven of which ate the entire word grid on a phone. */
+.summary {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  appearance: none;
+  border: 1px solid var(--rule);
+  border-radius: 0.7rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.summary:hover { border-color: var(--primary-text); }
+.summary__ico { flex: none; display: flex; color: var(--primary-text); }
+.summary__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.summary__name { font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
+.summary__count { font-size: 0.78rem; color: var(--muted); }
+.summary__edit { flex: none; font-size: 0.78rem; font-weight: 600; color: var(--primary-text); }
+
+/* The way in. One card on Home, because a screen whose first element starts
+   the thing gives you no moment to read the second element. */
+.bigcard {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  max-width: var(--col);
+  appearance: none;
+  border: 2px solid var(--edge);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  padding: 0.85rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.bigcard:hover { border-color: var(--primary-text); }
+.bigcard__glyph {
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.65rem;
+  background: var(--tint);
+  color: var(--primary-text);
+  font-size: 1.75rem;
+  font-weight: 600;
+  font-feature-settings: "palt" 1;
+}
+.bigcard__text b { display: block; font-size: 1.05rem; font-weight: 600; }
+.bigcard__text small { display: block; font-size: 0.82rem; color: var(--muted); margin-top: 0.1rem; }
+
+/* Back, and the detour. Quiet because neither is the thing most people want,
+   and Back is last because the harmless action belongs at the bottom. */
+.btn--quiet {
+  background: transparent;
+  color: var(--muted);
+  border: 2px solid transparent;
+  font-weight: 500;
+}
+.btn--quiet:hover:not(:disabled) { color: var(--ink); background: var(--surface); }
+
+/* Practice again sits above Choose something else, and is the one most people
+   want on a school night — so it carries the accent while the other stays
+   quiet. Both are the same shape: this is a choice between two things, not a
+   button and its footnote. */
+.bigcard--go { border-color: var(--primary-text); background: var(--tint); }
+.bigcard--go .bigcard__glyph { background: var(--primary); color: var(--on-primary); }
+.icon--big { width: 1.6rem; height: 1.6rem; }

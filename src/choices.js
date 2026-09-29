@@ -64,6 +64,49 @@ export function isPlausible(candidateFace, promptFace, direction) {
   return tail === '' || candidateFace.endsWith(tail)
 }
 
+/* Kana that are genuinely mistaken for one another.
+
+   Every other signal in this file is derived from the card data — okurigana,
+   shared kanji, length. None of them survive a single character: `KANJI` never
+   matches, so the shared-kanji term cannot fire, and `tailOf` returns the whole
+   character, which makes `isPlausible` reduce to exact equality and score every
+   candidate zero. Measured: any two hiragana score 3 against each other, with
+   nothing separating one pair from another. Distractors would be random and the
+   questions free.
+
+   What makes two kana confusable is how they LOOK, and that is not in the data.
+   So this is the one hand-maintained table in the project. Add to it when a
+   real child confuses a real pair; that is the only evidence worth having.
+
+   Groups are mutually confusable, and a character may appear in several. */
+const CONFUSABLE = [
+  // hiragana
+  ['あ', 'お'], ['い', 'り'], ['う', 'つ'], ['き', 'さ', 'ち'], ['く', 'へ'],
+  ['け', 'は', 'ほ'], ['こ', 'に'], ['す', 'む'], ['せ', 'ひ'], ['そ', 'ろ', 'る'],
+  ['た', 'な'], ['ぬ', 'め'], ['ね', 'れ', 'わ'], ['ま', 'も'], ['は', 'ほ'],
+  // katakana
+  ['ア', 'マ'], ['ウ', 'ワ', 'ク'], ['オ', 'ホ'], ['カ', 'ヤ'], ['キ', 'サ'],
+  ['ク', 'ケ', 'タ'], ['コ', 'ユ'], ['シ', 'ツ'], ['ソ', 'ン'], ['ス', 'ヌ', 'メ'],
+  ['セ', 'ヒ'], ['チ', 'テ'], ['ナ', 'メ'], ['ハ', 'ヘ'], ['フ', 'ワ', 'ヲ'],
+  ['マ', 'ム'], ['ミ', 'シ'], ['ヨ', 'ヲ'], ['ラ', 'ヲ'], ['ル', 'レ'],
+  ['ノ', 'ソ', 'ン'],
+]
+
+const CONFUSION = new Map()
+for (const group of CONFUSABLE) {
+  for (const ch of group) {
+    if (!CONFUSION.has(ch)) CONFUSION.set(ch, new Set())
+    for (const other of group) if (other !== ch) CONFUSION.get(ch).add(other)
+  }
+}
+
+/* Weighted like `isPlausible`, and for the same reason: being a candidate the
+   child cannot rule out on sight matters more than any resemblance score. The
+   two never compete — a single kana is never plausible under the okurigana
+   rule, because that rule reduces to exact equality at length one. */
+export const confusable = (a, b) => Boolean(CONFUSION.get(a)?.has(b))
+export const confusionBonus = (a, b) => (confusable(a, b) ? 10 : 0)
+
 // Higher means harder to tell apart without actually reading it.
 function similarity(a, b) {
   let score = 0
@@ -101,11 +144,34 @@ export function buildChoices(cards, card, direction, count) {
   const seen = new Set([correct])
 
   const candidates = []
+  /* `id` is the written form, so this also excludes a twin — the same word
+     present twice because it appears in two sets. An array index would not
+     have: the twins have different indices and are the same card. */
   for (const other of shuffle(cards.filter((c) => c.id !== card.id))) {
     const face = answerFaceOf(other, direction)
     if (seen.has(face)) continue // never show the same text twice
+    /* And never show a card that answers the same question. Refusing a
+       duplicate ANSWER face is not enough: asked こう with 校 correct, 高 is a
+       different answer face and an equally correct one. What makes two cards
+       interchangeable is a shared PROMPT face, so that is what is excluded.
+
+       A build-time rule over content/ cannot cover this. 54 readings collide
+       across the curriculum — the syllabus re-teaching a word as more of its
+       kanji arrive — and the pool widens across decks when a selection is
+       small, so a collision the generator allowed can still meet its twin in
+       one question. Custom worksheets and a new edition of the list can each
+       introduce more. This is the guarantee that holds at runtime. */
+    if (facesOf(other, direction).prompt === promptFace) continue
     seen.add(face)
-    candidates.push({ card: other, score: scoreCandidate(face, correct, promptFace, direction) })
+    candidates.push({
+      card: other,
+      /* The confusion bonus is keyed on the WRITTEN forms rather than on
+         whichever face this direction happens to show, because that is where
+         the resemblance lives — シ and ツ look alike; "shi" and "tsu" do not. */
+      score:
+        scoreCandidate(face, correct, promptFace, direction) +
+        confusionBonus(card.written, other.written),
+    })
   }
 
   // Shuffled first, so equal scores stay varied between rounds.
