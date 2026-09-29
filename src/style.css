@@ -2128,17 +2128,23 @@ html, body {
   border-bottom: 1px solid var(--rule);
 }
 .apphead--sm {
-  padding: 0.7rem 1.25rem 0.6rem;
+  padding: 0.8rem 1.25rem 0.7rem;
   /* Bled to the edges of #app's own padding, so it reads as a band the panes
      sit under rather than a heading that happens to be first. */
-  margin: calc(-1 * max(0.625rem, env(safe-area-inset-top))) -1.25rem 0.6rem;
-  background: var(--surface);
+  margin: calc(-1 * max(0.625rem, env(safe-area-inset-top))) -1.25rem 0.7rem;
+  /* --tint, not --surface: the band carries the title in the palette's own
+     colour, so it wants the palette's own ground rather than the neutral one
+     every card and list already uses. */
+  background: var(--tint);
   border-bottom: 1px solid var(--rule);
 }
+/* Home's hero already does this; the flow's header is the same title and
+   follows it. */
+.apphead--sm .apphead__title { color: var(--primary-text); }
 .apphead--big .apphead__title { font-size: clamp(2rem, min(11vw, 8vh), 4.5rem); }
-.apphead--sm .apphead__title { font-size: clamp(1.35rem, min(6vw, 4.5vh), 2.25rem); }
+.apphead--sm .apphead__title { font-size: clamp(1.5rem, min(8vw, 5vh), 2.75rem); }
 .apphead--big .apphead__tag { font-size: clamp(1rem, min(4.2vw, 3vh), 1.6rem); }
-.apphead--sm .apphead__tag { font-size: clamp(0.78rem, 2.8vw, 0.95rem); }
+.apphead--sm .apphead__tag { font-size: clamp(0.82rem, 3.2vw, 1.1rem); }
 /* The gear is chrome, not part of the flow, so it sits out of the column. */
 .apphead .menu {
   position: absolute;
