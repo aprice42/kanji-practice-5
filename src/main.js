@@ -2222,7 +2222,12 @@ function appHeader(big) {
     <header class="apphead ${big ? 'apphead--big' : 'apphead--sm'}">
       <hgroup class="apphead__group">
         <h1 class="apphead__title" lang="ja">\u6f22\u5b57\u306e\u7df4\u7fd2</h1>
-        <p class="apphead__tag">Japanese Kanji Practice</p>
+        ${
+          /* Only at full size. Inside the flow it is the app's name repeated
+             on every pane of something you are already in, and on a short
+             phone it costs the settings pane its last unscrolled row. */
+          big ? `<p class="apphead__tag">Japanese Kanji Practice</p>` : ''
+        }
       </hgroup>
       ${settingsMenu()}
     </header>`
