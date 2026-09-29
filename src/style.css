@@ -655,7 +655,9 @@ html, body {
      of narrow kana like の and makes a short title read as disconnected
      characters. "palt" switches to each glyph's own width; the small positive
      tracking then puts an even rhythm back. */
-  font-weight: 600;
+  /* 200, matching the home hero — it is the same title and should not change
+     weight when the flow starts. */
+  font-weight: 200;
   font-feature-settings: "palt" 1;
   letter-spacing: 0.02em;
 }
@@ -1399,6 +1401,11 @@ html, body {
   max-width: var(--col);
   margin-inline: auto;
   align-items: stretch;
+  /* Tight, unlike .actions during a round. There the gap is deliberate space
+     between the tick and the cross, where a mis-tap costs a score; here the
+     buttons are a stack of choices and up to 2rem between them was just the
+     bottom of the screen spent on nothing. */
+  gap: 0.5rem;
 }
 .pane__actions .btn {
   min-width: 0;
