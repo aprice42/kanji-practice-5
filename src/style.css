@@ -1386,15 +1386,31 @@ html, body {
 /* The format pane holds three cards, not a list — it is not a scroll region
    and a box around it would be a box for its own sake. */
 /* The format and settings panes hold a few controls, not a list. They do not
-   scroll, so a box around them would be a box for its own sake. */
+   scroll on a normal phone, so a box around them would be a box for its own
+   sake.
+
+   Top-aligned, not centred. Centring put the controls in the middle of
+   whatever height was left, which on a tall screen opened a hand's width of
+   nothing between the summary pill and the first question and read as a
+   missing section. They sit under the pill with a deliberate space instead,
+   and the slack goes to the bottom where it belongs. */
 .pane__body--center {
   border: 0;
   background: transparent;
   padding: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: clamp(0.4rem, 1.2vh, 0.8rem);
+}
+/* The space under the pill, as a flex item rather than padding, so it gives
+   way when the screen is short. Fixed padding took 25px that a 640px-tall
+   phone did not have and pushed the settings pane into scrolling; this is
+   generous where there is room and nothing where there is not. */
+.pane__body--center::before {
+  content: '';
+  flex: 0 1 clamp(0.75rem, 4vh, 2rem);
+  min-height: 0;
 }
 /* Stretch, not centre: .actions centres its children and .btn carries a
    min-width, which left the biggest element on the pane 116px narrower than
