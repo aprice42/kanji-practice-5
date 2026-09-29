@@ -66,6 +66,10 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   "Practice sets" section: a set that needs a commit and a deploy is not one a teacher can
   make. Sets are built in the app and handed over as a link. Do not reintroduce a
   build-time set format — the app-side path is the whole feature.
+- Everything in the flow shares ONE column, `--col` on `#app`. Four different widths were
+  on screen at once before that rule existed — a 372px list over a 352px pace block over a
+  256px button — and the panes read as a pile of unrelated boxes rather than one column of
+  questions. Anything new on a pane fills the column; nothing carries its own max-width.
 - Every Japanese string needs `lang="ja"` — that is what applies the Japanese typeface.
 - Colors come from CSS tokens only. Four palettes × light and dark; a literal hex breaks
   seven of the eight combinations.
