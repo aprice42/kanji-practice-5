@@ -278,6 +278,10 @@ html, body {
      256px button — and the panes read as a pile of unrelated boxes rather
      than one column of questions. */
   --col: 34rem;
+  /* The container's own cap, named so the header band can bleed past it and
+     still line its contents up with everything else. */
+  --app-max: 1080px;
+  --app-pad: 1.25rem;
   display: flex;
   flex-direction: column;
   height: 100dvh;
@@ -286,10 +290,10 @@ html, body {
      corners a foot apart from a card that is sized in rem and cannot fill the
      space. Everything inside is already clamped, so capping the container is
      the whole fix. */
-  max-width: 1080px;
+  max-width: var(--app-max);
   margin-inline: auto;
   width: 100%;
-  padding: max(0.625rem, env(safe-area-inset-top)) 1.25rem
+  padding: max(0.625rem, env(safe-area-inset-top)) var(--app-pad)
            max(0.875rem, env(safe-area-inset-bottom));
   /* Vertical rhythm tracks the viewport height so short phones compress
      instead of overflowing. */
@@ -2186,10 +2190,13 @@ html, body {
   border-bottom: 1px solid var(--rule);
 }
 .apphead--sm {
-  padding: 0.8rem 1.25rem 0.7rem;
-  /* Bled to the edges of #app's own padding, so it reads as a band the panes
-     sit under rather than a heading that happens to be first. */
-  margin: calc(-1 * max(0.625rem, env(safe-area-inset-top))) -1.25rem 0.7rem;
+  padding: 0.8rem 0 0.7rem;
+  /* Full bleed. #app is capped at --app-max and centred, so on a laptop the
+     band used to stop where the container stopped and float in the middle of
+     the window. These margins pull it out to the viewport edges; its contents
+     are re-capped by .apphead__inner, so only the colour runs wide. */
+  margin: calc(-1 * max(0.625rem, env(safe-area-inset-top)))
+          calc(50% - 50vw) 0.7rem;
   /* --tint, not --surface: the band carries the title in the palette's own
      colour, so it wants the palette's own ground rather than the neutral one
      every card and list already uses. */
@@ -2203,11 +2210,24 @@ html, body {
 .apphead--sm .apphead__title { font-size: clamp(1.5rem, min(8vw, 5vh), 2.75rem); }
 .apphead--big .apphead__tag { font-size: clamp(1rem, min(4.2vw, 3vh), 1.6rem); }
 .apphead--sm .apphead__tag { font-size: clamp(0.82rem, 3.2vw, 1.1rem); }
+/* The band runs to the window edges; what is in it does not. Without this the
+   gear would follow the band and end up an arm's length from the title. */
+.apphead__inner {
+  position: relative;
+  width: 100%;
+  max-width: var(--app-max);
+  margin-inline: auto;
+  padding-inline: var(--app-pad);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* The gear is chrome, not part of the flow, so it sits out of the column. */
-.apphead .menu {
+.apphead__inner .menu {
   position: absolute;
   inset-block-start: 0;
-  inset-inline-end: 0;
+  inset-inline-end: var(--app-pad);
 }
 
 /* How much more of this ---------------------------------------------------

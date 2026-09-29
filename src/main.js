@@ -2221,6 +2221,7 @@ function bindChrome() {
 function appHeader(big) {
   return `
     <header class="apphead ${big ? 'apphead--big' : 'apphead--sm'}">
+      <div class="apphead__inner">
       <hgroup class="apphead__group">
         <h1 class="apphead__title" lang="ja">\u6f22\u5b57\u306e\u7df4\u7fd2</h1>
         ${
@@ -2231,6 +2232,7 @@ function appHeader(big) {
         }
       </hgroup>
       ${settingsMenu()}
+      </div>
     </header>`
 }
 
