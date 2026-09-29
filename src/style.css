@@ -549,6 +549,15 @@ html, body {
 }
 
 /* Home -------------------------------------------------------------------- */
+/* Home ---------------------------------------------------------------------
+   Two thirds of this screen used to be nothing, with one card floating in the
+   middle of it — which reads as a page that failed to load rather than a calm
+   one. The title fills that space instead: set vertically, the way a Japanese
+   book spine or a shop curtain sets it, in the palette's own colour.
+
+   It is also the only kanji a child sees before they are three panes deep, in
+   an app about kanji.
+   ------------------------------------------------------------------------- */
 .home {
   flex: 1;
   min-height: 0;
@@ -556,9 +565,82 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: clamp(0.7rem, 2vh, 1.25rem);
+  justify-content: space-between;
+  gap: clamp(0.6rem, 2vh, 1.25rem);
   text-align: center;
+}
+.hero {
+  /* Takes the room above the panel and centres in it, so the title sits in
+     the middle of its own space rather than hanging from the top.
+
+     A size container, so the title can be sized against the room it actually
+     has rather than against the viewport. Sizing vertical text off vw is the
+     wrong axis entirely, and off vh means guessing the height of a panel whose
+     cards wrap differently on every phone — both got it wrong, and the title
+     silently wrapped into two columns at 412x560. */
+  container-type: size;
+  /* Size containment means the contents cannot set the box, so a width that
+     came from the text collapsed to zero — and with it every cqw. Stated
+     explicitly, the container has both axes and the title can size itself. */
+  width: 100%;
+  /* basis 0, not auto: a size container must get its height from the layout
+     rather than from what is inside it, and with `auto` that is circular —
+     the browser resolves cqh to zero and the title collapses to its clamp
+     floor at every size. */
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 2vh, 1.25rem);
+  padding-top: clamp(0.25rem, 2vh, 1.5rem);
+}
+.hero__title {
+  margin: 0;
+  /* tategaki. `mixed` is the default orientation and already stands CJK
+     upright; naming it stops a future edit reaching for `upright`, which would
+     also stand any Latin character up and look like a mistake. */
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-weight: 600;
+  color: var(--primary-text);
+  line-height: 1.05;
+  /* `palt` is the horizontal proportional feature and does nothing here; vpal
+     is its vertical counterpart, and without it Klee One leaves airy gaps
+     above and below the narrow の. */
+  font-feature-settings: "vpal" 1;
+  /* Five glyphs plus their leading is the whole constraint, so the height of
+     the container is what sets the size: 17cqh x 5 x 1.05 leaves the title at
+     about 89% of the room it has. The width term stops it becoming absurd on a
+     wide desktop. */
+  font-size: clamp(1.25rem, min(30cqw, 17cqh), 5rem);
+  /* Vertical text wraps into a SECOND COLUMN when it runs out of height, which
+     is how a five-glyph title turned into two. */
+  white-space: nowrap;
+}
+/* The same fallback the horizontal title needed: 練 and 習 are in no card, so
+   they are not in the font subset and would render in a different face. */
+:root .hero__title:lang(ja) {
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+}
+.hero__tag {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(0.9rem, min(4vw, 2.6vh), 1.35rem);
+  letter-spacing: 0.01em;
+}
+/* Just the grouping for the cards at the foot — no ground of its own. The
+   cards already carry their own edge and fill, and a band behind them was a
+   second container saying the same thing. */
+.home__panel {
+  flex: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.5rem, 1.5vh, 0.9rem);
+  padding-bottom: clamp(0.25rem, 2vh, 1rem);
 }
 .apphead__title {
   margin: 0;
@@ -2023,6 +2105,8 @@ html, body {
   text-align: center;
   padding-bottom: 0.5rem;
 }
+/* Kept for any screen that still wants a full-size banded heading; Home no
+   longer does. */
 .apphead--big {
   padding: clamp(1rem, 6vh, 3rem) 1.25rem 1.5rem;
   margin: calc(-1 * max(0.625rem, env(safe-area-inset-top))) -1.25rem clamp(1rem, 4vh, 2rem);

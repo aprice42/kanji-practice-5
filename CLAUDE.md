@@ -70,6 +70,12 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   belonged to the set builder's grade filters; reusing it for the flow's summary pill made
   every filter a full-width 44px row and collapsed the word grid to nothing on a phone. The
   flow's is `.summary`. `grep -n '^\.name' src/style.css` before naming anything.
+- Home's title is tategaki — `writing-mode: vertical-rl` — and is sized from its container
+  with `cqh`, not from the viewport. Two traps, both hit: vertical text WRAPS INTO A SECOND
+  COLUMN when it runs out of height (`white-space: nowrap`), and `container-type: size`
+  means the contents cannot set the box, so the container needs an explicit width and a
+  definite flex basis or every `cq` unit resolves to zero. Also `palt` is horizontal-only;
+  the vertical counterpart is `vpal`.
 - Everything in the flow shares ONE column, `--col` on `#app`. Four different widths were
   on screen at once before that rule existed — a 372px list over a 352px pace block over a
   256px button — and the panes read as a pile of unrelated boxes rather than one column of

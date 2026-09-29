@@ -2302,8 +2302,17 @@ function goScreen(screen) {
 
 function renderHome() {
   app.innerHTML = `
-    ${appHeader(true)}
+    <header class="topbar topbar--home">
+      <span class="topbar__spacer"></span>
+      <span class="topbar__spacer"></span>
+      ${settingsMenu()}
+    </header>
     <div class="home">
+      <div class="hero">
+        <h1 class="hero__title" lang="ja">\u6f22\u5b57\u306e\u7df4\u7fd2</h1>
+        <p class="hero__tag">JDLI Kanji Practice</p>
+      </div>
+      <div class="home__panel">
       ${
         isUpdateReady()
           ? `<div class="home__update" role="status">
@@ -2350,6 +2359,7 @@ function renderHome() {
           }</small>
         </span>
       </button>
+      </div>
     </div>`
 
   document.getElementById('get-started').addEventListener('click', () => goScreen('sets'))
