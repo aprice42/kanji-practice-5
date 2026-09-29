@@ -1464,7 +1464,7 @@ function renderSettings() {
         ${
           MODES[mode].directional
             ? `<div class="pace__group">
-                 <p class="pace__label" id="pace-direction-label">Which way round</p>
+                 <p class="pace__label" id="pace-direction-label">Which direction</p>
                  <div class="mode" role="radiogroup" aria-labelledby="pace-direction-label">
                    ${DIRECTIONS.map(
                      (d) => `<button class="mode__btn ${state.direction === d.id ? 'is-active' : ''}"
@@ -1479,7 +1479,7 @@ function renderSettings() {
         ${
           long
             ? `<div class="pace__group">
-                 <p class="pace__label" id="pace-length-label">How much at a time</p>
+                 <p class="pace__label" id="pace-length-label">How many rounds</p>
                  <div class="pace__choices" role="radiogroup" aria-labelledby="pace-length-label">
                    <button class="pick" type="button" role="radio" aria-checked="${rounds}" data-pace-mode="rounds">
                      <span class="pick__mark">${icon(rounds ? 'boxCheck' : 'box', 'icon--box')}</span>
