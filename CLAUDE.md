@@ -96,14 +96,7 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
 - There is no default selection. A student who has never chosen gets a non-dismissible
   picker; after that it is remembered. A stored selection that no longer resolves asks
   again rather than falling back to a guess.
-- Setting up a session is NOT a screen. The mode cards slide out to the left and the
-  settings slide in from the right, on the home screen, with the title and the selection
-  row still above them — that jump between two pages is what people kept losing. The two
-  panels share one grid cell; the one off to the side must be `inert` or the first Tab
-  goes somewhere nobody can see. The entry uses a forced reflow, NOT requestAnimationFrame:
-  rAF does not fire while the tab is in the background, which parks the panel off-screen.
-  `.setup__body` scrolls and `.setup__actions` does not, so Let's go is always reachable.
-- Direction and round size are set there, before the first card, and hold for
+- Direction and round size are set on the setup screen before the first card and hold for
   the session. Nothing about how a round works may be changeable during it — direction used
   to be, and flipping it rebuilt the multiple-choice options under the live question.
 - A session is one pass through the selection, SHUFFLED ONCE and dealt in rounds, so a few

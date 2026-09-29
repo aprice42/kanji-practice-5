@@ -1759,21 +1759,21 @@ html, body {
 .keep__row .btn { flex: 1; }
 
 /* Choosing the pace ------------------------------------------------------- */
-/* One question and its answers. The label used to be a bare <p>, which meant
-   two of them contributed 64px of default paragraph margin — most of the
-   reason "All N at once" was below the fold. */
-.pace__group {
+.pace {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  width: 100%;
+  justify-content: center;
+  gap: 0.7rem;
+  text-align: center;
+  overflow-y: auto;
 }
-.pace__label {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
+.pace__head { display: flex; flex-direction: column; gap: 0.05rem; }
+.pace__mode { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.pace__name { margin: 0; font-weight: 600; font-size: clamp(1.05rem, 4.5vw, 1.25rem); overflow-wrap: anywhere; }
+.pace__count { margin: 0; color: var(--muted); font-size: 0.85rem; }
 
 .pace__choices {
   display: flex;
@@ -1815,7 +1815,7 @@ html, body {
 .pick[aria-checked='true'] .pick__mark { color: var(--primary-text); }
 .pick[aria-checked='true'] b { font-weight: 700; }
 
-.setup .seg { width: 100%; }
+.pace .seg { width: 100%; }
 .seg {
   display: flex;
   gap: 0.2rem;
@@ -1953,105 +1953,4 @@ html, body {
   background: var(--primary);
   border-radius: 999px;
   padding: 0.15rem 0.45rem;
-}
-
-/* Two panels, one screen ---------------------------------------------------
-   Choosing a mode used to replace the whole page. The cards disappeared, a
-   top bar with a home button appeared, and nothing carried over — which is
-   the jump people kept losing. Now the cards slide out to the left and the
-   setup slides in from the right, with the title and the selection row
-   unmoved above them, so it reads as the same place answering a second
-   question.
-
-   Both panels occupy the same grid cell, so the stage is as tall as the
-   taller of the two and nothing below it moves during the slide. overflow
-   clips the panel that is off to the side; without it the page grows a
-   horizontal scrollbar mid-animation.
-   ------------------------------------------------------------------------- */
-.stage {
-  display: grid;
-  width: 100%;
-  /* Takes the space left over and keeps it: a plain grid in a flex column has
-     flex-shrink 1, so the taller panel was being squashed and spilling out of
-     its own box. align-content centres the panel inside whatever it gets. */
-  flex: 1 1 auto;
-  min-height: 0;
-  align-content: center;
-  /* No overflow of its own. #app already clips, so the panel parked off to the
-     side cannot reach a scrollbar — and clipping here instead would cut the
-     focus ring off the mode card nearest each edge. */
-}
-.stage__panel {
-  grid-area: 1 / 1;
-  min-width: 0;
-  transition: transform 0.32s ease, opacity 0.24s ease;
-}
-.stage[data-showing='modes'] .stage__setup {
-  transform: translateX(104%);
-  opacity: 0;
-}
-.stage[data-showing='setup'] .stage__modes {
-  transform: translateX(-104%);
-  opacity: 0;
-}
-
-/* The setup panel itself. */
-/* The settings scroll; the buttons do not. On a 560px-tall phone the whole
-   panel does not fit, and a child who cannot see Let's go! is stuck. */
-.setup {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  max-height: 100%;
-}
-.setup__body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(0.4rem, 1.2vh, 0.8rem);
-  width: 100%;
-}
-.setup__mode {
-  margin: 0;
-  font-size: clamp(0.95rem, 3.8vw, 1.15rem);
-  font-weight: 600;
-  color: var(--muted);
-}
-/* No outline on the heading: focus lands here on the way in so the panel is
-   announced, and a ring around a title reads as a mistake. */
-.setup__mode:focus { outline: none; }
-.setup__actions {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: min(22rem, 100%);
-  margin: 0.35rem auto 0;
-}
-
-/* The title stays while you set a session up — it is what makes the slide read
-   as the same place answering a second question rather than a new page — but
-   it steps down a size to pay for the controls. At full size it takes 140px of
-   a 650px phone, which pushed "All N at once" below the fold; a child should
-   not have to scroll to find one of two options. It transitions, so the step
-   down happens as part of the same movement as the slide. */
-.home__title,
-.home__tagline {
-  transition: font-size 0.32s ease;
-}
-.home[data-setup] .home__title { font-size: clamp(1.15rem, min(5.5vw, 3.4vh), 2.25rem); }
-/* Short screens are where this is tight, so the gaps come in too. */
-.home[data-setup] { gap: clamp(0.35rem, 1vh, 0.9rem); }
-.home[data-setup] .home__tagline { font-size: clamp(0.75rem, 2.6vw, 0.9rem); }
-@media (prefers-reduced-motion: reduce) {
-  .home__title,
-  .home__tagline { transition: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .stage__panel { transition: none; }
 }
