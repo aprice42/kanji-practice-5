@@ -565,11 +565,12 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Packed to the foot rather than spread. With two children, space-between
-     gives every spare pixel to the gap between them — on a 1366px iPad that
-     was 282px of nothing between the name and the only button. The surplus
-     belongs above the title, where it reads as a margin. */
-  justify-content: flex-end;
+  /* Centred as one group — title, tagline and cards together. With two
+     children and space-between, every spare pixel went to the gap between
+     them: 282px of nothing between the name and the only button on a 1366px
+     iPad. Centring splits the surplus above and below the whole block, where
+     it is margin rather than a hole in the middle of the composition. */
+  justify-content: center;
   gap: clamp(0.6rem, 2vh, 1.25rem);
   text-align: center;
 }
@@ -601,7 +602,6 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: clamp(0.5rem, 2vh, 1.25rem);
-  padding-top: clamp(0.25rem, 2vh, 1.5rem);
 }
 .hero__title {
   margin: 0;
