@@ -272,6 +272,10 @@ const state = {
      offer to repeat it. Not the same as "has a selection": someone can tick a
      set and walk away without ever choosing a mode. */
   hasLast: false,
+  /* The session available to pick up, validated and ready to rehydrate, or
+     null. Set at boot and kept in step by persistSession, so Home has one
+     thing to look at rather than reaching into storage on every render. */
+  resume: null,
   // id -> 'correct' | 'incorrect'. The source of truth for the score: a card
   // answered wrong in round 1 and right in round 2 simply flips to 'correct'.
   status: new Map(),
@@ -320,6 +324,8 @@ const USER_SETS_KEY = 'kanji-practice:sets'
    when a radio is tapped: this describes what someone practiced, not what they
    were considering on the way there. */
 const PREFS_KEY = 'kanji-practice:prefs'
+/* A session in progress, so being interrupted does not cost the round. */
+const SESSION_KEY = 'kanji-practice:session'
 
 /* Caps. Not storage pressure — 200 written forms is about 2 KB — but because
    the app pages nothing anywhere, and a 500-word round is not a round. */
@@ -772,9 +778,204 @@ function askPace(mode) {
   render()
 }
 
+/* Picking up where you left off ------------------------------------------
+   A child gets called to dinner seven cards into a round of twenty. Before
+   this, that round was gone.
+
+   Everything is stored as WRITTEN FORMS and rehydrated through cardByForm:
+   state.round and session.order hold card objects, which do not survive
+   JSON in any useful way.
+
+   The invariant that makes this work: `round` is authoritative and `session`
+   is bookkeeping — the progress line and the "is there another round" test.
+   Nothing may rebuild `round` from `order.slice(dealt - size, dealt)`, which
+   is why a retry round, which is not a slice of anything, resumes for free.
+   ------------------------------------------------------------------------- */
+
+/* Called at the end of render(), not from each mutator. A pure function of
+   state cannot be forgotten by the next person to add a fourth way of changing
+   the round, and running it after app.innerHTML keeps setItem off the path
+   between a tap and the paint that answers it. */
+function persistSession() {
+  /* Only the two screens that HAVE a position write one. On home, or anywhere
+     in the flow, the blob on disk is left exactly as it is — which is what
+     preserves a checkpoint someone walked away from. */
+  if (state.screen !== 'practice' && state.screen !== 'results') return
+
+  const finished = state.screen === 'results' && !hasMoreRounds()
+  if (finished || !state.round.length) {
+    /* Finishing the last round ends the session. Retrying the misses
+       afterwards is extra work, not an unfinished session — without this,
+       someone who never taps Retry is offered a resume into a dead end
+       forever. */
+    forgetSession()
+    return
+  }
+
+  const blob = {
+    v: 1,
+    saved: Date.now(),
+    screen: state.screen,
+    mode: state.mode,
+    direction: state.direction,
+    selection: [...state.selection],
+    round: state.round.map((card) => card.written),
+    index: state.index,
+    status: [...state.status],
+    session: state.session && {
+      order: state.session.order.map((card) => card.written),
+      plan: state.session.plan,
+      roundIndex: state.session.roundIndex,
+      dealt: state.session.dealt,
+      total: state.session.total,
+      firstTry: [...state.session.firstTry],
+    },
+  }
+
+  state.resume = blob
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(blob))
+  } catch {
+    /* Blocked storage or a full quota. Losing the resume is the whole cost;
+       an uncaught throw in here would take the screen down mid-answer, which
+       is not. */
+  }
+}
+
+function forgetSession() {
+  state.resume = null
+  try {
+    localStorage.removeItem(SESSION_KEY)
+  } catch {
+    // Nothing to do about it.
+  }
+}
+
+const isJudgement = (pair) =>
+  Array.isArray(pair) &&
+  pair.length === 2 &&
+  typeof pair[0] === 'string' &&
+  (pair[1] === 'correct' || pair[1] === 'incorrect')
+
+/* Validated rather than trusted, and more strictly than anything else here:
+   a half-restored session would practice fewer cards than its plan says and
+   corrupt the dealt/roundIndex arithmetic on the way. If any one thing is
+   wrong the whole blob goes, the same rule share links already follow. */
+function validSession(b) {
+  if (!b || typeof b !== 'object' || b.v !== 1) return null
+  if (!MODES[b.mode]) return null
+  /* Direction is meaningless for trace, so a trace session is not thrown away
+     over a field it never reads. */
+  if (MODES[b.mode].directional && !DIRECTIONS.some((d) => d.id === b.direction)) return null
+  if (b.screen !== 'practice' && b.screen !== 'results') return null
+  if (!Array.isArray(b.selection)) return null
+  if (!Array.isArray(b.round) || !b.round.length) return null
+  if (!b.round.every((form) => cardByForm.has(form))) return null
+  if (!Number.isInteger(b.index) || b.index < 0 || b.index >= b.round.length) return null
+  if (!Array.isArray(b.status) || !b.status.every(isJudgement)) return null
+
+  /* A session with no plan is legal: trace, or a selection small enough that
+     nothing was asked about pace. */
+  if (b.session != null) {
+    const s = b.session
+    if (typeof s !== 'object') return null
+    if (!Array.isArray(s.order) || !s.order.length) return null
+    if (!s.order.every((form) => cardByForm.has(form))) return null
+    if (!Array.isArray(s.plan) || !s.plan.length) return null
+    if (!s.plan.every((n) => Number.isInteger(n) && n > 0)) return null
+    if (!Number.isInteger(s.total) || s.total !== s.order.length) return null
+    // A plan that disagrees with the total would draw a progress bar wider
+    // than its own track.
+    if (s.plan.reduce((a, n) => a + n, 0) !== s.total) return null
+    if (!Number.isInteger(s.roundIndex) || s.roundIndex < 0 || s.roundIndex >= s.plan.length) return null
+    if (!Number.isInteger(s.dealt) || s.dealt < 0 || s.dealt > s.total) return null
+    if (!Array.isArray(s.firstTry) || !s.firstTry.every(isJudgement)) return null
+  }
+  /* Deliberately NOT checked: that round is a slice of order, or that its
+     length matches plan[roundIndex]. A retry round is neither. */
+  return b
+}
+
+function loadSession() {
+  try {
+    state.resume = validSession(JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null'))
+  } catch {
+    // Not even JSON — a truncated write, or something else's key.
+    state.resume = null
+  }
+  // Swept up either way, so a blob that can never be resumed does not sit
+  // there being re-parsed and re-rejected on every launch.
+  if (!state.resume) forgetSession()
+}
+
+/* Straight into state \u2014 never through startRound(), which reshuffles and
+   resets the index, leaving the stored position pointing into a different
+   order: answered cards would replay and unanswered ones be skipped. For the
+   same reason dealRound() is never replayed; it advances `dealt` at deal time,
+   before the round is played. */
+function resumeSession() {
+  const b = state.resume
+  if (!b) return
+  state.mode = b.mode
+  if (MODES[b.mode].directional) state.direction = b.direction
+  /* In memory only, and never written back to the selection: picking a session
+     up should not rewrite a picker they have changed since. */
+  state.selection = new Set(
+    b.selection.map(migrateSetId).filter((id) => playableSets().some((set) => set.id === id))
+  )
+  state.round = b.round.map((form) => cardByForm.get(form))
+  state.index = b.index
+  state.status = new Map(b.status)
+  state.session = b.session
+    ? {
+        order: b.session.order.map((form) => cardByForm.get(form)),
+        plan: [...b.session.plan],
+        roundIndex: b.session.roundIndex,
+        dealt: b.session.dealt,
+        total: b.session.total,
+        firstTry: new Map(b.session.firstTry),
+      }
+    : null
+  state.keeping = null
+  state.screen = b.screen
+  prepareCard()
+  render()
+}
+
+/* Roughly when, because "Round 2 of 3" alone does not tell a child whether
+   this is the thing they were doing ten minutes ago or last Tuesday. */
+function whenWord(ms) {
+  const mins = Math.max(0, Math.round((Date.now() - ms) / 60000))
+  if (mins < 5) return 'just now'
+  if (mins < 60) return `${mins} minutes ago`
+  const midnight = new Date()
+  midnight.setHours(0, 0, 0, 0)
+  if (ms >= midnight.getTime()) return 'earlier today'
+  if (ms >= midnight.getTime() - 86400000) return 'yesterday'
+  return 'a while back'
+}
+
+function resumeLine(b) {
+  const bits = []
+  if (b.session) bits.push(`Round ${b.session.roundIndex + 1} of ${b.session.plan.length}`)
+  bits.push(b.screen === 'results' ? 'at the break' : `card ${b.index + 1} of ${b.round.length}`)
+  bits.push(whenWord(b.saved))
+  return bits.join(' \u00b7 ')
+}
+
+const hasMoreRounds = () =>
+  Boolean(state.session) && state.session.roundIndex + 1 < state.session.plan.length
+
 function restart() {
   state.status.clear()
   state.session = null
+  /* A resumed session can outlive every set it was built from. Sending them to
+     step one beats a button that silently does nothing. */
+  if (!state.selection.size) {
+    state.screen = 'sets'
+    render()
+    return
+  }
   askPace(state.mode)
 }
 
@@ -2075,11 +2276,26 @@ function renderHome() {
           : ''
       }
       ${
+        /* First, because it is the most time-sensitive thing on the screen:
+           someone who walked away mid-round wants that round, not a new one. */
+        state.resume
+          ? `<button class="bigcard bigcard--go" id="resume">
+               <span class="bigcard__glyph">${icon('again', 'icon--big')}</span>
+               <span class="bigcard__text">
+                 <b>Pick up where you left off</b>
+                 <small>${escapeHtml(MODES[state.resume.mode].label)} \u00b7 ${escapeHtml(
+                   resumeLine(state.resume)
+                 )}</small>
+               </span>
+             </button>`
+          : ''
+      }
+      ${
         /* One tap back to last night's homework. The flow is right for a first
            session and for changing what you study, and far too long for the
            fourth school night in a row. */
         state.hasLast
-          ? `<button class="bigcard bigcard--go" id="practice-again">
+          ? `<button class="bigcard ${state.resume ? '' : 'bigcard--go'}" id="practice-again">
                <span class="bigcard__glyph">${icon('again', 'icon--big')}</span>
                <span class="bigcard__text">
                  <b>Practice again</b>
@@ -2101,6 +2317,7 @@ function renderHome() {
 
   document.getElementById('get-started').addEventListener('click', () => goScreen('sets'))
   document.getElementById('practice-again')?.addEventListener('click', beginSession)
+  document.getElementById('resume')?.addEventListener('click', resumeSession)
   bindMenus()
 
   const update = document.getElementById('update')
@@ -2380,7 +2597,7 @@ function renderResults() {
      session, so the checkpoint after one still offers the next round — without
      that, retrying your misses stranded you at the end of a session you were
      eleven rounds from finishing. */
-  const more = Boolean(state.session) && state.session.roundIndex + 1 < state.session.plan.length
+  const more = hasMoreRounds()
   // The round, not every card that exists — a retry of seven missed cards must
   // report seven, not 743.
   const total = state.round.length
@@ -2532,6 +2749,13 @@ let teardownTrace = null
 function render() {
   teardownTrace?.()
   teardownTrace = null
+  paint()
+  // After the screen exists, so a 14 KB write never sits between a tap and
+  // the paint that answers it.
+  persistSession()
+}
+
+function paint() {
   if (state.screen === 'home') return renderHome()
   if (state.screen === 'sets') return renderSets()
   if (state.screen === 'manage') return renderManage()
@@ -2564,6 +2788,13 @@ const sharedPayload = takeSharedFromUrl()
 loadUserSets()
 rebuildMembership()
 loadPrefs()
+/* After rebuildMembership and loadPrefs, because a stored session resolves its
+   written forms through cardByForm and its set ids through the manifest.
+
+   Deliberately only an OFFER: setting state.screen here would fight the shared
+   link below, and would drop someone into a round they may not have opened the
+   app for. Home shows the card; its click handler does the rest. */
+loadSession()
 
 if (sharedPayload) {
   /* A shared link wins over anything else at boot. It is why they opened the

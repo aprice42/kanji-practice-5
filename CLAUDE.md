@@ -115,6 +115,25 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   opening this on the fourth school night in a row. Written in `beginSession`, when a
   session actually starts — not when a radio is tapped, because this describes what someone
   practiced rather than what they were considering on the way there.
+- A session in progress is persisted to `kanji-practice:session` so being interrupted does
+  not cost the round. `persistSession()` runs at the END of `render()` — a pure function of
+  state, so the next person to add a way of changing the round cannot forget to call it —
+  and only when the screen is `practice` or `results`, which is what preserves a checkpoint
+  someone walked away from. It removes the blob when the last round is finished; retrying
+  the misses afterwards is extra work, not an unfinished session.
+- `round` is authoritative and `session` is bookkeeping. NOTHING may rebuild `round` from
+  `order.slice(dealt - size, dealt)` — that invariant is why a retry round, which is a slice
+  of nothing, resumes for free.
+- Resuming assigns `state.round` DIRECTLY. Never through `startRound()`, which reshuffles
+  and resets the index, so the stored position would land in a different order and replay
+  answered cards. `dealRound()` is never replayed either: it advances `dealt` at deal time,
+  before the round is played.
+- The stored session is written forms, never card objects, and one unresolvable form drops
+  the whole blob — a half-restored session practices fewer cards than its plan says and
+  corrupts the arithmetic on the way. Same rule as a truncated share link.
+- Boot only populates the OFFER (`state.resume`); it never sets `state.screen`. Doing so
+  would fight the shared-link branch and drop someone into a round they did not open the
+  app for.
 - Every count — tally, progress, score ring — follows `state.round`, since a retry and
   "practice the N you missed" both play a subset. `state.session.firstTry` is written once
   per card and never overwritten, so a retry cannot turn a miss into a win.
