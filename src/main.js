@@ -254,7 +254,11 @@ const DIRECTIONS = [
 const KANA_SECTION = 'Kana'
 
 const state = {
-  screen: 'home', // 'home' | 'pace' | 'practice' | 'results' | 'builder' | 'share' | 'receive'
+  screen: 'home', // 'home' | 'practice' | 'results' | 'builder' | 'share' | 'receive'
+  /* Setting up a session is not a screen — it is a panel that slides in over
+     the mode cards, on the home screen, with the title and the selection row
+     still in place above it. Holds the mode being set up, or null. */
+  setup: null,
   mode: 'flashcards', // 'flashcards' | 'choice'
   direction: 'reading-first',
   // id -> 'correct' | 'incorrect'. The source of truth for the score: a card
@@ -644,6 +648,8 @@ function roundPlan(total, size) {
    removed: a few short rounds cover the selection exactly once, where a cap
    re-sampled it at random every round and never guaranteed a card was seen. */
 function startSession(size) {
+  state.setup = null
+  slidIn = false
   const cards = activeCards()
   state.status.clear()
   state.session = {
@@ -693,8 +699,43 @@ function askPace(mode) {
     return
   }
   state.pendingMode = mode
-  state.screen = 'pace'
+  state.setup = mode
+  slidIn = false
+  state.screen = 'home'
   render()
+}
+
+/* Back out of the setup panel. No re-render: the panel slides away and its
+   contents are never seen again before the next render, so rebuilding them
+   would only risk a flash on the way out. */
+function leaveSetup() {
+  const from = state.setup
+  state.setup = null
+  slidIn = false
+  showStage()
+  document.querySelector(`[data-start="${from}"]`)?.focus()
+}
+
+/* Which panel the stage is showing. Kept out of render() so that changing a
+   radio inside setup repaints in place rather than replaying the slide. */
+let slidIn = false
+
+function showStage() {
+  const stage = app.querySelector('.stage')
+  if (!stage) return
+  const showing = state.setup && slidIn ? 'setup' : 'modes'
+  stage.dataset.showing = showing
+  /* Drives the title stepping down a size. It lives here rather than in the
+     markup because leaving setup deliberately does not re-render — the
+     attribute has to come off with the slide, not a frame later. */
+  app.querySelector('.home')?.toggleAttribute('data-setup', showing === 'setup')
+  /* inert, not just off-screen: a translated panel is still in the tab order
+     and still read out, so without this the first Tab goes somewhere nobody
+     can see. */
+  const modes = stage.querySelector('.stage__modes')
+  const setup = stage.querySelector('.stage__setup')
+  modes.inert = showing === 'setup'
+  if (setup) setup.inert = showing !== 'setup'
 }
 
 function restart() {
@@ -711,6 +752,8 @@ function practiceMissed() {
 
 function goHome() {
   state.screen = 'home'
+  state.setup = null
+  slidIn = false
   render()
 }
 
@@ -1248,114 +1291,131 @@ function sessionLine() {
 let paceSize = 20
 let paceMode = 'rounds'
 
-function renderPace() {
+/* Setting up a session ----------------------------------------------------
+   Not a screen. Choosing WHAT to practice and choosing HOW were two separate
+   pages, and the jump between them lost people: the mode cards vanished, a
+   top bar appeared with a home button on it, and nothing on the new page
+   looked like the one before.
+
+   So this is the same screen. The mode cards slide out to the left and this
+   slides in from the right, under the title and the selection row, which
+   never move. Back reverses it. The two panels live in one grid cell and are
+   moved with transforms, which the compositor handles without laying the page
+   out again on every frame.
+
+   What is NOT repeated here: the sets and the card count. They are in the
+   summary row directly above, unmoved, and saying them twice invites a child
+   to wonder whether the two numbers are about different things. The mode's
+   name stays, because it is the one thing the sliding-away cards took with
+   them. */
+function setupPanel() {
+  const mode = state.setup
+  if (!mode) return ''
   const total = activeCards().length
   const plan = roundPlan(total, paceSize)
   const rounds = paceMode === 'rounds'
   const long = total > ASK_ABOVE
   const kind = selectionIsKana() ? 'kana' : 'word'
 
-  app.innerHTML = `
-    <header class="topbar">
-      <button class="menu__trigger" id="pace-back">
-        ${icon('home', 'icon--menu')}
-        <span class="visually-hidden">Back without starting</span>
-      </button>
-      <span class="topbar__spacer"></span>
-      ${settingsMenu()}
-    </header>
+  return `
+    <div class="setup__body">
+    <h2 class="setup__mode" id="setup-mode" tabindex="-1">${escapeHtml(MODES[mode].label)}</h2>
 
-    <div class="pace">
-      <div class="pace__head">
-        <p class="pace__mode">${escapeHtml(MODES[state.pendingMode].label)}</p>
-        <p class="pace__name">${selectionSummary()}</p>
-        <p class="pace__count">${total} cards</p>
-      </div>
+    ${
+      MODES[mode].directional
+        ? `<div class="pace__group">
+             <p class="pace__label" id="pace-direction-label">Which way round</p>
+             <div class="mode" role="radiogroup" aria-labelledby="pace-direction-label">
+               ${DIRECTIONS.map(
+                 (d) => `<button class="mode__btn ${state.direction === d.id ? 'is-active' : ''}"
+                           type="button" role="radio" aria-checked="${state.direction === d.id}"
+                           data-direction="${d.id}" title="${d.hint}">${d[kind]}</button>`
+               ).join('')}
+             </div>
+           </div>`
+        : ''
+    }
 
-      ${
-        MODES[state.pendingMode].directional
-          ? `<div class="pace__group">
-               <p class="pace__label" id="pace-direction-label">Which way round</p>
-               <div class="mode" role="radiogroup" aria-labelledby="pace-direction-label">
-                 ${DIRECTIONS.map(
-                   (d) => `<button class="mode__btn ${state.direction === d.id ? 'is-active' : ''}"
-                             type="button" role="radio" aria-checked="${state.direction === d.id}"
-                             data-direction="${d.id}" title="${d.hint}">${d[kind]}</button>`
-                 ).join('')}
-               </div>
-             </div>`
-          : ''
-      }
+    ${
+      long
+        ? `<div class="pace__group">
+             <p class="pace__label" id="pace-length-label">How much at a time</p>
+             <div class="pace__choices" role="radiogroup" aria-labelledby="pace-length-label">
+               <button class="pick" type="button" role="radio" aria-checked="${rounds}" data-mode="rounds">
+                 <span class="pick__mark">${icon(rounds ? 'boxCheck' : 'box', 'icon--box')}</span>
+                 <span class="pick__text">
+                   <b>In rounds of ${paceSize}</b>
+                   <small>${plan.length} round${plan.length === 1 ? '' : 's'}, with a break after each one</small>
+                 </span>
+               </button>
 
-      ${
-        long
-          ? `<div class="pace__group">
-               <p class="pace__label" id="pace-length-label">How much at a time</p>
-               <div class="pace__choices" role="radiogroup" aria-labelledby="pace-length-label">
-        <button class="pick" type="button" role="radio" aria-checked="${rounds}" data-mode="rounds">
-          <span class="pick__mark">${icon(rounds ? 'boxCheck' : 'box', 'icon--box')}</span>
-          <span class="pick__text">
-            <b>In rounds of ${paceSize}</b>
-            <small>${plan.length} round${plan.length === 1 ? '' : 's'}, with a break after each one</small>
-          </span>
-        </button>
+               ${
+                 /* Only while it applies. An inert size control under an
+                    unselected option is a thing to wonder about rather than a
+                    thing to use. */
+                 rounds
+                   ? `<div class="seg" role="group" aria-label="How many cards in a round">
+                        ${ROUND_SIZES.map(
+                          (n) => `<button type="button" data-pace="${n}" aria-pressed="${paceSize === n}">${n}</button>`
+                        ).join('')}
+                      </div>`
+                   : ''
+               }
 
-        ${
-          /* Only while it applies. An inert size control under an unselected
-             option is a thing to wonder about rather than a thing to use. */
-          rounds
-            ? `<div class="seg" role="group" aria-label="How many cards in a round">
-                 ${ROUND_SIZES.map(
-                   (n) => `<button type="button" data-pace="${n}" aria-pressed="${paceSize === n}">${n}</button>`
-                 ).join('')}
-               </div>`
-            : ''
-        }
+               <button class="pick" type="button" role="radio" aria-checked="${!rounds}" data-mode="all">
+                 <span class="pick__mark">${icon(rounds ? 'box' : 'boxCheck', 'icon--box')}</span>
+                 <span class="pick__text">
+                   <b>All ${total} at once</b>
+                   <small>One long round, no breaks</small>
+                 </span>
+               </button>
+             </div>
+           </div>`
+        : ''
+    }
 
-        <button class="pick" type="button" role="radio" aria-checked="${!rounds}" data-mode="all">
-          <span class="pick__mark">${icon(rounds ? 'box' : 'boxCheck', 'icon--box')}</span>
-          <span class="pick__text">
-            <b>All ${total} at once</b>
-            <small>One long round, no breaks</small>
-          </span>
-        </button>
-               </div>
-             </div>`
-          : ''
-      }
     </div>
 
-    <div class="actions">
+    <div class="setup__actions">
       <button class="btn" id="pace-go">Let's go!</button>
+      <button class="btn btn--secondary" id="pace-back">Back</button>
     </div>`
+}
 
-  document.getElementById('pace-back').addEventListener('click', goHome)
-  document.getElementById('pace-go').addEventListener('click', () =>
+function bindSetup() {
+  const go = document.getElementById('pace-go')
+  if (!go) return
+  const long = activeCards().length > ASK_ABOVE
+  go.addEventListener('click', () =>
     // A selection too short to split is one round whatever the control says.
     startSession(long && paceMode === 'rounds' ? paceSize : null)
   )
+  document.getElementById('pace-back').addEventListener('click', leaveSetup)
+
+  /* Each of these re-renders the home screen. The stage paints straight into
+     its current position, so changing a radio does not replay the slide. */
+  const rebind = (selector, value) => {
+    render()
+    document.querySelector(`[${selector}="${value}"]`)?.focus()
+  }
   for (const btn of app.querySelectorAll('[data-direction]')) {
     btn.addEventListener('click', () => {
       state.direction = btn.dataset.direction
-      render()
-      document.querySelector(`[data-direction="${state.direction}"]`)?.focus()
+      rebind('data-direction', state.direction)
     })
   }
-  for (const btn of app.querySelectorAll('[data-mode]')) {
+  for (const btn of app.querySelectorAll('.setup [data-mode]')) {
     btn.addEventListener('click', () => {
       paceMode = btn.dataset.mode
-      render()
-      document.querySelector(`[data-mode="${paceMode}"]`)?.focus()
+      rebind('data-mode', paceMode)
     })
   }
   for (const btn of app.querySelectorAll('[data-pace]')) {
     btn.addEventListener('click', () => {
       paceSize = Number(btn.dataset.pace)
-      render()
-      document.querySelector(`[data-pace="${paceSize}"]`)?.focus()
+      rebind('data-pace', paceSize)
     })
   }
-  bindMenus()
 }
 
 /* Keeping the words from a round -----------------------------------------
@@ -2108,7 +2168,7 @@ function renderHome() {
       <span class="topbar__spacer"></span>
       ${settingsMenu()}
     </header>
-    <div class="home">
+    <div class="home" ${state.setup ? 'data-setup' : ''}>
       <hgroup class="home__heading">
         <h1 class="home__title" lang="ja">漢字の練習</h1>
         <p class="home__tagline">JDLI Kanji Practice</p>
@@ -2129,23 +2189,47 @@ function renderHome() {
         </span>
         ${icon('chevron', 'icon--chevron')}
       </button>
-      <div class="home__modes">
-        ${Object.entries(MODES)
-          .map(
-            ([id, m]) => `
-              <button class="card-btn" data-start="${id}">
-                <span class="card-btn__icon">${icon(m.icon)}</span>
-                <span class="card-btn__label">${m.label}</span>
-                <span class="card-btn__hint">${m.hint}</span>
-              </button>`
-          )
-          .join('')}
+      <div class="stage" data-showing="modes">
+        <div class="stage__panel stage__modes home__modes">
+          ${Object.entries(MODES)
+            .map(
+              ([id, m]) => `
+                <button class="card-btn" data-start="${id}">
+                  <span class="card-btn__icon">${icon(m.icon)}</span>
+                  <span class="card-btn__label">${m.label}</span>
+                  <span class="card-btn__hint">${m.hint}</span>
+                </button>`
+            )
+            .join('')}
+        </div>
+        ${state.setup ? `<div class="stage__panel stage__setup setup">${setupPanel()}</div>` : ''}
       </div>
     </div>
     ${renderSheet()}`
 
   for (const btn of app.querySelectorAll('[data-start]')) {
     btn.addEventListener('click', () => setMode(btn.dataset.start))
+  }
+  bindSetup()
+
+  /* Paint in the starting position, force the layout, THEN slide. A transform
+     set in the same task as the element is created does not animate — the
+     browser has no previous value to move from — and reading offsetWidth is
+     what makes it commit one.
+
+     Deliberately not requestAnimationFrame, which is the usual way to do
+     this: rAF does not fire at all while the tab is in the background, so the
+     panel would stay parked off-screen until the tab was looked at. A forced
+     reflow happens whether anyone is watching or not.
+
+     Re-renders while already in setup skip this and land in place, so
+     changing a radio does not replay the slide. */
+  showStage()
+  if (state.setup && !slidIn) {
+    void app.querySelector('.stage')?.offsetWidth
+    slidIn = true
+    showStage()
+    document.getElementById('setup-mode')?.focus()
   }
   document.getElementById('selection').addEventListener('click', openSheet)
   bindSheet()
@@ -2514,7 +2598,6 @@ function render() {
   teardownTrace = null
   if (state.screen === 'home') return renderHome()
   if (state.screen === 'builder') return renderBuilder()
-  if (state.screen === 'pace') return renderPace()
   if (state.screen === 'share') return renderShare()
   if (state.screen === 'receive') return renderReceive()
   if (state.screen === 'results') return renderResults()
