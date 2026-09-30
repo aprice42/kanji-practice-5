@@ -465,7 +465,11 @@ html, body {
   top: calc(100% + 0.375rem);
   left: 0;
   z-index: 20;
-  min-width: 14rem;
+  /* Wide enough for the support row's two lines to each stay one line, and
+     never wider than the screen — the panel hangs off the top bar, so on a
+     320px phone an 18rem box would run off the edge. */
+  min-width: min(18rem, calc(100vw - 2.5rem));
+  max-width: calc(100vw - 2.5rem);
   /* Never taller than the space below the trigger. */
   max-height: calc(100dvh - 5rem);
   overflow-y: auto;
@@ -2383,3 +2387,58 @@ html, body {
 .bigcard--go { border-color: var(--primary-text); background: var(--tint); }
 .bigcard--go .bigcard__glyph { background: var(--primary); color: var(--on-primary); }
 .icon--big { width: 1.6rem; height: 1.6rem; }
+
+/* Support this Project ----------------------------------------------------
+   Two lines beside one icon that spans both, which is what makes it read as a
+   card rather than a menu row with a subtitle. Same shape in both places; only
+   the surrounding padding differs, because two marks for one link is how a
+   small app starts feeling like two.
+   ------------------------------------------------------------------------- */
+.support {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: 0.625rem;
+}
+.icon--support {
+  flex: none;
+  width: 1.9rem;
+  height: 1.9rem;
+  color: var(--primary-text);
+}
+.support__text { min-width: 0; }
+.support__text b { display: block; font-weight: 600; }
+.support__text small { display: block; color: var(--muted); font-size: 0.78rem; }
+
+/* Scoped to the panel, and deliberately: `.menu__panel [role='menuitem']` is
+   two selectors deep and sets `display: block`, which beat a bare `.support`
+   and stacked the icon above the text at 103px tall. Matching its specificity
+   and coming later is what wins. */
+.menu__panel .support {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  min-height: 44px;
+}
+.menu__panel .support:hover { background: var(--surface); }
+
+/* In the builder it sits under Cancel and Save, quiet enough not to compete
+   with them — this screen fought hard for its word grid and the line is only
+   worth about half a row of tiles. */
+.support--inline {
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  min-height: 44px;
+}
+.support--inline .icon--support { width: 1.5rem; height: 1.5rem; }
+.support--inline .support__text b { font-size: 0.92rem; }
+.support--inline .support__text small { font-size: 0.74rem; }
+.support--inline:hover { background: var(--surface); }
+
+/* Offline: visibly not a button, and it says why. */
+.support.is-off { opacity: 0.5; cursor: default; }

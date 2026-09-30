@@ -211,6 +211,10 @@ const ICONS = {
      angles. Paired with the hamburger in the top bar, so it has to read as a
      different shape at 24px — a sliders glyph would have been three horizontal
      lines sitting next to three horizontal lines. */
+  coffee:
+    '<path d="M11 17h22v9a11 11 0 0 1-11 11a11 11 0 0 1-11-11Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>' +
+    '<path d="M33 20h3.5a5.5 5.5 0 0 1 0 11H33" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>' +
+    '<path d="M18 7v4M26 7v4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
   gear:
     '<path d="M20.6,9.9L20.9,4.7L27.1,4.7L27.4,9.9L31.6,11.6L35.5,8.2L39.8,12.5L36.4,16.4L38.1,20.6L43.3,20.9L43.3,27.1L38.1,27.4L36.4,31.6L39.8,35.5L35.5,39.8L31.6,36.4L27.4,38.1L27.1,43.3L20.9,43.3L20.6,38.1L16.4,36.4L12.5,39.8L8.2,35.5L11.6,31.6L9.9,27.4L4.7,27.1L4.7,20.9L9.9,20.6L11.6,16.4L8.2,12.5L12.5,8.2L16.4,11.6Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>' +
     '<circle cx="24" cy="24" r="6" fill="none" stroke="currentColor" stroke-width="3"/>',
@@ -1081,6 +1085,41 @@ function navMenu() {
   })
 }
 
+/* Paying for this is an adult's decision, so the link lives where adults go:
+   the settings menu, and the set builder — which is the one screen an adult
+   uses that has no gear on it, since its top bar was stripped to a title.
+
+   Never on Home, in a round, or on the checkpoint. Nothing in the app is ever
+   behind it: the point of the sub-line is to say so before anyone wonders. */
+const KOFI = 'https://ko-fi.com/andy_price'
+
+function supportLink(kind) {
+  /* The app works offline and this link does not. Dimmed with a reason beats a
+     tap that goes nowhere — read at render time rather than watched, because a
+     listener that re-renders mid-round to grey out a menu item is a worse
+     trade than a stale label behind a gear. */
+  if (!navigator.onLine) {
+    return `
+      <span class="support support--${kind} is-off" aria-disabled="true">
+        ${icon('coffee', 'icon--support')}
+        <span class="support__text">
+          <b>Support this Project</b>
+          <small>Needs a connection</small>
+        </span>
+      </span>`
+  }
+  return `
+    <a class="support support--${kind}" href="${KOFI}" target="_blank" rel="noopener noreferrer"
+       ${kind === 'menu' ? 'role="menuitem"' : ''}>
+      ${icon('coffee', 'icon--support')}
+      <span class="support__text">
+        <b>Support this Project</b>
+        <small>Help keep this free for everyone</small>
+      </span>
+      <span class="visually-hidden">opens in a new tab</span>
+    </a>`
+}
+
 function settingsMenu() {
   return popover({
     id: 'settings',
@@ -1091,7 +1130,9 @@ function settingsMenu() {
       <p class="menu__heading">Theme</p>
       ${themeSwitch()}
       <p class="menu__heading">Color scheme</p>
-      ${paletteSwitch()}`,
+      ${paletteSwitch()}
+      <hr />
+      ${supportLink('menu')}`,
   })
 }
 
@@ -1902,6 +1943,12 @@ function renderBuilder() {
         <button class="btn btn--secondary" id="builder-cancel">Cancel</button>
         <button class="btn" id="save-set" ${canSave ? '' : 'disabled'}>Save</button>
       </div>
+      ${
+        /* Under the buttons, not above them. Cancel and Save are what someone
+           came here to press; this waits until they have finished reading
+           them. */
+        supportLink('inline')
+      }
     </div>`
 
   bindBuilder()
