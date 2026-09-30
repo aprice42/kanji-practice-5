@@ -282,6 +282,9 @@ html, body {
      still line its contents up with everything else. */
   --app-max: 1080px;
   --app-pad: 1.25rem;
+  /* The settings gear, named because the header band has to be at least this
+     tall to hold it — it is the tallest thing in the band, not the title. */
+  --trigger: clamp(44px, min(6vw, 7.5vh), 56px);
   display: flex;
   flex-direction: column;
   height: 100dvh;
@@ -453,8 +456,8 @@ html, body {
   /* 44px is the phone touch target and the floor. On a tablet or desktop the
      two triggers are the only chrome on an otherwise wide top bar, and at
      44px they read as specks. */
-  width: clamp(44px, min(6vw, 7.5vh), 56px);
-  height: clamp(44px, min(6vw, 7.5vh), 56px);
+  width: var(--trigger);
+  height: var(--trigger);
   border-radius: 0.75rem;
   cursor: pointer;
 }
@@ -2194,7 +2197,10 @@ html, body {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 0.8rem 0 0.7rem;
+  /* Small, because the gear now sets the band's height (see the min-height on
+     .apphead__inner) and this padding is on top of it. The 0.8/0.7 it had when
+     the title was the tallest thing in here made the band 81px on a laptop. */
+  padding: 0.3rem 0;
   /* Full bleed. #app is capped at --app-max and centred, so on a laptop the
      band used to stop where the container stopped and float in the middle of
      the window. These margins pull it out to the viewport edges; its contents
@@ -2221,19 +2227,29 @@ html, body {
    gear would follow the band and end up an arm's length from the title. */
 .apphead__inner {
   position: relative;
+  /* The gear is out of flow, so nothing else in here can hold the band open to
+     its height — and the gear is taller than the title at every size, so
+     without this it hangs out of the bottom of the tint. */
+  min-height: var(--trigger);
   width: 100%;
   max-width: var(--app-max);
   margin-inline: auto;
   padding-inline: var(--app-pad);
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
 }
 
 /* The gear is chrome, not part of the flow, so it sits out of the column. */
 .apphead__inner .menu {
   position: absolute;
-  inset-block-start: 0;
+  /* Centred on the band rather than pinned to its top: the two are different
+     heights, and pinning left the gear low. `inset-block: 0` plus auto margins
+     is how an absolutely positioned box centres itself. */
+  inset-block: 0;
+  margin-block: auto;
+  block-size: var(--trigger);
   inset-inline-end: var(--app-pad);
 }
 

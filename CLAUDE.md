@@ -106,6 +106,10 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   truncated link must fail loudly — deflate catches it — never save a short word list.
   Sharing does NOT work for an iOS app installed to the Home Screen: storage there is
   partitioned from Safari, which is where the link opens. Documented, not solved.
+- The GEAR sets the header band's height, not the title — it is 44-56px and the title is
+  about 30. `.apphead__inner` carries `min-height: var(--trigger)` for that reason, and the
+  band's own padding is small because it sits on top of that. The gear is out of flow, so
+  without the min-height it hangs out of the bottom of the tint.
 - The flow's header band carries THE PANE'S OWN TITLE, in Latin — "Select your practice
   sets", not the 漢字の練習 wordmark. The wordmark lives on Home's hero and nowhere else, so
   `.apphead__title` is plain Latin type: no Klee fallback, no `palt`, and a heading weight
