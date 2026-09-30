@@ -1085,22 +1085,26 @@ function navMenu() {
   })
 }
 
-/* Paying for this is an adult's decision, so the link lives where adults go:
-   the settings menu, and the set builder — which is the one screen an adult
-   uses that has no gear on it, since its top bar was stripped to a title.
+/* Paying for this is an adult's decision, so the link lives where adults go
+   and children do not: behind the gear.
+
+   It was in the set builder too, on the argument that a builder is an adult's
+   screen. It looked wrong there — a donate line under Cancel and Save reads as
+   part of the task rather than beside it, and it cost a full row of the word
+   grid on a small phone. One placement.
 
    Never on Home, in a round, or on the checkpoint. Nothing in the app is ever
    behind it: the point of the sub-line is to say so before anyone wonders. */
 const KOFI = 'https://ko-fi.com/andy_price'
 
-function supportLink(kind) {
+function supportLink() {
   /* The app works offline and this link does not. Dimmed with a reason beats a
      tap that goes nowhere — read at render time rather than watched, because a
      listener that re-renders mid-round to grey out a menu item is a worse
      trade than a stale label behind a gear. */
   if (!navigator.onLine) {
     return `
-      <span class="support support--${kind} is-off" aria-disabled="true">
+      <span class="support is-off" aria-disabled="true">
         ${icon('coffee', 'icon--support')}
         <span class="support__text">
           <b>Support this Project</b>
@@ -1109,8 +1113,7 @@ function supportLink(kind) {
       </span>`
   }
   return `
-    <a class="support support--${kind}" href="${KOFI}" target="_blank" rel="noopener noreferrer"
-       ${kind === 'menu' ? 'role="menuitem"' : ''}>
+    <a class="support" href="${KOFI}" target="_blank" rel="noopener noreferrer" role="menuitem">
       ${icon('coffee', 'icon--support')}
       <span class="support__text">
         <b>Support this Project</b>
@@ -1132,7 +1135,7 @@ function settingsMenu() {
       <p class="menu__heading">Color scheme</p>
       ${paletteSwitch()}
       <hr />
-      ${supportLink('menu')}`,
+      ${supportLink()}`,
   })
 }
 
@@ -1943,12 +1946,6 @@ function renderBuilder() {
         <button class="btn btn--secondary" id="builder-cancel">Cancel</button>
         <button class="btn" id="save-set" ${canSave ? '' : 'disabled'}>Save</button>
       </div>
-      ${
-        /* Under the buttons, not above them. Cancel and Save are what someone
-           came here to press; this waits until they have finished reading
-           them. */
-        supportLink('inline')
-      }
     </div>`
 
   bindBuilder()

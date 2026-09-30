@@ -2426,19 +2426,5 @@ html, body {
 }
 .menu__panel .support:hover { background: var(--surface); }
 
-/* In the builder it sits under Cancel and Save, quiet enough not to compete
-   with them — this screen fought hard for its word grid and the line is only
-   worth about half a row of tiles. */
-.support--inline {
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.5rem;
-  min-height: 44px;
-}
-.support--inline .icon--support { width: 1.5rem; height: 1.5rem; }
-.support--inline .support__text b { font-size: 0.92rem; }
-.support--inline .support__text small { font-size: 0.74rem; }
-.support--inline:hover { background: var(--surface); }
-
 /* Offline: visibly not a button, and it says why. */
 .support.is-off { opacity: 0.5; cursor: default; }
