@@ -679,48 +679,15 @@ html, body {
   gap: clamp(0.5rem, 1.5vh, 0.9rem);
   padding-bottom: clamp(0.25rem, 2vh, 1rem);
 }
+/* The pane's own question, in Latin — so none of the Japanese typesetting the
+   home wordmark needs applies here: no Klee fallback, no `palt`, and a heading
+   weight rather than the hero's 200, which is far too thin for a sentence at
+   this size. */
 .apphead__title {
   margin: 0;
-  /* Klee One sets CJK on a full-width grid, which leaves airy gaps either side
-     of narrow kana like の and makes a short title read as disconnected
-     characters. "palt" switches to each glyph's own width; the small positive
-     tracking then puts an even rhythm back. */
-  /* 200, matching the home hero — it is the same title and should not change
-     weight when the flow starts. */
-  font-weight: 200;
-  font-feature-settings: "palt" 1;
-  letter-spacing: 0.02em;
-}
-/* The title is the one Japanese string on screen that is not a card, so its
-   characters are not in the font subset — 練 and 習 are in no card, fall back to
-   the device face, and the title renders half Klee One and half something else.
-   Skipping to the next face in the stack makes it one font again.
-
-   Specificity: `:root :lang(ja)` is (0,2,0) and would otherwise win over a bare
-   class, which is why it is written this way rather than as `.home__title`. */
-:root .apphead__title:lang(ja) {
-  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
-}
-/* The title and its translation are one unit, so they are grouped and spaced
-   tightly against each other rather than being two children of .home competing
-   with its much larger gap. */
-.apphead__group {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(0.1rem, 0.5vh, 0.35rem);
-}
-
-/* A <p> in an <hgroup>, not an <h2>. It is a translation of the heading above
-   it, not the title of a section — an h2 would put a phantom "Japanese Kanji Practice"
-   section containing the mode buttons into the document outline and every
-   screen reader's heading list. The text is in the DOM either way, which is all
-   a crawler cares about. */
-.apphead__tag {
-  margin: 0;
-  letter-spacing: 0.01em;
-  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-wrap: balance;
 }
 /* One column on a phone, three from a tablet up.
 
@@ -2227,17 +2194,6 @@ html, body {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding-bottom: 0.5rem;
-}
-/* Kept for any screen that still wants a full-size banded heading; Home no
-   longer does. */
-.apphead--big {
-  padding: clamp(1rem, 6vh, 3rem) 1.25rem 1.5rem;
-  margin: calc(-1 * max(0.625rem, env(safe-area-inset-top))) -1.25rem clamp(1rem, 4vh, 2rem);
-  background: var(--surface);
-  border-bottom: 1px solid var(--rule);
-}
-.apphead--sm {
   padding: 0.8rem 0 0.7rem;
   /* Full bleed. #app is capped at --app-max and centred, so on a laptop the
      band used to stop where the container stopped and float in the middle of
@@ -2253,11 +2209,14 @@ html, body {
 }
 /* Home's hero already does this; the flow's header is the same title and
    follows it. */
-.apphead--sm .apphead__title { color: var(--primary-text); }
-.apphead--big .apphead__title { font-size: clamp(2rem, min(11vw, 8vh), 4.5rem); }
-.apphead--sm .apphead__title { font-size: clamp(1.5rem, min(8vw, 5vh), 2.75rem); }
-.apphead--big .apphead__tag { font-size: clamp(1rem, min(4.2vw, 3vh), 1.6rem); }
-.apphead--sm .apphead__tag { font-size: clamp(0.82rem, 3.2vw, 1.1rem); }
+.apphead .apphead__title {
+  color: var(--primary-text);
+  font-size: clamp(1.1rem, min(5vw, 3.2vh), 1.6rem);
+  /* The gear is absolutely positioned at the inner edge; without room either
+     side a long title would run underneath it. Symmetric, so the title stays
+     centred on the band rather than on what is left of it. */
+  padding-inline: 2.75rem;
+}
 /* The band runs to the window edges; what is in it does not. Without this the
    gear would follow the band and end up an arm's length from the title. */
 .apphead__inner {

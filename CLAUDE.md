@@ -106,6 +106,10 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   truncated link must fail loudly — deflate catches it — never save a short word list.
   Sharing does NOT work for an iOS app installed to the Home Screen: storage there is
   partitioned from Safari, which is where the link opens. Documented, not solved.
+- The flow's header band carries THE PANE'S OWN TITLE, in Latin — "Select your practice
+  sets", not the 漢字の練習 wordmark. The wordmark lives on Home's hero and nowhere else, so
+  `.apphead__title` is plain Latin type: no Klee fallback, no `palt`, and a heading weight
+  rather than the hero's 200, which is unreadably thin at a sentence's size.
 - Setting a session up is a FLOW OF PANES, not a dialog and not a screen swap: Home → sets
   → format → settings → the first card, with manage-my-sets as a detour off step one. The
   header is the one thing that does not move, which is what makes four panes read as one

@@ -1500,7 +1500,7 @@ function renderSettings() {
   const kind = selectionIsKana() ? 'kana' : 'word'
 
   app.innerHTML = `
-    ${appHeader(false)}
+    ${appHeader('Set up this session')}
     ${stepRail('settings')}
     <div class="pane">
       ${summaryPill(true)}
@@ -2262,20 +2262,19 @@ function bindChrome() {
 /* The header every pane wears. Full size on Home, where it is the point; a
    size down once the flow starts, where 140px of a 650px phone is the
    difference between seeing the last option and hunting for it. */
-function appHeader(big) {
+/* Home wears the app's name; every pane of the flow wears its own question.
+
+   The name used to repeat on all four, which is the app introducing itself to
+   someone already three taps inside it — and it left each pane's actual title
+   as a smaller line underneath, so the band said the least useful thing in
+   the largest type on the screen. The title moves up into the band and the
+   duplicate goes. */
+function appHeader(title) {
   return `
-    <header class="apphead ${big ? 'apphead--big' : 'apphead--sm'}">
+    <header class="apphead">
       <div class="apphead__inner">
-      <hgroup class="apphead__group">
-        <h1 class="apphead__title" lang="ja">\u6f22\u5b57\u306e\u7df4\u7fd2</h1>
-        ${
-          /* Only at full size. Inside the flow it is the app's name repeated
-             on every pane of something you are already in, and on a short
-             phone it costs the settings pane its last unscrolled row. */
-          big ? `<p class="apphead__tag">Japanese Kanji Practice</p>` : ''
-        }
-      </hgroup>
-      ${settingsMenu()}
+        <h1 class="apphead__title">${escapeHtml(title)}</h1>
+        ${settingsMenu()}
       </div>
     </header>`
 }
@@ -2428,10 +2427,9 @@ function renderHome() {
 
 function renderSets() {
   app.innerHTML = `
-    ${appHeader(false)}
+    ${appHeader('Select your practice sets')}
     ${stepRail('sets')}
     <div class="pane">
-      <p class="pane__title">Select your practice sets</p>
       ${selectionTray()}
       <div class="pane__body">${setList()}</div>
       <p class="pane__note" role="status" aria-live="polite"></p>
@@ -2445,9 +2443,8 @@ function renderSets() {
 
 function renderManage() {
   app.innerHTML = `
-    ${appHeader(false)}
+    ${appHeader('Manage your sets')}
     <div class="pane">
-      <p class="pane__title">Manage your sets</p>
       <div class="pane__body">${libraryList()}</div>
       <p class="pane__note" role="status" aria-live="polite"></p>
     </div>
@@ -2464,10 +2461,9 @@ function renderFormat() {
   const last = flowSteps().at(-1) === 'format'
 
   app.innerHTML = `
-    ${appHeader(false)}
+    ${appHeader('How do you want to practice?')}
     ${stepRail('format')}
     <div class="pane">
-      <p class="pane__title">How do you want to practice?</p>
       ${summaryPill(false)}
       <div class="pane__body pane__body--center" role="radiogroup" aria-label="How do you want to practice?">
         ${Object.entries(MODES)
