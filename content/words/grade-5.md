@@ -78,7 +78,7 @@
 | なっとう         | なっ豆          | fermented soybeans             | ? Kana substitution: reconstructed whole word.                            |
 | とうにゅう        | 豆にゅう         | soy milk                       | ? Kana substitution: reconstructed whole word.                            |
 | あかるい         | 明るい          | bright                         |                                                                           |
-|              | 明日           |                                | ? Multiple readings: あした / あす / みょうにち; source does not choose.            |
+| あした           | 明日            | tomorrow                       |                                                                           |
 | あけまして        | 明けまして        | as the new year begins         | ? English judgement: fragment of a New Year greeting.                     |
 | はつめい         | はつ明          | invention                      | ? Kana substitution: reconstructed whole word.                            |
 | せつめい         | せつ明          | explanation                    | ? Kana substitution: reconstructed whole word.                            |
@@ -86,7 +86,7 @@
 | あんしょう        | 暗しょう         | reciting from memory           | ? Kana substitution: reconstructed whole word.                            |
 | あんき          | 暗記           | memorization                   |                                                                           |
 | あんざん         | 暗ざん          | mental math                    | ? Kana substitution: reconstructed whole word.                            |
-|              | 門            |                                | ? Multiple readings: もん / かど; source lists both.                          |
+| もん             | 門              | gate                           |                                                                           |
 | かどまつ         | 門松           | New Year's pine decoration     | ? English judgement: Japanese New Year decoration.                        |
 | ごじ           | 五時           | five o'clock                   |                                                                           |
 | じかん          | 時間           | time                           |                                                                           |
