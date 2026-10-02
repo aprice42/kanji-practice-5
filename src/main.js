@@ -4,6 +4,7 @@ import { confetti } from './confetti.js'
 import { mountTrace } from './trace.js'
 import { isUpdateReady, onUpdateReady, checkForUpdate, applyUpdate } from './update.js'
 import { shareUrl, decodeSet, takeSharedFromUrl, ShareError } from './share.js'
+import { romajiKeys, reduceQuery, isRomaji } from './romaji.js'
 import './style.css'
 
 /* A card's id is its written form, not its position in the array.
@@ -1845,26 +1846,101 @@ function closeBuilder() {
   render()
 }
 
-/* Written form first, then reading, then meaning — a child copying a list off
-   a sheet of paper is matching characters, and a parent looking for "bicycle"
-   can wait. Written matches sort ahead of the rest for the same reason. */
+/* Romaji keys, built once and kept. The search box re-renders the whole screen
+   on every keystroke, so converting 745 readings per character is exactly the
+   cost the SHOW_LIMIT comment below is already worried about. Lazy, because
+   most sessions never open the builder at all. */
+const romajiCache = new Map()
+function keysFor(card) {
+  let keys = romajiCache.get(card.written)
+  if (!keys) {
+    keys = romajiKeys(card.reading)
+    romajiCache.set(card.written, keys)
+  }
+  return keys
+}
+
+/* Romaji is off below three characters. At one character 17 of the 23 possible
+   queries match more than SHOW_LIMIT cards — `i` alone matches 446 — and
+   silently dropping 386 of them tells the person nothing. At three characters
+   nothing in the corpus exceeds the limit. The other tiers are unaffected and
+   still work from the first character, as they always have. */
+const ROMAJI_MIN = 3
+
+/* Written form first, then reading, then romaji, then meaning — a child copying
+   a list off a sheet of paper is matching characters, and a parent looking for
+   "bicycle" can wait.
+
+   The romaji tier carries its OWN reduced query and must never share the
+   lowered one. The reduction exists to flatten Japanese spelling, so turning it
+   loose on an English query silently breaks the meaning search: `fish` reduces
+   to hisy, `jump` to zyunp, `cats` to cat. */
 function builderMatches() {
   const { query, filter } = state.builder
-  const q = query.trim().toLowerCase()
+  const raw = query.trim()
+  const q = raw.toLowerCase()
   // Nothing typed and no list chosen: show nothing rather than all 839.
   if (!q && !filter) return null
 
   const pool = filter ? cards.filter((c) => formsIn(filter).has(c.written)) : cards
   if (!q) return pool
 
+  const key = isRomaji(raw) ? reduceQuery(raw) : ''
+  const useRomaji = key.length >= ROMAJI_MIN
+
   const byWritten = []
-  const byRest = []
+  const byReading = []
+  /* Whole key, then prefix, then anywhere. Substring matching is what lets
+     `taki` find ナイアガラの滝, but it is also why `mon` reaches 生きもの — so the
+     word whose whole reading IS the query leads, rather than whichever card
+     happens to come first in the file. */
+  const byRomaji = [[], [], []]
+  const byMeaning = []
+
   for (const card of pool) {
-    if (card.written.includes(query.trim())) byWritten.push(card)
-    else if (card.reading.toLowerCase().includes(q)) byRest.push(card)
-    else if (card.meaning && card.meaning.toLowerCase().includes(q)) byRest.push(card)
+    if (card.written.includes(raw)) byWritten.push(card)
+    else if (card.reading.toLowerCase().includes(q)) byReading.push(card)
+    else if (useRomaji && keysFor(card).some((k) => k.includes(key))) {
+      const keys = keysFor(card)
+      byRomaji[keys.some((k) => k === key) ? 0 : keys.some((k) => k.startsWith(key)) ? 1 : 2].push(card)
+    } else if (card.meaning && card.meaning.toLowerCase().includes(q)) byMeaning.push(card)
   }
-  return [...byWritten, ...byRest]
+  return [...byWritten, ...byReading, ...byRomaji.flat(), ...byMeaning]
+}
+
+/* When nothing matches a query that has kanji in it, the kanji are still a
+   lead. Someone typing 言葉 wants 言ば, which this app does not spell that way;
+   someone typing 電車 is looking at a word the school writes てん車. Rather than
+   a dead end, show every word built from any of those characters, best overlap
+   first.
+
+   Strictly a rescue — it never appears beside real matches, so it cannot be
+   mistaken for one. */
+const HAS_KANJI = /[一-鿿]/
+function kanjiFallback() {
+  const { query, filter } = state.builder
+  const wanted = [...new Set([...query.trim()].filter((ch) => HAS_KANJI.test(ch)))]
+  if (!wanted.length) return null
+
+  const pool = filter ? cards.filter((c) => formsIn(filter).has(c.written)) : cards
+  const scored = []
+  /* Only the characters that actually turned something up get named in the
+     heading. 言葉 finds words through 言 and nothing at all through 葉, and a
+     heading promising "words using 言葉" would be describing a list that has no
+     葉 in it. */
+  const used = new Set()
+  for (const card of pool) {
+    const hits = wanted.filter((ch) => card.written.includes(ch))
+    if (!hits.length) continue
+    for (const ch of hits) used.add(ch)
+    scored.push([hits.length, card])
+  }
+  if (!scored.length) return null
+  scored.sort((a, b) => b[0] - a[0])
+  return {
+    kanji: wanted.filter((ch) => used.has(ch)),
+    cards: scored.map(([, card]) => card),
+  }
 }
 
 /* Rendering all 839 is about five thousand elements and shapes 839 Japanese
@@ -1886,6 +1962,8 @@ function renderBuilder() {
   const b = state.builder
   const matches = builderMatches()
   const shown = matches ? matches.slice(0, SHOW_LIMIT) : []
+  // Only when the search itself came up empty — never alongside real results.
+  const nearby = matches && !matches.length ? kanjiFallback() : null
   const chosen = cards.filter((c) => b.forms.has(c.written))
   const full = b.forms.size >= MAX_FORMS
   const canSave = Boolean(b.label.trim()) && b.forms.size > 0
@@ -1913,7 +1991,7 @@ function renderBuilder() {
         <div class="builder__field">
           <label class="visually-hidden" for="set-search">Find words</label>
           <input type="search" id="set-search" value="${escapeHtml(b.query)}"
-                 placeholder="A word, a reading, or a meaning" autocomplete="off" />
+                 placeholder="ことば, kotoba, 言ば, or word" autocomplete="off" />
         </div>
         <div class="pills" role="group" aria-label="Show words from">
           ${FILTERS()
@@ -1929,12 +2007,21 @@ function renderBuilder() {
               ? `<p class="builder__hint">Search for a word, or pick a list below to browse it.</p>`
               : shown.length
                 ? `<div class="wordgrid">${shown.map(builderTile).join('')}</div>
-                   ${
+                   <p class="builder__hint">${
                      matches.length > SHOW_LIMIT
-                       ? `<p class="builder__hint">${matches.length} matches. Keep typing to narrow it down.</p>`
-                       : ''
-                   }`
-                : `<p class="builder__hint">Nothing matches.</p>`
+                       ? `${matches.length} matches. Keep typing to narrow it down.`
+                       : `${matches.length} ${matches.length === 1 ? 'word' : 'words'}.`
+                   }</p>`
+                : nearby
+                  ? `<p class="builder__hint">No word is written ${escapeHtml(b.query.trim())} here.</p>
+                     <h3 class="builder__group">Words using <span lang="ja">${escapeHtml(
+                       nearby.kanji.join('')
+                     )}</span></h3>
+                     <div class="wordgrid">${nearby.cards
+                       .slice(0, SHOW_LIMIT)
+                       .map(builderTile)
+                       .join('')}</div>`
+                  : `<p class="builder__hint">Nothing matches.</p>`
           }
         </div>
       </div>

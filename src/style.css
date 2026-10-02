@@ -1630,6 +1630,17 @@ html, body {
 
 /* The one thing on this screen allowed to scroll. */
 .builder__results { flex: 1; min-height: 0; overflow-y: auto; }
+/* The heading over the kanji fallback. A real h3, not a styled paragraph: it
+   introduces a second list of words and a screen reader should be able to skip
+   to it. Sits inside the scrolling results, so it scrolls with them. */
+.builder__group {
+  margin: 0.6rem 0 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
 .wordgrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));

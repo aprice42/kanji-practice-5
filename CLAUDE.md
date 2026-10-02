@@ -119,6 +119,21 @@ serving static assets, configured in `wrangler.jsonc`, not Cloudflare Pages.
   header is the one thing that does not move, which is what makes four panes read as one
   place asking four questions. `flowSteps()` decides how many steps this session has, so
   the rail and the Next/Let's go! label cannot disagree.
+- Romaji exists ONLY as a runtime search key, in `src/romaji.js`. It is never content, never
+  rendered, and never baked into `cards.js` — `content/words/README.md` says readings are
+  kana and never romaji, and that rule stands. The key is computed from the kana already in
+  the cards so a child on a Chromebook with no kana keyboard can type `kurai` and find 暗い.
+- `builderMatches` has four tiers — written, reading, romaji, meaning — and the romaji tier
+  MUST carry its own reduced query rather than the shared lowered one. The reduction exists
+  to flatten Japanese spelling, so on an English query it silently wrecks the meaning
+  search: `fish` becomes hisy, `jump` becomes zyunp, `cats` becomes cat.
+- The romaji tier is off below three characters. At one character 17 of the 23 possible
+  queries match more than `SHOW_LIMIT`; at three, nothing in the corpus does. The other
+  tiers still work from the first character.
+- An empty result for a query containing kanji is not a dead end: `kanjiFallback()` offers
+  every word built from those characters, and the heading names only the characters that
+  actually found something. This is how 言葉 reaches 言ば — the school writes the kanji it
+  has taught and kana for the rest, and nothing records the full form.
 - Nothing inside a scrolling list calls `render()` — that rebuilds the list and resets its
   scroll, sending someone who scrolled down back to the top on every tap. Swap the rows
   with `syncSets()`, `refreshLibrary()` or `syncChosen()` and re-bind with `bindSetList()`,
