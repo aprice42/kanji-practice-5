@@ -1097,6 +1097,9 @@ function navMenu() {
    Never on Home, in a round, or on the checkpoint. Nothing in the app is ever
    behind it: the point of the sub-line is to say so before anyone wonders. */
 const KOFI = 'https://ko-fi.com/andy_price'
+/* Off for the time being. Flip back to true to restore the link; the rule
+   above the menu's <hr /> goes with it so the menu does not end on a divider. */
+const SUPPORT_ON = false
 
 function supportLink() {
   /* The app works offline and this link does not. Dimmed with a reason beats a
@@ -1135,8 +1138,7 @@ function settingsMenu() {
       ${themeSwitch()}
       <p class="menu__heading">Color scheme</p>
       ${paletteSwitch()}
-      <hr />
-      ${supportLink()}`,
+      ${SUPPORT_ON ? `<hr />${supportLink()}` : ''}`,
   })
 }
 
